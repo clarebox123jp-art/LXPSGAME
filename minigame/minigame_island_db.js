@@ -50,7 +50,8 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.399.0';   /* ★ v1.399.0(2026-10-18・老師「荒島求生新增尋寶系統」)— 本檔實質異動:檔尾新增 D.TREASURE(全部數字)/D.TREASURE_COL(11 件收藏品,同時登記為室內裝飾 D.DECOS)/D.TOOLS 自製羅盤(needZone:'cave')/D.IMG 24 張尋寶圖＋點擊星星.gif;D.STATS 四維、5 隻寵物天賦、4 件飾品、2 件防具、水晶風鈴的說明文字補上尋寶效果;D.LOG 一筆。 */   void 'v1.396.0';   /* ★ v1.396.0(2026-10-13)— D.STATS 腳程說明補上「走路/奔跑速度最多 +50%、野外少遇到魔物最多 −50%」(公式在 index islMoveBonus/islEncDodge) */  void 'v1.394.0';   /* ★ v1.394.0(2026-10-12・老師「智取改成不再是相同的回答,把原本的提示改成隨機情境(依天氣、晝夜、現場環境),讓玩家選擇正確的措施才會成功造成傷害」)— 本檔實質異動:檔尾新增 D.WIT_ZT(區域→環境標籤)/D.WIT_ZT_N/D.WIT_CAT(弱點類別名)/D.WIT_SC(86 題情境);D.LOG 一筆。D.WIT_HINT 保留不再讀取。 */
+  D.VER = 'v1.454.0';   /* ★ v1.454.0(2026-11-24・老師「主角與營地裝飾互動」)— 本檔實質異動:檔尾新增 D.DECO_ACT(營地裝飾互動表)+ 坐/躺動作圖 24 張圖鍵 + D.LOG 一筆 */
+  void 'v1.399.0';   /* ★ v1.399.0(2026-10-18・老師「荒島求生新增尋寶系統」)— 本檔實質異動:檔尾新增 D.TREASURE(全部數字)/D.TREASURE_COL(11 件收藏品,同時登記為室內裝飾 D.DECOS)/D.TOOLS 自製羅盤(needZone:'cave')/D.IMG 24 張尋寶圖＋點擊星星.gif;D.STATS 四維、5 隻寵物天賦、4 件飾品、2 件防具、水晶風鈴的說明文字補上尋寶效果;D.LOG 一筆。 */   void 'v1.396.0';   /* ★ v1.396.0(2026-10-13)— D.STATS 腳程說明補上「走路/奔跑速度最多 +50%、野外少遇到魔物最多 −50%」(公式在 index islMoveBonus/islEncDodge) */  void 'v1.394.0';   /* ★ v1.394.0(2026-10-12・老師「智取改成不再是相同的回答,把原本的提示改成隨機情境(依天氣、晝夜、現場環境),讓玩家選擇正確的措施才會成功造成傷害」)— 本檔實質異動:檔尾新增 D.WIT_ZT(區域→環境標籤)/D.WIT_ZT_N/D.WIT_CAT(弱點類別名)/D.WIT_SC(86 題情境);D.LOG 一筆。D.WIT_HINT 保留不再讀取。 */
   void 'v1.393.0';   /* ★ v1.393.0(2026-10-11・老師「魔物包含 boss 受到相同的智取傷害,每次減為上次的 50%」「智取威力取決於巧思,設計合理公式避免太強」)— 本檔實質異動:D.BT 新增 OUTWIT_ATK0/OUTWIT_ATK_WIT/OUTWIT_HP_WIT/OUTWIT_HP_CAP/OUTWIT_BOSS_HP/OUTWIT_DECAY;D.STATS 巧思說明加「智取威力」;D.LOG 一筆。公式在 index islBtWitDmg。 */
   void 'v1.392.0';   /* ★ v1.392.0(2026-10-09)— 本檔實質異動:D.BLD_DMG(設施損壞分級)+ D.LOG 一筆;外島/遠洋星域資料在 sea_db。 */
   void 'v1.391.0';   /* ★ v1.391.0(2026-10-09・老師「倉庫堆滿的材料堆在背包中,新增一鍵賣出背包普通材料」)— 本檔實質異動:新增 D.SHOP.bulkSell 清單 + D.LOG 一筆。 */
@@ -6388,5 +6389,86 @@ window.ISL_DB = (function(){
     '🔊 拿著羅盤在野外按「🧭 探測」:聲音越急、星星越紅、泡泡說「非常近」,就離寶藏越近;走到上面按「🪏 挖掘」。挖到寶藏才扣 ⚡1,挖錯不扣。稀有寶藏埋得深,要連打挖出來。',
     '🗺 第一次每區都有寶藏,之後每天只有幾區會再冒出來;阿獺每天賣 1 張藏寶圖,會在大地圖標出今天哪幾區有寶藏。沒挖到的寶藏會留到明天。',
     '🏺 每區第一次挖到稀有寶藏會得到那一區的「收藏品」,可以擺進小木屋;集滿 11 件還有寶藏展示櫃!巧思、巧手、力氣、腳程,還有穿山甲、藍鵲、大冠鷲、椰子蟹、螢火蟲和幾件飾品,都能幫你尋寶。'
+  ] });
+
+  /* ══ ★ v1.454.0(2026-11-24・老師「設計荒島求生的主角與營地裝飾互動的功能」— 設計書 claude/荒島營地裝飾互動_設計書.md v0.2)══
+     D.DECO_ACT[裝飾 id] = 主角怎麼跟它互動:
+       a   動作:sit 坐椅子 / lie 躺 / floor 席地坐 / play 撥弄 / reach 照顧・打開 / look 看一看 / polish 擦亮 / hug 抱 / light 開關燈 / walk 走過去自動(不停下)
+       s/f 錨點 [面向, ax, ay]:s = 側面圖(f=0,f=1 時程式自動左右鏡像),f = 正面圖(f=2);面向 d 正面/u 背面/r 朝右/l 朝左;
+           ax/ay = 主角腳底相對「裝飾顯示框中心」的位移,單位 = 裝飾顯示邊長(96px × sz × 玩家縮放)。2026-11-24 以合成圖逐件對過 19 件坐/躺裝飾。
+       fx  裝飾特效:squash 壓一下 / rock 跟主角一起搖 / swingc 只搖主角 / sway 頂端為軸晃 / bend 底部為軸彎 / jiggle 抖一下 / wobble 搖一搖
+       p   粒子:notes zzz water sparkle leaf steam heart fire bubble star wind sprout petal step
+       st  每天第一次互動算一次四維練習(dex 巧手 / wit 巧思);坐/躺/席地坐不算練習,它的好處是休息回體力(老師裁定 Q1 丙:每秒 +1、不設上限)
+       sleep 1 = 躺著可以「😴 睡到明天」,睡床比睡帳篷舒適度 +5(老師裁定 Q2 甲、Q1 丙)
+     主角動作圖:island_sit_<body>_h<n> / island_lie_<body>_h<n>(512×384,4 欄×3 列,與 island_walk_* 同規格;席地坐用 lie 圖正面第 2~3 格)。
+     play/reach/look/polish/hug/light 還沒有專屬動作圖(第二批),先用站立待機圖站在裝飾旁,只播裝飾特效與粒子。 */
+  (function(){
+    var b, h, k, S = ['l', 0.42, 0.42], A = {}, i, L;
+    var bodies = ['boy', 'girl'], poses = ['sit', 'lie'];
+    for(k = 0; k < poses.length; k++) for(b = 0; b < bodies.length; b++) for(h = 0; h < 6; h++) D.IMG[poses[k] + '_' + bodies[b] + '_h' + h] = 'island_' + poses[k] + '_' + bodies[b] + '_h' + h + '.png';
+    /* 坐 */
+    A.chair    = { a:'sit', fx:'squash', s:['r', 0.0, 0.45], f:['d', 0, 0.45] };
+    A.table    = { a:'sit', s:['d', -0.25, 0.40] };
+    A.logseat  = { a:'sit', s:['d', 0, 0.42], f:['d', 0, 0.42] };
+    A.sofa     = { a:'sit', fx:'squash', s:['d', 0, 0.40], f:['d', 0, 0.40] };
+    A.dining   = { a:'sit', s:['u', 0, 0.42], f:['u', 0, 0.42] };
+    A.desk     = { a:'sit', s:['u', 0, 0.45], f:['u', 0, 0.45] };
+    A.dresser  = { a:'sit', p:'sparkle', s:['u', 0, 0.45], f:['u', 0, 0.45] };
+    A.organ    = { a:'sit', p:'notes', s:['u', 0, 0.45], f:['u', 0, 0.45] };
+    A.rocker   = { a:'sit', fx:'rock', s:['l', -0.05, 0.42], f:['d', 0, 0.42] };
+    A.swing    = { a:'sit', fx:'swingc', s:['d', 0.27, 0.33], f:['d', 0.27, 0.33] };
+    /* 躺 */
+    A.bed      = { a:'lie', fx:'squash', p:'zzz', sleep:1, s:['l', 0, 0.15] };
+    A.bunkbed  = { a:'lie', p:'zzz', sleep:1, s:['r', 0, 0.30], f:['d', 0, 0.30] };
+    A.hammock  = { a:'lie', fx:'swingc', p:'zzz', sleep:1, s:['r', 0, 0.05], f:['d', 0, 0.05] };
+    /* 席地坐 */
+    A.cushion  = { a:'floor', fx:'squash', s:['d', 0, 0.30], f:['d', 0, 0.30] };
+    A.picnic   = { a:'floor', s:['d', 0, 0.25], f:['d', 0, 0.25] };
+    A.rug      = { a:'floor', s:['d', 0, 0.25] };
+    A.roundrug = { a:'floor', s:['d', 0, 0.20], f:['d', 0, 0.20] };
+    A.pool     = { a:'floor', p:'water', s:['d', 0, 0.40], f:['d', 0, 0.40] };
+    A.fountain = { a:'floor', p:'water', s:['d', 0, 0.40], f:['d', 0, 0.40] };
+    /* 撥弄(巧手) */
+    L = { guitar:['', 'notes'], chime:['sway', 'notes'], r_buoy:['sway', 'notes'], globe:['wobble', 'sparkle'], windmill:['wobble', 'wind'] };
+    for(k in L){ if(L.hasOwnProperty(k)) A[k] = { a:'play', fx:L[k][0], p:L[k][1], st:'dex', s:S, f:S }; }
+    /* 照顧植物(巧手) */
+    L = { pot:['bend', 'leaf'], flower:['bend', 'petal'], hangplant:['sway', 'leaf'], bamboo:['bend', 'leaf'], palm:['bend', 'leaf'], r_sapling:['bend', 'sprout'], lotuspond:['', 'water'], r_wetland:['bend', 'leaf'], r_ash:['', 'sprout'], scarecrow:['wobble', 'leaf'] };
+    for(k in L){ if(L.hasOwnProperty(k)) A[k] = { a:'reach', fx:L[k][0], p:L[k][1], st:'dex', t:'🌱 照顧', s:S, f:S }; }
+    /* 打開・拿取(巧手) */
+    L = { cupboard:'', wardrobe:'', basket:'', mailbox:'', curtain:'', bookshelf:'', well:'water', teaset:'steam', stove:'steam' };
+    for(k in L){ if(L.hasOwnProperty(k)) A[k] = { a:'reach', fx:'jiggle', p:L[k], st:'dex', t:(k === 'well' ? '🪣 打水' : (k === 'teaset' ? '🫖 倒茶' : (k === 'stove' ? '🍳 顧爐火' : '🚪 打開看看'))), s:S, f:S }; }
+    /* 觀察(巧思) */
+    L = { telescope:'star', specimen:'sparkle', aquarium:'bubble', painting:'sparkle', mirror:'sparkle', sundial:'sparkle', clock:'', birdhouse:'leaf' };
+    for(k in L){ if(L.hasOwnProperty(k)) A[k] = { a:'look', p:L[k], st:'wit', s:S, f:S }; }
+    /* 擦亮・摸摸(巧思) */
+    L = { statue:'', vase:'', r_crystal:'', r_ice:'', koi:'sway', r_banner:'sway' };
+    for(k in L){ if(L.hasOwnProperty(k)) A[k] = { a:'polish', fx:L[k], p:'sparkle', st:'wit', s:S, f:S }; }
+    A.plushbear = { a:'hug', fx:'squash', p:'heart', st:'wit', s:S, f:S };
+    /* 開關燈(巧思;開/關狀態存在 deco.on) */
+    L = { lamp:'', floorlamp:'', r_stonelamp:'', r_elamp:'', lights:'', fireplace:'fire' };
+    for(k in L){ if(L.hasOwnProperty(k)) A[k] = { a:'light', p:L[k], st:'wit', s:S, f:S }; }
+    /* 走過去自動 */
+    A.stonepath = { a:'walk', p:'step' }; A.woodbridge = { a:'walk', p:'step' }; A.flowerarch = { a:'walk', p:'petal' };
+    D.DECO_ACT = A;
+    D.DECO_ACT_LABEL = { sit:'🪑 坐下', lie:'🛏 躺下', floor:'🧺 坐下來', play:'🎵 撥弄', reach:'🌱 照顧', look:'🔭 看一看', polish:'✨ 擦亮', hug:'🧸 抱抱', light:'💡 開關燈' };
+    D.DECO_ACT_PT = { notes:'🎵', zzz:'💤', water:'💧', sparkle:'✨', leaf:'🍃', steam:'♨', heart:'❤', fire:'🔥', bubble:'🫧', star:'⭐', wind:'💨', sprout:'🌱', petal:'🌸', step:'👣' };
+    D.DECO_ACT_REST = { sit:1, lie:1, floor:1 };   /* 會回體力的動作(🛋 休息自動找的也是這些) */
+    D.DECO_ACT_HP_SEC = 1;      /* 休息中每秒回幾點體力(老師 2026-11-24:每秒 +1,不設上限) */
+    D.DECO_BED_COMFORT = 5;     /* 從床上「睡到明天」時,當晚舒適度 +5 */
+    D.DECO_ACT_NEAR = 9;        /* 走到裝飾錨點多近(營地 %)會冒互動泡泡 */
+    D.PET_REST_MAX = 3;         /* ★ 22:09 老師「寵物陪伴休息也會一起恢復」— 最多幾位夥伴跑來陪休息(受傷的優先,再來是編組裡的;倒下的不來) */
+    D.PET_REST_HP_PCT = 1;      /* ★ 22:43 老師「夥伴有跨場的血量」— 陪休息每秒回夥伴血量上限的幾 %(最少 1 點) */
+    D.PET_WAKE_HP_PCT = 20;     /* 倒下的夥伴睡一覺(隔天)醒來剩上限的幾 %;之後靠休息回 */
+    for(i = 0; i < D.DECOS.length; i++){ if(A[D.DECOS[i].id] && A[D.DECOS[i].id].a !== 'walk') D.DECOS[i].act = A[D.DECOS[i].id].a; }
+  })();
+
+  D.LOG.unshift({ v: 'v1.454.0', d: '2026-11-24', items: [
+    '🪑【新功能:跟裝飾互動】走到椅子、沙發、床、吊床、坐墊旁邊,頭上會冒出泡泡,點一下就能坐下或躺下;長按裝飾,選單裡也多了一顆互動鈕。',
+    '❤ 坐著或躺著休息時,每秒回 1 點體力!在「🌙 休息」裡按「🛋 坐下休息」,主角會自己走到最近的椅子或床。',
+    '😴 躺在床、雙層床或吊床上,天黑以後可以直接「睡到明天」,而且睡床比睡帳篷更舒服(舒適度 +5)。',
+    '🎸 吉他、風鈴、盆栽、望遠鏡、路燈……七十多件裝飾都能撥一撥、照顧、看一看或開關燈,每種每天第一次互動還能練習巧手或巧思!',
+    '🏠 小木屋裡的家具也能坐、躺、互動了;🚪 參觀好友的營地時也可以走來走去,坐坐好友的椅子、躺躺好友的吊床。',
+    '🐾 夥伴的體力會一直帶到下一場戰鬥了!受傷的夥伴會在你休息時跑過來陪你,一起慢慢回體力;倒下的夥伴要睡一覺到隔天才會醒來,醒來時體力很少,記得陪牠休息。',
+    '🏝 參觀好友的營地時,看到的是好友自己的夥伴在走來走去。'
   ] });
 })();
