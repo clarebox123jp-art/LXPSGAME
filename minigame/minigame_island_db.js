@@ -50,7 +50,8 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.454.0';   /* ★ v1.454.0(2026-11-24・老師「主角與營地裝飾互動」)— 本檔實質異動:檔尾新增 D.DECO_ACT(營地裝飾互動表)+ 坐/躺動作圖 24 張圖鍵 + D.LOG 一筆 */
+  D.VER = 'v1.455.0';   /* ★ v1.455.0(2026-11-24・老師「荒島新增飢餓值」)— 本檔實質異動:檔尾新增 D.HUNGER/HUNGER_STAGE/FOOD_GRP/FOOD_FULL/PET_NO_FOOD/DIET/PET_DIET、新物品 🐛 bug(ITEM_ORDER/SHOP.sell/4 區 pick)、D.SK_HUN_PATCH 改 10 個天賦節點效果與說明、D.LOG 一筆 */
+  void 'v1.454.0';   /* ★ v1.454.0(2026-11-24・老師「主角與營地裝飾互動」)— 本檔實質異動:檔尾新增 D.DECO_ACT(營地裝飾互動表)+ 坐/躺動作圖 24 張圖鍵 + D.LOG 一筆 */
   void 'v1.399.0';   /* ★ v1.399.0(2026-10-18・老師「荒島求生新增尋寶系統」)— 本檔實質異動:檔尾新增 D.TREASURE(全部數字)/D.TREASURE_COL(11 件收藏品,同時登記為室內裝飾 D.DECOS)/D.TOOLS 自製羅盤(needZone:'cave')/D.IMG 24 張尋寶圖＋點擊星星.gif;D.STATS 四維、5 隻寵物天賦、4 件飾品、2 件防具、水晶風鈴的說明文字補上尋寶效果;D.LOG 一筆。 */   void 'v1.396.0';   /* ★ v1.396.0(2026-10-13)— D.STATS 腳程說明補上「走路/奔跑速度最多 +50%、野外少遇到魔物最多 −50%」(公式在 index islMoveBonus/islEncDodge) */  void 'v1.394.0';   /* ★ v1.394.0(2026-10-12・老師「智取改成不再是相同的回答,把原本的提示改成隨機情境(依天氣、晝夜、現場環境),讓玩家選擇正確的措施才會成功造成傷害」)— 本檔實質異動:檔尾新增 D.WIT_ZT(區域→環境標籤)/D.WIT_ZT_N/D.WIT_CAT(弱點類別名)/D.WIT_SC(86 題情境);D.LOG 一筆。D.WIT_HINT 保留不再讀取。 */
   void 'v1.393.0';   /* ★ v1.393.0(2026-10-11・老師「魔物包含 boss 受到相同的智取傷害,每次減為上次的 50%」「智取威力取決於巧思,設計合理公式避免太強」)— 本檔實質異動:D.BT 新增 OUTWIT_ATK0/OUTWIT_ATK_WIT/OUTWIT_HP_WIT/OUTWIT_HP_CAP/OUTWIT_BOSS_HP/OUTWIT_DECAY;D.STATS 巧思說明加「智取威力」;D.LOG 一筆。公式在 index islBtWitDmg。 */
   void 'v1.392.0';   /* ★ v1.392.0(2026-10-09)— 本檔實質異動:D.BLD_DMG(設施損壞分級)+ D.LOG 一筆;外島/遠洋星域資料在 sea_db。 */
@@ -6470,5 +6471,113 @@ window.ISL_DB = (function(){
     '🏠 小木屋裡的家具也能坐、躺、互動了;🚪 參觀好友的營地時也可以走來走去,坐坐好友的椅子、躺躺好友的吊床。',
     '🐾 夥伴的體力會一直帶到下一場戰鬥了!受傷的夥伴會在你休息時跑過來陪你,一起慢慢回體力;倒下的夥伴要睡一覺到隔天才會醒來,醒來時體力很少,記得陪牠休息。',
     '🏝 參觀好友的營地時,看到的是好友自己的夥伴在走來走去。'
+  ] });
+
+  /* ══ ★ v1.455.0(2026-11-24・老師「荒島新增飢餓值」+ 23:13 裁定「招募時直接 +10」「照你建議(全甲)」「修改部分天賦星盤來減輕飢餓考驗」)══
+     設計書:Project claude/荒島飢餓值_設計書.md。所有數字集中在這裡,index 端只讀不寫死。
+     ・島上時鐘 = AP:只有花 AP、打仗、睡覺換日才會餓;真實時間不扣(放假回來不會餓扁)。
+     ・飽足 <50%:全部戰鬥屬性(攻擊/防禦/速度/暴擊率)與移動速度依比率下降,上限 30%(裁定 A 甲)。最大 HP 不降(見 index 說明)。
+     ・只有探險隊上的夥伴會餓(裁定 D 甲);餵食不再一天一次,改每天前 3 次才加親密度(裁定 G 甲);寵物可以吃生的材料(裁定 E 甲)。 */
+  (function(){
+    var i, k, n, P;
+    D.HUNGER = {
+      max: 100, start: 80, warnAt: [50, 20, 0],
+      hero: { perAp: 7, perBattle: 2, perBoss: 5, sleep: 20, camp: 30 },    /* 一天約 10 AP×7 + 5 場×2 + 睡覺 20 ≈ 100 ⇒ 三餐各約 33 */
+      pet:  { perAp: 5, perBattle: 3, perBoss: 6, sleep: 15, camp: 20 },    /* 一天約 80 ⇒ 兩餐最愛的食物剛好 */
+      pen:  { from: 50, capP: 30, moveCapP: 30 },                           /* 降幅% = (from − 飽足) ÷ from × capP */
+      qMul: [1, 1.1, 1.2],                                                  /* 料理 ★/★★/★★★ 飽足倍率 */
+      favMul: 1.6, fullWarn: 95, petFullStop: 95,
+      newbie: { floor: 50, days: 3 },                                       /* 前 3 天、還沒煮過第一道料理前:飽足最低 50(不會被罰) */
+      cookN: [2, 3, 4],                                                     /* 裁定 B 甲:一鍋多份(★/★★/★★★ 份數) */
+      bond: { fav: 8, ok: 3, perDay: 3, sad: [[0, 10], [30, 6], [50, 3]], streakMul: 2, zeroDay: 5, sulkBack: 10, recruitStart: 10 },   /* sad:[睡前飽足 < 門檻, 扣多少](由低往高找第一個符合的;0 = 剛好 0) */
+      balanced: { groups: 3, wakeBonus: 10 }                                /* 裁定 C 甲:一天吃到 ≥3 類六大類 ⇒ 隔天起床飽足 +10 */
+    };
+    D.HUNGER_STAGE = [
+      { min: 50, e: '🙂', n: '飽足',   c: 'ok' },
+      { min: 30, e: '😕', n: '有點餓', c: 'mid' },
+      { min: 10, e: '😣', n: '很餓',   c: 'low' },
+      { min: 0,  e: '😵', n: '餓昏了', c: 'crit' }
+    ];
+    /* 六大類(衛福部每日飲食指南) */
+    D.FOOD_GRP = { grain:'🌾 全榖雜糧', protein:'🐟 豆魚蛋肉', milk:'🥛 乳品', veg:'🥬 蔬菜', fruit:'🍎 水果', fat:'🥜 油脂與堅果' };
+    /* 食物表:h = 主角飽足(0/沒有 = 主角不能拿來吃飽)、p = 寵物飽足、t = 食物標籤(寵物食性)、g = 六大類
+       料理的寵物飽足沒寫就 = h;★ 品質倍率兩邊都吃。外島(sea_db)的食材/料理也寫在這裡,沒載入外島時就用不到。 */
+    D.FOOD_FULL = {
+      berry:{ h:8, p:15, t:['fruit'], g:['fruit'] },      honey:{ h:5, p:15, t:['nectar'] },
+      milk:{ h:10, p:15, t:['milk'], g:['milk'] },         mushroom:{ h:6, p:15, t:['shroom'], g:['veg'] },
+      fish:{ p:25, t:['fish'] }, egg:{ p:20, t:['egg'] }, grain:{ p:20, t:['grain'] }, herb:{ p:15, t:['leaf'] }, water:{ p:8, t:['water'] }, bug:{ p:25, t:['bug'] },
+      d_jam:{ h:12, t:['fruit'], g:['fruit'] },            d_pudding:{ h:20, t:['milk','egg'], g:['milk'] },
+      d_egg:{ h:22, t:['egg'], g:['protein'] },            d_fish:{ h:28, t:['fish'], g:['protein'] },
+      d_soup:{ h:30, t:['shroom'], g:['veg'] },            d_bread:{ h:35, t:['grain'], g:['grain'] },
+      d_stew:{ h:42, t:['fish','shroom'], g:['protein','veg'] },
+      /* 外島 */
+      krill:{ p:20, t:['fish'] }, urchin:{ p:25, t:['fish'] }, kelp:{ p:15, t:['leaf'] }, lichen:{ p:12, t:['leaf'] },
+      cloudberry:{ h:8, p:15, t:['fruit'], g:['fruit'] }, coconut:{ h:8, p:15, t:['fruit'], g:['fruit'] }, banana:{ h:10, p:15, t:['fruit'], g:['fruit'] },
+      nut:{ h:10, p:20, t:['nut'], g:['fat'] },            cactus:{ h:5, p:15, t:['leaf'], g:['veg'] },
+      d_cocoa:{ h:20, t:['milk'], g:['milk'] },            d_krillsoup:{ h:30, t:['fish'], g:['protein'] },
+      d_bananacoco:{ h:30, t:['fruit'], g:['fruit'] },     d_cactusjuice:{ h:10, t:['leaf'], g:['veg'] },
+      d_kelpsoup:{ h:32, t:['fish','leaf'], g:['protein','veg'] }
+    };
+    /* 不能給動物吃的(教學點) */
+    D.PET_NO_FOOD = { d_cocoa: '可可裡的「可可鹼」對很多動物有毒,巧克力、可可不能給動物吃!' };
+    /* 食性:肉食/草食/雜食/吸食(吸食的蜜和水特別飽) */
+    D.DIET = {
+      carn: { n:'肉食', e:'🍖', t:['fish','egg','bug','milk'] },
+      herb: { n:'草食', e:'🌿', t:['fruit','grain','shroom','leaf','nectar','nut'] },
+      omni: { n:'雜食', e:'🍽', t:'*' },
+      sip:  { n:'吸食', e:'💧', t:['nectar','water'], full:25 }
+    };
+    /* 每位夥伴的食性 d 與 ❤ 最愛 f(裁定 F 甲:招募送禮的食物直接當最愛;最愛一定會吃,就算不在食性裡)
+       real:圖鑑補一句真實的主食(穿山甲/綠蠵龜/莫氏樹蛙的最愛沿用招募食物,但食性寫真實的) */
+    D.PET_DIET = {
+      gull:{ d:'omni', f:'fish' }, bear:{ d:'omni', f:'berry', real:'野外主要吃青剛櫟等殼斗科堅果和果實' }, deer:{ d:'herb', f:'herb', real:'吃嫩葉和青草' },
+      owl:{ d:'carn', f:'bug', real:'晚上抓昆蟲、小老鼠' }, leopardcat:{ d:'carn', f:'fish', real:'主要抓老鼠、小鳥' }, bluemagpie:{ d:'omni', f:'berry' },
+      eagle:{ d:'carn', f:'egg', real:'最愛抓蛇' }, pangolin:{ d:'carn', f:'honey', real:'真正的主食是螞蟻和白蟻' }, turtle:{ d:'herb', f:'mushroom', real:'真正的主食是海草和海藻' },
+      coconutcrab:{ d:'omni', f:'d_jam', real:'會爬上樹吃椰子和果實' }, treefrog:{ d:'carn', f:'herb', real:'真正的主食是小昆蟲' }, firefly:{ d:'sip', f:'water', real:'成蟲只喝露水' },
+      salmon:{ d:'carn', f:'bug', real:'吃溪裡的水生昆蟲' }, macaque:{ d:'omni', f:'grain' }, spoonbill:{ d:'carn', f:'d_fish', real:'用湯匙嘴在淺水裡撈魚蝦' },
+      barbet:{ d:'omni', f:'berry', real:'最愛吃果實' }, cloudleopard:{ d:'carn', f:'egg' }, bluering:{ d:'carn', f:'fish', real:'主要吃小螃蟹' }, swallowtail:{ d:'sip', f:'honey', real:'成蝶吸花蜜' },
+      /* 外島 12 位 */
+      empenguin:{ d:'carn', f:'krill' }, snowyowl:{ d:'carn', f:'fish', real:'主要抓旅鼠' }, arcticfox:{ d:'omni', f:'cloudberry' },
+      capybara:{ d:'herb', f:'banana', real:'主要吃水邊的青草' }, macaw:{ d:'herb', f:'nut', real:'強壯的鳥喙能咬開巴西堅果' }, jaguar:{ d:'carn', f:'fish' },
+      puffin:{ d:'carn', f:'fish' }, tortoise:{ d:'herb', f:'cactus', real:'真的會吃仙人掌' }, albatross:{ d:'carn', f:'krill', real:'吃魷魚、魚和磷蝦' },
+      sailfish:{ d:'carn', f:'fish', real:'追捕燈籠魚等小魚' }, seaotter:{ d:'carn', f:'urchin', real:'吃海膽,保護巨藻森林' }, isopod:{ d:'carn', f:'fish', real:'在深海吃沉下來的魚屍' }
+    };
+    /* 裁定 F 甲:新生食「🐛 小昆蟲」(森林/溪流/草原/山谷草叢可撿;領角鴞、櫻花鉤吻鮭的最愛)。圖片選配,沒圖顯示 emoji。 */
+    D.ITEMS.bug = { n:'小昆蟲', e:'🐛', cat:'food' };
+    if(D.ITEM_ORDER && D.ITEM_ORDER.indexOf('bug') < 0){ n = D.ITEM_ORDER.indexOf('egg'); D.ITEM_ORDER.splice(n >= 0 ? n + 1 : D.ITEM_ORDER.length, 0, 'bug'); }
+    if(D.SHOP && D.SHOP.sell) D.SHOP.sell.bug = 1;
+    P = ['forest', 'river', 'grass', 'valley'];
+    for(i = 0; i < P.length; i++){ if(D.SCENE[P[i]] && D.SCENE[P[i]].pick && D.SCENE[P[i]].pick.items) D.SCENE[P[i]].pick.items.push('bug'); }
+    /* 「修改部分天賦星盤來減輕飢餓考驗」— 只改既有節點的效果與說明,節點位置/連線/數量不變。
+       新效果鍵:hunSlowP 主角餓得慢%、fullP 主角吃東西飽足 +%、hunPenCutP 餓肚子能力下降減少%(主角+夥伴)、
+                petHunSlowP 夥伴餓得慢%、petFullP 夥伴吃東西飽足 +%、bondSadCutP 夥伴餓肚子少掉的親密度減少%。 */
+    D.SK_HUN_PATCH = {
+      SK_MED_CK_L1: { eff:{ hunSlowP:5 },  d:'最大體力 +1%;肚子餓得慢 5%' },
+      SK_MED_CK_L2: { eff:{ hunSlowP:5 },  d:'最大體力 +1%;肚子餓得慢 5%' },
+      SK_MED_CK_L3: { eff:{ hunSlowP:5 },  d:'最大體力 +1%;肚子餓得慢 5%' },
+      SK_MED_CK_L4: { eff:{ hunSlowP:5 },  d:'最大體力 +1%;肚子餓得慢 5%' },
+      SK_MED_CK_1:  { eff:{ fullP:15 },    d:'吃料理回復量 +20%,熱食可解除失溫;🍙 吃東西的飽足感 +15%;養的動物每日產出 +20%' },
+      SK_MED_CK_3:  { eff:{ hunPenCutP:30 }, d:'每天第一次吃料理額外回復 ⚡AP 1;😕 餓肚子時能力下降減少 30%(主角和夥伴);養的動物每日產出 +25%' },
+      SK_LIFE_4:    { eff:{ hunSlowP:10 }, d:'島上活動失誤受傷 −30%;夜襲被咬扣血 −30%;做事不慌不忙,肚子餓得慢 10%' },
+      SK_CORE_BEAST:{ eff:{ petHunSlowP:10 }, d:'所有寵物最大體力/攻擊/防禦/速度 +3%;寵物親密度提升效率 +5%;🍖 隊上夥伴餓得慢 10%(馴獸專精星域從這裡出發)' },
+      SK_BEAST_L5:  { eff:{ petFullP:20 }, d:'寵物最大體力/攻擊/防禦/速度 各 +1%;🍖 夥伴吃東西的飽足感 +20%' },
+      SK_BEAST_KEY: { eff:{ bondSadCutP:50 }, d:'★關鍵節點:每隻寵物每場戰鬥第一次被打倒時,會撐住保留 1 點體力;開戰時技能計量再多 25%;夥伴餓肚子時少掉的親密度減半' }
+    };
+    for(i = 0; i < D.SK_NODES.length; i++){
+      n = D.SK_NODES[i]; P = D.SK_HUN_PATCH[n.id]; if(!P) continue;
+      if(!n.eff) n.eff = {};
+      for(k in P.eff){ if(P.eff.hasOwnProperty(k)) n.eff[k] = (n.eff[k] || 0) + P.eff[k]; }
+      n.d = P.d;
+    }
+  })();
+  D.LOG.unshift({ v: 'v1.455.0', d: '2026-11-24', items: [
+    '🍙【新功能:飽足度】HUD 多了一個 🍙 飽足度,吃飽是 100%。做事情、打仗、睡覺都會慢慢餓,一天吃三餐剛剛好!',
+    '😕 飽足低於 50% 會肚子餓:攻擊、防禦、速度、暴擊率和走路速度都會變慢(最多 −30%),吃一頓就恢復。不同料理的飽足感不一樣,材料越多的越飽。',
+    '🍳 煮一次料理可以做好幾份了:★ 2 份、★★ 3 份、★★★ 4 份!',
+    '🥗 一天吃到 3 類以上的「六大類食物」,隔天起床飽足 +10%。',
+    '🐾 隊上的夥伴也會餓!每位夥伴有自己的食性(肉食/草食/雜食/吸食)和 ❤ 最愛的食物,生的魚、蛋、野果也可以直接餵。吃最愛的食物最飽,親密度 +8!',
+    '😢 讓夥伴一直餓肚子會減少親密度,親密度降到 0 的夥伴會鬧脾氣、不跟你出門;餵牠吃東西,親密度回到 10 就會和好。',
+    '🐛 森林、溪流、草原、山谷的草叢裡可以撿到「小昆蟲」,是領角鴞和櫻花鉤吻鮭的最愛。',
+    '🌟 天賦星盤的「飽足」「恢復料理」「消除疲勞」「小心作業」「馴獸之心」「萬獸共鳴」「羈絆守護」加上了減輕飢餓的效果。'
   ] });
 })();
