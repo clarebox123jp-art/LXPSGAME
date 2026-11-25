@@ -17,7 +17,7 @@
 (function(){
 'use strict';
 if(window.DSGW) return;
-var VER = 'v1.2.7';   /* ★ v1.2.7(2026-11-25・老師「右下角的圖層功能鍵太佔空間,高度縮小些。圖層可看的高度提高到三層」「繳交作品改成打字命名,最多10字。智慧金鑰審核增加不雅字詞判別」)— 圖層小視窗/選色區按鈕不吃全域 min-height、清單至少 3 列;TITLE_MAX 10、拿掉詞組下拉;審核查作品說明/希望獎勵文字、圖上文字逐塊+串接查 */ void 'v1.2.6';   /* ★ v1.2.6(2026-11-25・老師「角色皮膚和荒島裝飾要有吸色滴管在色環旁邊可以使用」「用橡皮擦擦掉的東西,要減去相對應的步數」)— 🧪 吸管 eyeToggle/eyePick(I 鍵);重疊格記筆畫編號,擦掉七成以上扣回步數(清/刪圖層也扣);像素筆拖曳補點 */ void 'v1.2.5';   /* ★ v1.2.5(2026-11-25・老師「皮膚和裝飾繳交追加『作品說明』20字到100字內」)— 作品資料加 #dsg-desc、存 mod.desc、老師台倉庫卡片顯示 */ void 'v1.2.4';   /* ★ v1.2.4(2026-11-25・老師「步數計算,在同一條線或色塊上用相同的筆刷或色彩重疊,只算一步」)— 重疊格 ovStroke:同筆刷或同色重疊 ≥70% 不加步數 */ void 'v1.2.3';   /* ★ v1.2.3(2026-11-25・老師「角色皮膚設計的人物骨架,走路和奔跑的姿勢是嚴重錯誤的,請重新以多角度檢視」)— pzFromSag 真 3D 走路/奔跑範本(D.POSE_SAG),正面選到時自動轉斜側 */ void 'v1.2.2';   /* ★ v1.2.2(2026-11-25・老師「美術設計師的投稿要求步數增加至500步」+平板轉螢幕後重新對齊畫布)— 門檻 ops 500(舊雲端 100 視為沒改)、轉向後延遲重新 fitStage */ void 'v1.2.1';   /* ★ v1.2.1(2026-11-23・老師「美術設計師的作品增加『不存檔直接退出』的選項」):回工作室的取名視窗多「🚪 不存檔直接退出」(discardExit) */ void 'v1.2.0';   /* ★ v1.2.0(2026-11-19 15:09・老師「美術設計師的面板適當縮小左右的工具介面面板尺寸和字體,讓中央畫圖區域加大些」「畫筆感壓、即時反應和流暢感再提升」)
+var VER = 'v1.2.8';   /* ★ v1.2.8(2026-11-25・老師「筆刷新增『液化』功能,同 procreate」「角色皮膚新增 參考(同荒島裝飾描圖功能),可以從現有所有角色中挑選出來」)— 🫠 液化 liqDab/liqStart(推移/扭轉/收縮/膨脹/還原);角色皮膚 🖼 參考分頁(D.REF_HEROES 140 位,srcUrl 'hero:') */ void 'v1.2.7';   /* ★ v1.2.7(2026-11-25・老師「右下角的圖層功能鍵太佔空間,高度縮小些。圖層可看的高度提高到三層」「繳交作品改成打字命名,最多10字。智慧金鑰審核增加不雅字詞判別」)— 圖層小視窗/選色區按鈕不吃全域 min-height、清單至少 3 列;TITLE_MAX 10、拿掉詞組下拉;審核查作品說明/希望獎勵文字、圖上文字逐塊+串接查 */ void 'v1.2.6';   /* ★ v1.2.6(2026-11-25・老師「角色皮膚和荒島裝飾要有吸色滴管在色環旁邊可以使用」「用橡皮擦擦掉的東西,要減去相對應的步數」)— 🧪 吸管 eyeToggle/eyePick(I 鍵);重疊格記筆畫編號,擦掉七成以上扣回步數(清/刪圖層也扣);像素筆拖曳補點 */ void 'v1.2.5';   /* ★ v1.2.5(2026-11-25・老師「皮膚和裝飾繳交追加『作品說明』20字到100字內」)— 作品資料加 #dsg-desc、存 mod.desc、老師台倉庫卡片顯示 */ void 'v1.2.4';   /* ★ v1.2.4(2026-11-25・老師「步數計算,在同一條線或色塊上用相同的筆刷或色彩重疊,只算一步」)— 重疊格 ovStroke:同筆刷或同色重疊 ≥70% 不加步數 */ void 'v1.2.3';   /* ★ v1.2.3(2026-11-25・老師「角色皮膚設計的人物骨架,走路和奔跑的姿勢是嚴重錯誤的,請重新以多角度檢視」)— pzFromSag 真 3D 走路/奔跑範本(D.POSE_SAG),正面選到時自動轉斜側 */ void 'v1.2.2';   /* ★ v1.2.2(2026-11-25・老師「美術設計師的投稿要求步數增加至500步」+平板轉螢幕後重新對齊畫布)— 門檻 ops 500(舊雲端 100 視為沒改)、轉向後延遲重新 fitStage */ void 'v1.2.1';   /* ★ v1.2.1(2026-11-23・老師「美術設計師的作品增加『不存檔直接退出』的選項」):回工作室的取名視窗多「🚪 不存檔直接退出」(discardExit) */ void 'v1.2.0';   /* ★ v1.2.0(2026-11-19 15:09・老師「美術設計師的面板適當縮小左右的工具介面面板尺寸和字體,讓中央畫圖區域加大些」「畫筆感壓、即時反應和流暢感再提升」)
    橫放左欄 28vw→21vw、右欄 22vw→18vw,面板字級約縮 15%;自由手繪接共用筆畫濾波器(防抖/筆壓平滑與軟硬/速度模擬筆壓/曲線內插,設定跟創藝工坊共用);↔ 翻轉檢視;
    每一筆下筆/收筆不再整串重算所有圖層的指紋(plsHash 快取)⇒ 舊 iPad 下筆不頓。選色器多了 🎡 配色(MGPK)。 */ void 'v1.1.4';   /* ★ v1.1.4(2026-11-18・老師「設計師成功投稿時,可預先勾選至多三種希望的獎勵」)— 繳交作品資料視窗多一區「🎁 希望獲得的獎勵」(D.WISH,最多 3 種,「其他」要自己寫);
    寫進 designSubmit.wish / wishTxt / em(信箱)。Firestore 規則還沒發布新版時,這三格會被擋 ⇒ 自動改放進 mod.wish/mod.wishTxt/mod.em 再交一次(作品照常繳交成功)。 */ void 'v1.1.3';/* ★ v1.1.3(2026-11-13・老師)①「每次復原,要減去操作數」:undo/redo 整份換回快照(含 ops 與指紋 oh)②「我的作品」⬇️ 下載圖片 PNG(透明/白色背景;recEd/dlWork/dlSave,iPad 走分享選單「儲存影像」)③ 13:58「設計師畫布也改成同樣的固定方式」:右欄選色器固定、圖層小視窗 .dsg-lwin 自己捲(＋▲▼🗑 在標題列 #dsg-lwh)、物件屬性在下;直式維持整欄捲 */ void 'v1.1.2';   /* ★ v1.1.2(2026-11-11 20:50・老師)PC 快捷鍵 Ctrl+Z 復原/Ctrl+Y 重做、按住空白鍵游標變手掌拖曳畫布(dsgKey/handSet) */ void 'v1.1.1';   /* ★ v1.1.1(2026-11-11・老師「PC 版手繪、點陣、像素畫出來的點(線)都比滑鼠游標低」)滑鼠/筆座標改用畫布在螢幕上的實際大小換算(stPt/vzOf),PC 放大後也精準 */ void 'v1.1.0';   /* ★ v1.1.0(2026-11-10・老師)圖層(可改名、⋯ 透明度/參照/阿爾法鎖定)、選色器+圖層常駐右欄、環形色相+三角形選色器、7 種畫筆(鉛筆/水彩/蠟筆/毛筆/圓頭麥克筆/平頭麥克筆/向量筆)、油漆桶(拖顏色+臨界值)、長按 2 秒變向量形狀、剪刀剪下移到指定圖層、變形、小提示與繳交標準收進「怎麼玩」、存檔時間標記、每月繳交 皮膚 1 件+荒島裝飾 1 件分開計算 */ void 'v1.0.7';   /* ★ v1.0.7(2026-11-09)有條件解鎖(創藝工坊全部關卡 ≥2★,unlockCheck/gate('stars'))+ 作品集/設定自動雙向雲端同步(MG_CSYNC;「☁ 立即同步」= 手動保險) */ void 'v1.0.6';   /* ★ v1.0.6(2026-11-08 18:07)雙指捏合縮放/挪動畫布(PC 滾輪、空白鍵/中鍵拖曳)、手機平板直式版面、◧ 面板收合 */ void 'v1.0.5';   /*★ v1.0.5(2026-11-08 13:06~13:24)動作骨架改成 3D 關節人偶:拖關節擺姿勢、拖空白處轉視角、範本當起手式;脊椎 3 節、頭部球體+十字線定位眼鼻(fc 臉方向點)、立體圓柱四肢與關節球;骨架功能鍵 復原/重做/向前/向後/拉近/拉遠;我的姿勢命名儲存(見 pzDraw/pzDragTo/pzNudge/pzCmd) */ void 'v1.0.4';   /* ★ v1.0.4(2026-11-08 11:27)作品名不可與已上架商品同名(nameAsk/繳交都查)、角色皮膚繳交存透明全身圖 th→上架複製成 designShopItems.img、老師台「🛒 上架商品」改價/上下架/分紅比例 */ void 'v1.0.3';   /* ★ v1.0.3(2026-11-08 11:03)手繪原創:皮膚只留畫筆+動作骨架、荒島裝飾素材收進參考圖片(描圖層不進作品)、預設畫筆、回工作室先命名、作品集可改名 */ void 'v1.0.2';   /* ★ v1.0.2(2026-11-08 10:51)操作次數算「增加、變色」,且改完要跟原本不一樣(見 endOp/opKey) */ void 'v1.0.1';   /* ★ v1.0.1(2026-11-08)操作次數只算「增加」的動作(見 endOp) */ void 'v1.0.0';
@@ -170,6 +170,7 @@ function wordHits(str){
 function srcUrl(src){
   var p = String(src).split(':'), k = p.slice(1).join(':');
   if(p[0] === 'av') return '../avatar_parts/' + encodeURIComponent(k) + '.png';
+  if(p[0] === 'hero') return '../' + encodeURIComponent(k);   /* ★ v1.2.8 大對抗角色立繪(repo 根目錄,同網域)— 角色皮膚「🖼 參考」 */
   if(p[0] === 'isl'){ try{ if(window.mgPicUrl) return window.mgPicUrl('island_' + k + '.png'); }catch(e){} return 'img/island_' + encodeURIComponent(k) + '.png'; }
   return '';
 }
@@ -1421,11 +1422,19 @@ function libPaint(){
     var gr = E.d.guide && E.d.guide.t === 'ref' && E.d.guide.on ? E.d.guide.src : '';
     h += '<div class="dsg-sec">🖼 參考圖片</div><div style="font-size:1.8vmin;opacity:.9;margin-bottom:.8vmin">' + esc(T({ c: '點一張圖,它會淡淡地放在畫布下面讓你看著畫。參考圖片不會放進作品裡,要自己畫出來喔!', p: '點選圖片即置於畫布下方作為描繪參考;參考圖片不會納入作品,請以手繪完成創作。' })) + '</div>';
     if(gr) h += '<div class="dsg-chips"><button data-gr="">🙈 收起參考圖片</button></div><div style="font-size:1.8vmin;display:flex;gap:1vmin;align-items:center;margin:.6vmin 0">👁 濃淡 <input type="range" min="10" max="80" value="' + Math.round(((E.d.guide && E.d.guide.a) || 0.35) * 100) + '" id="dsg-ga" style="flex:1"></div>';
+    if(E.r.kind === 'skin' && D.REF_HEROES){   /* ★ v1.2.8 角色皮膚:大對抗全部角色(依稀有度收合) */
+      for(j = 0; j < D.REF_HERO_GROUPS.length; j++){ a = D.REF_HEROES[D.REF_HERO_GROUPS[j].id] || [];
+        h += '<details class="dsg-ref"' + (E.refOpen === D.REF_HERO_GROUPS[j].id ? ' open' : '') + ' data-rg="' + D.REF_HERO_GROUPS[j].id + '"><summary>' + D.REF_HERO_GROUPS[j].e + ' ' + esc(D.REF_HERO_GROUPS[j].n) + ' <small style="opacity:.7">(' + a.length + ')</small></summary><div class="dsg-grid">';
+        if(E.refOpen === D.REF_HERO_GROUPS[j].id){ for(i = 0; i < a.length; i++) h += '<div class="dsg-it' + (gr === 'hero:' + a[i][1] ? ' on' : '') + '" data-gr="hero:' + esc(a[i][1]) + '"><img loading="lazy" src="' + esc(srcUrl('hero:' + a[i][1])) + '"><span>' + esc(a[i][0]) + '</span></div>'; }   /* 收合的組不載圖(省流量) */
+        h += '</div></details>'; }
+      h += '<button class="dsg-b go" data-tab2="paint" style="margin-top:1.2vmin">🖌 開始畫</button>';
+    } else {
     for(j = 0; j < D.REF_GROUPS.length; j++){ a = D[D.REF_GROUPS[j].lib] || [];
       h += '<details class="dsg-ref"' + (E.refOpen === D.REF_GROUPS[j].id ? ' open' : '') + ' data-rg="' + D.REF_GROUPS[j].id + '"><summary>' + D.REF_GROUPS[j].e + ' ' + esc(D.REF_GROUPS[j].n) + ' <small style="opacity:.7">(' + a.length + ')</small></summary><div class="dsg-grid">';
       for(i = 0; i < a.length; i++) h += '<div class="dsg-it' + (gr === 'isl:' + a[i][0] ? ' on' : '') + '" data-gr="isl:' + esc(a[i][0]) + '"><img loading="lazy" src="' + esc(srcUrl('isl:' + a[i][0])) + '"><span>' + esc(a[i][1] || '') + '</span></div>';
       h += '</div></details>'; }
     h += '<button class="dsg-b go" data-tab2="paint" style="margin-top:1.2vmin">🖌 開始畫</button>';
+    }   /* ★ v1.2.8 荒島裝飾的參考圖片組(原本的)結束 */
   } else if(E.tab === 'paint'){
     h += '<div class="dsg-pm"><button data-pm="free"' + (E.pm === 'free' ? ' class="on"' : '') + '><b>✍️</b><span class="lb">自由手繪</span></button><button data-pm="pixel"' + (E.pm === 'pixel' ? ' class="on"' : '') + '><b>👾</b><span class="lb">像素點陣</span></button><button data-pm="vector"' + (E.pm === 'vector' ? ' class="on"' : '') + '><b>🔷</b><span class="lb">向量繪圖</span></button></div>';
     h += pmPanel();
@@ -1444,6 +1453,8 @@ function libPaint(){
     if(t.id === 'dsg-pzn'){ E.pzName = t.value; return; }   /* 我的姿勢名稱(重畫面板不會不見) */
     if(sid){ if(!E._tintOp){ beginOp(); E._tintOp = 1; } E.d.tint[sid] = [+t.value, 1]; layersPaint(); }
     if(t.id === 'dsg-bw'){ E.brush.w = +t.value; $('dsg-bwv').textContent = t.value; }
+    if(t.id === 'dsg-lqr'){ if(!E.liq) E.liq = { m: 'push', r: 40, s: 50 }; E.liq.r = +t.value; $('dsg-lqrv').textContent = t.value; }   /* ★ v1.2.8 液化範圍 */
+    if(t.id === 'dsg-lqs'){ if(!E.liq) E.liq = { m: 'push', r: 40, s: 50 }; E.liq.s = +t.value; $('dsg-lqsv').textContent = t.value + '%'; }   /* ★ v1.2.8 液化強度 */
     if(t.id === 'dsg-bo'){ E.brush.op = (+t.value) / 100; $('dsg-bov').textContent = t.value + '%'; }   /* ★ v1.1.0 筆刷透明度 */
     if(t.id === 'dsg-sl'){ pkSet('sl', +t.value); $('dsg-slv').textContent = t.value; }   /* ★ v1.2.0 防抖 */
     if(t.id === 'dsg-spd'){ pkSet('spd', !!t.checked); }
@@ -1462,9 +1473,16 @@ function pmPanel(){
     h += '<div class="dsg-sec">✍️ <span class="lb">畫筆</span></div><div class="dsg-brs">';
     for(i = 0; i < BR_ORDER.length; i++){ k2 = BR_ORDER[i]; h += '<button data-br="' + k2 + '"' + (bt === k2 ? ' class="on"' : '') + '><b>' + BRUSH[k2].e + '</b><span class="lb">' + BRUSH[k2].n + '</span></button>'; }
     h += '<button data-br="eraser"' + (bt === 'eraser' ? ' class="on"' : '') + '><b>🧽</b><span class="lb">橡皮擦</span></button>';
+    if(PKon) h += '<button data-br="liquify"' + (bt === 'liquify' ? ' class="on"' : '') + '><b>🫠</b><span class="lb">液化</span></button>';   /* ★ v1.2.8 液化 */
     if(PKon) h += '<button data-br="bucket"' + (bt === 'bucket' ? ' class="on"' : '') + '><b>🪣</b><span class="lb">油漆桶</span></button><button data-br="lasso"' + (bt === 'lasso' ? ' class="on"' : '') + '><b>✂️</b><span class="lb">剪刀</span></button><button data-xf="1"><b>⤡</b><span class="lb">變形</span></button>';
     h += '</div>';
-    if(bt === 'bucket') h += '<label style="display:block;margin-top:1vmin">🪣 <span class="lb">臨界值(越大填越多)</span> <b id="dsg-tolv">' + E.tol + '%</b></label><input type="range" min="0" max="100" value="' + E.tol + '" id="dsg-tol" style="width:100%">';
+    if(bt === 'liquify'){ if(!E.liq) E.liq = { m: 'push', r: 40, s: 50 };   /* ★ v1.2.8 液化:模式、範圍、強度 */
+      h += '<div class="dsg-sec" style="margin-top:1vmin">🫠 <span class="lb">液化方式</span></div><div class="dsg-chips">';
+      for(i = 0; i < LIQ_MODES.length; i++) h += '<button data-liq="' + LIQ_MODES[i][0] + '"' + (E.liq.m === LIQ_MODES[i][0] ? ' class="on"' : '') + '>' + LIQ_MODES[i][1] + '<span class="lb"> ' + LIQ_MODES[i][2] + '</span></button>';
+      h += '</div><label style="display:block;margin-top:1vmin">⭕ <span class="lb">範圍</span> <b id="dsg-lqrv">' + E.liq.r + '</b></label><input type="range" min="8" max="150" value="' + E.liq.r + '" id="dsg-lqr" style="width:100%">';
+      h += '<label style="display:block;margin-top:.6vmin">💪 <span class="lb">強度</span> <b id="dsg-lqsv">' + E.liq.s + '%</b></label><input type="range" min="5" max="100" value="' + E.liq.s + '" id="dsg-lqs" style="width:100%">';
+      h += '<div class="dsg-tip">' + esc(T({ c: '🫠 液化會推動已經畫好的線條和顏色(不會加新顏色):推移=跟著筆拖;扭轉=按住轉圈;收縮=按住往中間吸;膨脹=按住往外鼓;還原=把液化過的地方慢慢變回原來的樣子。', p: '🫠 液化:推移隨筆拖動像素;扭轉、收縮、膨脹、還原按住持續作用。只影響目前圖層。' })) + '</div>'; }
+    else if(bt === 'bucket') h += '<label style="display:block;margin-top:1vmin">🪣 <span class="lb">臨界值(越大填越多)</span> <b id="dsg-tolv">' + E.tol + '%</b></label><input type="range" min="0" max="100" value="' + E.tol + '" id="dsg-tol" style="width:100%">';
     else if(bt !== 'lasso') h += '<label style="display:block;margin-top:1vmin">📏 <span class="lb">粗細</span> <b id="dsg-bwv">' + E.brush.w + '</b></label><input type="range" min="2" max="60" value="' + E.brush.w + '" id="dsg-bw" style="width:100%">';
     if(bt !== 'eraser' && bt !== 'lasso') h += '<label style="display:block;margin-top:.6vmin">🔅 <span class="lb">透明度</span> <b id="dsg-bov">' + Math.round((E.brush.op || 1) * 100) + '%</b></label><input type="range" min="10" max="100" value="' + Math.round((E.brush.op || 1) * 100) + '" id="dsg-bo" style="width:100%">';
     if(PKon && bt !== 'bucket' && bt !== 'lasso' && bt !== 'eraser'){ var pp = pkPref();   /* ★ v1.2.0 防抖、筆壓軟硬(跟創藝工坊共用);↔ 翻轉檢視 */
@@ -1491,6 +1509,8 @@ function pmPanel(){
 function libClick(ev){
   var E = S.ed, t = ev.target, a = null, v;
   /* ★ v1.2.0 筆壓軟硬、↔ 翻轉檢視(只改看的方式,不記復原、不算操作次數;鎖定的作品也能翻轉來看) */
+  var lq = t; while(lq && lq !== this && !(lq.getAttribute && lq.getAttribute('data-liq'))) lq = lq.parentNode;   /* ★ v1.2.8 液化方式 */
+  if(lq && lq !== this && lq.getAttribute){ sfx('sfx-tap', 0.25); if(!E.liq) E.liq = { m: 'push', r: 40, s: 50 }; E.liq.m = lq.getAttribute('data-liq'); libPaint(); return; }
   var tq = t; while(tq && tq !== this && !(tq.getAttribute && (tq.getAttribute('data-dpc') || tq.getAttribute('data-dflip')))) tq = tq.parentNode;
   if(tq && tq !== this && tq.getAttribute){ sfx('sfx-tap', 0.25); if(tq.getAttribute('data-dpc')){ if(locked()) return; pkSet('pc', tq.getAttribute('data-dpc')); libPaint(); return; }
     E.flip = !E.flip; fitStage(); libPaint(); toast(E.flip ? T({ c: '↔ 畫面翻過來看了(作品沒變),再按一次翻回來', p: '↔ 已翻轉檢視(不影響作品)' }) : '↔ 翻回來了'); return; }
@@ -1499,7 +1519,8 @@ function libClick(ev){
   var g0 = t, gk = null, gv = null;
   while(g0 && g0 !== this && !gk){ if(g0.getAttribute){ if(g0.hasAttribute('data-pz')){ gk = 'pz'; gv = g0.getAttribute('data-pz'); } else if(g0.hasAttribute('data-gp')){ gk = 'gp'; gv = g0.getAttribute('data-gp'); } else if(g0.hasAttribute('data-gr')){ gk = 'gr'; gv = g0.getAttribute('data-gr'); } else if(g0.hasAttribute('data-tab2')){ gk = 'tab'; gv = g0.getAttribute('data-tab2'); } else if(g0.tagName === 'SUMMARY'){ gk = 'sum'; gv = g0.parentNode.getAttribute('data-rg'); } } g0 = g0.parentNode; }
   if(gk === 'pz'){ pzCmd(gv); return; }   /* ★ v1.0.5 3D 骨架按鈕 */
-  if(gk === 'sum'){ setTimeout(function(){ var dd = $('dsg-lib') && $('dsg-lib').querySelector('details[data-rg="' + gv + '"]'); E.refOpen = dd && dd.open ? gv : (E.refOpen === gv ? null : E.refOpen); }, 0); return; }
+  if(gk === 'sum'){ setTimeout(function(){ var dd = $('dsg-lib') && $('dsg-lib').querySelector('details[data-rg="' + gv + '"]'), was = E.refOpen; E.refOpen = dd && dd.open ? gv : (E.refOpen === gv ? null : E.refOpen);
+      if(E.r.kind === 'skin' && E.refOpen !== was){ var lb = $('dsg-lib'), sy = lb ? lb.scrollTop : 0; libPaint(); if(lb) lb.scrollTop = sy; } }, 0); return; }   /* ★ v1.2.8 角色組打開才載圖 ⇒ 打開時重畫一次 */
   if(gk === 'tab'){ sfx('sfx-sel', 0.3); E.tab = gv; pmApply(); tabsPaint(); libPaint(); return; }
   if(gk === 'gp' || gk === 'gr'){ sfx('sfx-sel', 0.3); var oa = (E.d.guide && E.d.guide.a) || 0.35, og = E.d.guide && E.d.guide.t === 'pose' ? E.d.guide : null;
     if(gk === 'gp' && og) pzSnap();   /* ★ v1.0.5 換範本前記一步,按「↶ 骨架上一步」可以回來 */
@@ -1669,6 +1690,7 @@ function stageBind(){
     var q = g; g = null; if(!q) return;
     if(q.hold) q.hold.stop();
     if(q.m === 'paint') brushEnd(q);
+    else if(q.m === 'liq') liqEnd(q);   /* ★ v1.2.8 液化 */
     else if(q.m === 'qs'){ endOp(true); layersPaint(); propPaint(); }
     else if(q.m === 'px'){   /* 點格子/填色算增加,擦掉不算 */
       var pxw = E.d.W / E.px.n, ovP;   /* ★ v1.2.6 像素筆也登記格子;像素橡皮擦擦掉的筆畫扣回步數(油漆桶填色不追蹤) */
@@ -1688,6 +1710,7 @@ function stageBind(){
     if(q.m === 'paint'){ if(now() - q.t0 < 350){ brushAbort(q); E.undo.pop(); E.redo = q.rd || []; E._bk = null; return; } g = q; endG(); return; }   /* 畫了比較久的那一筆:照常收筆保留 */
     if(q.m === 'px'){ if(q.snap && now() - q.t0 < 350){ try{ ctx.putImageData(q.snap, 0, 0); }catch(x){} E.undo.pop(); E.redo = q.rd || []; E._bk = null; return; } g = q; endG(); return; }
     if(q.m === 'qs'){ restore(E.undo.pop()); E.redo = q.rd || []; E._bk = null; return; }
+    if(q.m === 'liq'){ if(now() - q.t0 < 350){ liqAbort(q); return; } g = q; endG(); return; }   /* ★ v1.2.8 液化:剛按下就變兩指縮放 ⇒ 整筆取消 */
     if(q.m === 'bk' || q.m === 'lasso' || q.m === 'fl'){ E.lassoPts = null; if(E.float) E.float.hot = null; fxDraw(); return; }
     if(q.m === 'vec'){ if(q.made){ restore(E.undo.pop()); E.redo = q.rd || []; E._bk = null; } return; }
     if(q.moved){ restore(E.undo.pop()); E.redo = q.rd || []; E._bk = null; } else selPaint();
@@ -1771,6 +1794,7 @@ function stageBind(){
       if(E.px.tool === 'fill'){ pxFill(p); g.done = true; } else pxDot(p); return; }
     if(E.tab === 'paint' && E.pm !== 'vector' && PK){ tl = E.brush.t;
       if(tl === 'bucket'){ e.preventDefault(); g = { m: 'bk', pid: e.pointerId, p: p }; return; }
+      if(tl === 'liquify'){ e.preventDefault(); liqStart(p, e); return; }   /* ★ v1.2.8 液化 */
       if(tl === 'lasso'){ e.preventDefault(); tolClose(); g = { m: 'lasso', pid: e.pointerId, pts: [p] }; E.lassoPts = g.pts; cap(e); return; } }
     if(E.tab === 'paint' && E.pm !== 'vector'){ cv = apc(); if(!cv) return; ctx = cv.getContext('2d'); if(!plVisOk()) return; e.preventDefault();
       if(E.brush.t === 'eraser' && lkOn()){ toast(T({ c: '🔒 這個圖層開了阿爾法鎖定,不能擦(在圖層 ⋯ 裡關掉)', p: '🔒 阿爾法鎖定中無法使用橡皮擦' })); return; }
@@ -1789,10 +1813,37 @@ function stageBind(){
     g = { m: 'mv', pid: e.pointerId, ox: it.x - p.x, oy: it.y - p.y, moved: false }; selPaint();
     try{ st.setPointerCapture(e.pointerId); }catch(x){}
   }
+  /* ★ v1.2.8 🫠 液化:按下 = 記下整層像素(復原/兩指取消用)與「還原」的基準;移動 = 推移;按住 = 扭轉/收縮/膨脹/還原持續作用 */
+  function liqStart(p, e){
+    var c0 = apc(), x0, W0, H0, q, base, lid;
+    if(!c0 || !plVisOk()) return;
+    if(lkOn()){ toast(T({ c: '🔒 這個圖層開了阿爾法鎖定,不能液化(在圖層 ⋯ 裡關掉)', p: '🔒 阿爾法鎖定中無法液化' })); return; }
+    cv = c0; ctx = x0 = cv.getContext('2d'); W0 = cv.width; H0 = cv.height; lid = E.al;
+    if(!E.liq) E.liq = { m: 'push', r: 40, s: 50 };
+    tolClose(); beginOp();
+    q = { m: 'liq', pid: e.pointerId, t0: now(), rd: E.redo.slice(), sc: W0 / E.d.W, last: p, cur: p, mode: E.liq.m, moved: false };
+    try{ q.img = x0.getImageData(0, 0, W0, H0); }catch(er){ E.undo.pop(); E._bk = null; return; }
+    q.snap = new Uint8ClampedArray(q.img.data);
+    if(!E.liqBase) E.liqBase = {};
+    base = E.liqBase[lid];
+    if(!base || base.after !== E.pls[lid] || base.w !== W0 || base.h !== H0) base = E.liqBase[lid] = { d: new Uint8ClampedArray(q.img.data), w: W0, h: H0, after: null };   /* 上一次液化之後圖層又被改過 ⇒ 「還原」的基準重新記 */
+    q.base = base; q.R = Math.max(4, (E.liq.r || 40) * q.sc); q.k = Math.max(0.05, Math.min(1, (E.liq.s || 50) / 100));
+    g = q; cap(e);
+    if(q.mode !== 'push'){ liqDo(q, p, 0, 0); q.tm = setInterval(function(){ if(g !== q){ clearInterval(q.tm); return; } liqDo(q, q.cur, 0, 0); }, 40); }
+  }
+  function liqDo(q, p, dx, dy){ var r = liqDab(q.img, p.x * q.sc, p.y * q.sc, q.R, q.mode, dx * q.sc, dy * q.sc, q.k, q.base.d); if(r){ ctx.putImageData(q.img, 0, 0, r.x, r.y, r.w, r.h); q.moved = true; } }
+  function liqMove(q, p){ var dx = p.x - q.last.x, dy = p.y - q.last.y, L = Math.sqrt(dx * dx + dy * dy), st0 = Math.max(1, q.R / q.sc / 4), n, i, ax, ay;
+    q.cur = p; if(q.mode !== 'push'){ q.last = p; return; } if(L < 0.5) return;
+    n = Math.min(60, Math.max(1, Math.ceil(L / st0)));
+    for(i = 1; i <= n; i++){ ax = q.last.x + dx * i / n; ay = q.last.y + dy * i / n; liqDo(q, { x: ax, y: ay }, dx / n * 1.6, dy / n * 1.6); }
+    q.last = p; }
+  function liqEnd(q){ clearInterval(q.tm); plSave(cv); if(q.base) q.base.after = E.pls[E.al]; endOp(true); }
+  function liqAbort(q){ clearInterval(q.tm); try{ q.img.data.set(q.snap); ctx.putImageData(q.img, 0, 0); }catch(x){} plSave(cv); E.undo.pop(); E.redo = q.rd || []; E._bk = null; }
   st.onpointermove = function(e){
     if(!g || e.pointerId !== g.pid) return;
     var p = pt(e), it, d;
     if(g.m === 'paint'){ brushMove(g, e); return; }
+    if(g.m === 'liq'){ liqMove(g, p); return; }
     if(g.m === 'qs'){ qsAdjust(g, p); return; }
     if(g.m === 'px'){ if(!g.done){   /* ★ v1.2.6 快速拖曳時,兩點之間每半格補一點(原本只畫取樣點,線會斷、橡皮擦會漏擦) */
         var lp = g.pts && g.pts.length ? g.pts[g.pts.length - 1] : p, cs0 = E.d.W / E.px.n, dl = Math.sqrt((p.x - lp.x) * (p.x - lp.x) + (p.y - lp.y) * (p.y - lp.y)), nn = Math.min(400, Math.max(1, Math.ceil(dl / (cs0 / 2)))), ii;
@@ -2103,7 +2154,7 @@ function eyePick(p, cx, cy){ var E = S.ed, cv = E && E.eyeCv, sc, x, y, dt, i, n
   toast('🧪 吸到 ' + hx); }
 function colorSet(hx, fromWheel, fin){
   var E = S.ed, c = $('dsg-cur'), x = $('dsg-curx'), it;
-  E.brush.c = hx; if(E.brush.t === 'eraser') E.brush.t = E.lastBr || 'mround'; if(E.px.tool === 'er') E.px.tool = 'pen';
+  E.brush.c = hx; if(E.brush.t === 'eraser' || E.brush.t === 'liquify'){ E.brush.t = E.lastBr || 'mround'; E.brush.er = false; } if(E.px.tool === 'er') E.px.tool = 'pen';   /* ★ v1.2.8 液化中選顏色 ⇒ 回到畫筆 */
   if(E.pm === 'vector') E.vec.fill = hx;
   if(c) c.style.background = hx; if(x) x.textContent = hx;
   if(!fromWheel && E.wheel) E.wheel.set(hx);
@@ -2129,6 +2180,37 @@ function pxFill(p){
     x.fillRect(Math.round(cur[0] * q.c), Math.round(cur[1] * q.c), Math.round((cur[0] + 1) * q.c) - Math.round(cur[0] * q.c), Math.round((cur[1] + 1) * q.c) - Math.round(cur[1] * q.c));
     st.push([cur[0] + 1, cur[1]], [cur[0] - 1, cur[1]], [cur[0], cur[1] + 1], [cur[0], cur[1] - 1]); }
   x.globalCompositeOperation = 'source-over';
+}
+
+/* ══ ★ v1.2.8(2026-11-25・老師「筆刷新增『液化』功能,同 procreate」)🫠 液化 ══
+   在目前圖層上推動像素(不加新顏色):推移(跟著筆拖)、順時針/逆時針扭轉、收縮(往中心吸)、膨脹(往外推)、還原(往按下前的樣子回去)。
+   做法:每一點(dab)只處理筆刷圓內的方框;先複製這一塊當來源,每個像素依模式算「從哪裡拿顏色」,用預乘透明度的雙線性取樣(邊緣不會發黑)。
+   扭轉/收縮/膨脹/還原 按住不動也會持續作用(每 40ms 一點);推移只在移動時作用,長距離拆成 R/4 一步。強度越大變形越快。 */
+var LIQ_MODES = [['push', '👉', '推移'], ['cw', '↻', '順時針扭轉'], ['ccw', '↺', '逆時針扭轉'], ['pinch', '🤏', '收縮'], ['bulge', '🎈', '膨脹'], ['rec', '↩', '還原']];
+function liqDab(img, cx, cy, R, mode, dx, dy, k, orig){
+  var W = img.width, H = img.height, d = img.data, x0 = Math.max(0, Math.floor(cx - R)), y0 = Math.max(0, Math.floor(cy - R)), x1 = Math.min(W - 1, Math.ceil(cx + R)), y1 = Math.min(H - 1, Math.ceil(cy + R));
+  if(x1 < x0 || y1 < y0) return null;
+  var bw = x1 - x0 + 1, bh = y1 - y0 + 1, src = new Uint8ClampedArray(bw * bh * 4), x, y, i, o, rx, ry, r2 = R * R, rr, f, sx, sy, ang, ca, sa, ix, iy, fx, fy, w00, w10, w01, w11, j00, j10, j01, j11, a, s0, s1, s2;
+  for(y = 0; y < bh; y++){ o = ((y0 + y) * W + x0) * 4; src.set(d.subarray(o, o + bw * 4), y * bw * 4); }
+  function S(px, py, c){ px -= x0; py -= y0; if(px < 0) px = 0; if(py < 0) py = 0; if(px > bw - 1) px = bw - 1; if(py > bh - 1) py = bh - 1; return src[(py * bw + px) * 4 + c]; }
+  for(y = y0; y <= y1; y++){ for(x = x0; x <= x1; x++){
+    rx = x + 0.5 - cx; ry = y + 0.5 - cy; rr = rx * rx + ry * ry; if(rr >= r2) continue;
+    f = 1 - rr / r2; f = f * f * k;   /* 中心最強、邊緣 0 */
+    i = (y * W + x) * 4;
+    if(mode === 'rec'){ if(!orig) continue; for(a = 0; a < 4; a++) d[i + a] = Math.round(d[i + a] + (orig[i + a] - d[i + a]) * Math.min(1, f * 1.6)); continue; }
+    if(mode === 'push'){ sx = x + 0.5 - dx * f; sy = y + 0.5 - dy * f; }
+    else if(mode === 'cw' || mode === 'ccw'){ ang = (mode === 'cw' ? -1 : 1) * f * 0.35; ca = Math.cos(ang); sa = Math.sin(ang); sx = cx + rx * ca - ry * sa; sy = cy + rx * sa + ry * ca; }
+    else if(mode === 'pinch'){ sx = cx + rx * (1 + f * 0.25); sy = cy + ry * (1 + f * 0.25); }
+    else { sx = cx + rx * (1 - f * 0.2); sy = cy + ry * (1 - f * 0.2); }
+    sx -= 0.5; sy -= 0.5; ix = Math.floor(sx); iy = Math.floor(sy); fx = sx - ix; fy = sy - iy;
+    w00 = (1 - fx) * (1 - fy); w10 = fx * (1 - fy); w01 = (1 - fx) * fy; w11 = fx * fy;
+    j00 = S(ix, iy, 3) * w00; j10 = S(ix + 1, iy, 3) * w10; j01 = S(ix, iy + 1, 3) * w01; j11 = S(ix + 1, iy + 1, 3) * w11; a = j00 + j10 + j01 + j11;
+    if(a < 0.5){ d[i] = d[i + 1] = d[i + 2] = d[i + 3] = 0; continue; }
+    s0 = S(ix, iy, 0) * j00 + S(ix + 1, iy, 0) * j10 + S(ix, iy + 1, 0) * j01 + S(ix + 1, iy + 1, 0) * j11;
+    s1 = S(ix, iy, 1) * j00 + S(ix + 1, iy, 1) * j10 + S(ix, iy + 1, 1) * j01 + S(ix + 1, iy + 1, 1) * j11;
+    s2 = S(ix, iy, 2) * j00 + S(ix + 1, iy, 2) * j10 + S(ix, iy + 1, 2) * j01 + S(ix + 1, iy + 1, 2) * j11;
+    d[i] = Math.round(s0 / a); d[i + 1] = Math.round(s1 / a); d[i + 2] = Math.round(s2 / a); d[i + 3] = Math.round(a); } }
+  return { x: x0, y: y0, w: bw, h: bh };
 }
 
 /* ══ 合成整張圖(匯出/縮圖/品質檢查/審核共用) ══ */
