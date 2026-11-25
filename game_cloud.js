@@ -9225,7 +9225,8 @@
     'summon_ticket_ur_pick':1,'summon_ticket_sr_pick':1,
     'summon_ticket_treasure':1,'summon_ticket_treasure_pick':1,
     'pet_summon_ticket':1,  /* ★ v4.0.0 隨機寵物召喚卷(使用紀錄供 GM 稽核) */
-    'summon_ticket_ur_swap':1   /* ★ v5.246.0 UR 英雄替換卷(取得/使用寫帳本,GM「🔁 UR轉換紀錄」讀) */
+    'summon_ticket_ur_swap':1,  /* ★ v5.246.0 UR 英雄替換卷(取得/使用寫帳本,GM「🔁 UR轉換紀錄」讀) */
+    'summon_ticket_ssr_swap':1, 'summon_ticket_sr_swap':1   /* ★ v5.454.0 SSR/SR 英雄替換券(超商每月免費 2 張;取得/使用寫帳本) */
   };
   const _LXPS_TL_OPT = {
     keyFn: function(b){ return (b.at || 0) + '_' + (b.ev || '') + '_' + (b.item || '') + '_' + (b.n || 0); },
@@ -14360,14 +14361,26 @@
     if(!fromName || !toName || fromName === toName) return { ok:false, reason:'bad_args' };
     // ★ v5.232.0 — 縱深防禦:換出/換入兩端都必須是 UR(名單讀 UR 唯一權威 ⇒ 新增的究極神兵/天照大神/月讀大神自動可換)。
     //   面板本來就只列 UR,這一道是防「日後有人從別處呼叫本函式」把非 UR 換成 UR(= 憑空多出 UR)。
-    try{
-      const _isURn = function(n){
-        try{ if(typeof window._lxpsIsUR === 'function') return !!window._lxpsIsUR(n); }catch(_){}
-        try{ return Array.isArray(window._LXPS_RARITY_UR) && window._LXPS_RARITY_UR.indexOf(n) >= 0; }catch(_){ return false; }
-      };
-      if(!_isURn(fromName) || !_isURn(toName)) return { ok:false, reason:'not_ur' };
-    }catch(_eUrChk){ return { ok:false, reason:'not_ur' }; }
     opts = opts || {};
+    // ★ v5.454.0(老師 2026-11-25「不可思議超商新增 SSR 替換券和 SR 替換券」)— opts.rarity:'UR'(預設,行為與 v5.232.0 完全相同)/'SSR'/'SR'。
+    //   SSR/SR 的縱深防禦:兩端都必須在「該稀有度自選召喚卷本來就選得到的名單」(window._summonTicketPickUniverse,game_adv.js 暴露)裡
+    //   ⇒ 主角、BOSS 同名英雄、hero_db 沒資料的空殼英雄、非 SSR/SR 的英雄一律不能被換進換出(防日後有人從別處呼叫本函式憑空多出英雄)。
+    //   換入帳本 source:UR 維持 'ticket_ur_swap'(GM「🔁 UR轉換紀錄」讀這個字串);SSR/SR 用 'ticket_ssr_swap' / 'ticket_sr_swap'。
+    const _swapRar = (opts.rarity === 'SSR' || opts.rarity === 'SR') ? opts.rarity : 'UR';
+    const _swapSrc = (_swapRar === 'UR') ? 'ticket_ur_swap' : ('ticket_' + _swapRar.toLowerCase() + '_swap');
+    const _swapName = (_swapRar === 'UR') ? 'UR 英雄替換卷' : (_swapRar + ' 英雄替換券');
+    try{
+      if(_swapRar === 'UR'){
+        const _isURn = function(n){
+          try{ if(typeof window._lxpsIsUR === 'function') return !!window._lxpsIsUR(n); }catch(_){}
+          try{ return Array.isArray(window._LXPS_RARITY_UR) && window._LXPS_RARITY_UR.indexOf(n) >= 0; }catch(_){ return false; }
+        };
+        if(!_isURn(fromName) || !_isURn(toName)) return { ok:false, reason:'not_ur' };
+      }else{
+        const _uni = (typeof window._summonTicketPickUniverse === 'function') ? (window._summonTicketPickUniverse(_swapRar) || []) : [];
+        if(_uni.indexOf(fromName) < 0 || _uni.indexOf(toName) < 0) return { ok:false, reason:'not_' + _swapRar.toLowerCase() };
+      }
+    }catch(_eUrChk){ return { ok:false, reason:'not_ur' }; }
     const _now = Date.now();
     const _uid12 = String(uid).slice(0, 12);
     const _gds = (typeof getDocFromServer === 'function') ? getDocFromServer : getDoc;
@@ -14460,10 +14473,10 @@
         _hist.push({
           name: fromName, at: _now, source: 'admin_delete', uid: _uid12,
           urSwap: true, swapTo: toName, slot: _t.label,
-          reason: opts.reason || '玩家使用「UR 英雄替換卷」把 ' + fromName + ' 換成 ' + toName + '(v5.227.0)'
+          reason: opts.reason || '玩家使用「' + _swapName + '」把 ' + fromName + ' 換成 ' + toName + '(' + (_swapRar === 'UR' ? 'v5.227.0' : 'v5.454.0') + ')'
         });
         _hist.push({
-          name: toName, at: _now + 1, source: 'ticket_ur_swap', uid: _uid12,
+          name: toName, at: _now + 1, source: _swapSrc, uid: _uid12,
           urSwap: true, swapFrom: fromName, slot: _t.label
         });
         if(_hist.length > 300) _hist = _hist.slice(-300);
@@ -14472,7 +14485,7 @@
         try{
           if(typeof window._lxpsPatchOwnLedger === 'function'){
             window._lxpsPatchOwnLedger(_d, _patch, [fromName], _now, 'admin_delete', uid, 'rem');
-            window._lxpsPatchOwnLedger(Object.assign({}, _d, { heroOwnLedger_s: _patch.heroOwnLedger_s || _d.heroOwnLedger_s }), _patch, [toName], _now + 1, 'ticket_ur_swap', uid, 'acq');
+            window._lxpsPatchOwnLedger(Object.assign({}, _d, { heroOwnLedger_s: _patch.heroOwnLedger_s || _d.heroOwnLedger_s }), _patch, [toName], _now + 1, _swapSrc, uid, 'acq');
           }
         }catch(_eOL){}
 
@@ -17813,7 +17826,8 @@
     'summon_ticket_ssr':'SSR 召喚卷', 'summon_ticket_sr':'SR 召喚卷',
     'summon_ticket_ssr_pick':'SSR 自選卷', 'summon_ticket_ur_pick':'UR 自選卷', 'summon_ticket_sr_pick':'SR 自選卷',
     'summon_ticket_treasure':'至寶召喚卷', 'summon_ticket_treasure_pick':'至寶自選卷',
-    'pet_summon_ticket':'寵物召喚卷', 'summon_ticket_ur_swap':'UR 英雄替換卷'
+    'pet_summon_ticket':'寵物召喚卷', 'summon_ticket_ur_swap':'UR 英雄替換卷',
+    'summon_ticket_ssr_swap':'SSR 英雄替換券', 'summon_ticket_sr_swap':'SR 英雄替換券'   /* ★ v5.454.0 */
   };
   window._fbRescueVerifyItems = async function(uid, req, opt){
     if(!uid) throw new Error('缺少 uid');
@@ -19175,7 +19189,9 @@
         // 召喚卷逐張帳本(_TICKET_INST_IDS)沒收的券(UR 英雄替換卷)→ 直接報主檔背包張數(字串版優先)
         var _bg = {};
         try{ _bg = (typeof _pd.playerBackpack_s === 'string') ? (JSON.parse(_pd.playerBackpack_s) || {}) : (_pd.playerBackpack || {}); }catch(_){ _bg = _pd.playerBackpack || {}; }
-        _extraBag = { summon_ticket_ur_swap: (parseInt(_bg.summon_ticket_ur_swap, 10) || 0) };
+        _extraBag = { summon_ticket_ur_swap: (parseInt(_bg.summon_ticket_ur_swap, 10) || 0),
+                      summon_ticket_ssr_swap: (parseInt(_bg.summon_ticket_ssr_swap, 10) || 0),    /* ★ v5.454.0 */
+                      summon_ticket_sr_swap: (parseInt(_bg.summon_ticket_sr_swap, 10) || 0) };
       }
     }catch(_){}
     // ① 課堂獎勵收件箱

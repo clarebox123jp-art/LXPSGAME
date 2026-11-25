@@ -32746,6 +32746,10 @@ const BACKPACK_ITEM_DEF = {
   /* ★ v5.227.0 — UR 英雄替換卷。type:'use' ⇒ 背包會給一顆「使用」鈕，走 _useBackpackItem 的分流。
      ⚠ 刻意**不給 sellPrice**：這是每月免費限量的功能券，可賣出等於開一條「每月免費換知識幣」的路。 */
   'summon_ticket_ur_swap': { name:'UR 英雄替換卷', icon:'🔁', desc:'挑選一位你已經擁有的 UR 英雄，把他替換成任何一位你還沒有的 UR 英雄。等級、經驗、素質投資、技能等級、爆發等級、天賦等級全部轉移；身上的至寶、寵物、裝備會先卸下來(東西都還在，只是不跟著過去)。', type:'use', useLabel:'選擇要替換的 UR' },
+  /* ★ v5.454.0(老師 2026-11-25「不可思議超商新增 SSR 替換券和 SR 替換券,每個月可以免費購買 2 張」)——
+     與 UR 英雄替換卷同一套流程(window._openURSwapModal(稀有度))。同樣刻意不給 sellPrice(每月免費的功能券,可賣出 = 每月免費換知識幣)。 */
+  'summon_ticket_ssr_swap': { name:'SSR 英雄替換券', icon:'🔁', desc:'挑選一位你已經擁有的 SSR 英雄，把他替換成任何一位你還沒有、而且「SSR 自選召喚卷」本來就選得到的 SSR 英雄。等級、經驗、素質投資、技能等級、爆發等級、天賦等級全部轉移；身上的至寶、寵物、裝備會先卸下來(東西都還在，只是不跟著過去)。', type:'use', useLabel:'選擇要替換的 SSR' },
+  'summon_ticket_sr_swap':  { name:'SR 英雄替換券',  icon:'🔁', desc:'挑選一位你已經擁有的 SR 英雄，把他替換成任何一位你還沒有、而且「SR 自選召喚卷」本來就選得到的 SR 英雄。等級、經驗、素質投資、技能等級、爆發等級、天賦等級全部轉移；身上的至寶、寵物、裝備會先卸下來(東西都還在，只是不跟著過去)。', type:'use', useLabel:'選擇要替換的 SR' },
   // ★ v3.37.0 寵物馴養 — 三種寵物飼料(戰鬥中攜帶「未馴養寵物」時按 🐾 馴養按鈕使用;type:sell_only 防被「使用」流程誤觸,不入 SHOP_SELL_ITEMS 防一鍵賣出誤殺)
   'pet_food_basic': { name:'便宜的寵物飼料', icon:'🥫', desc:'普通的寵物飼料,香味樸實。冒險戰鬥中攜帶「未馴養」的寵物時,按下 🐾 馴養按鈕餵食,有機會讓寵物願意永遠跟隨你!(基礎成功率 30%,會依寵物稀有度調整)', type:'sell_only', sellPrice:150 },
   // ★ v4.0.0 — 隨機寵物召喚卷(老師 GM 獎勵發放;寵物圖鑑上方使用)
@@ -32983,6 +32987,15 @@ const SHOP_PRODUCTS = [
   { id:'summon_ticket_ur_swap', name:'UR 英雄替換卷', icon:'🔁',
     desc:'蘊含命運改寫之力的捲軸。使用後可以挑選一位你已經擁有的 UR 英雄，把他替換成任何一位你還沒有的 UR 英雄。等級、經驗、素質投資、技能等級、爆發等級、天賦等級全部原封轉移過去；身上的至寶、寵物、裝備會先卸下來(東西都還在，只是不跟著過去)。每個月 1 號更新，免費限領 1 張。',
     price:0, stock:'每月1張(免費)', monthlyLimit:1, pinTop:true },
+  /* ★ v5.454.0(老師 2026-11-25「不可思議超商新增 SSR 替換券和 SR 替換券,每個月可以免費購買 2 張」)——
+     完全比照上面的 UR 英雄替換卷:price:0 ＝ 免費、真正的限購由 monthlyLimit 控制(每月 1 號台灣 08:00 重置)、
+     id 含 'summon' ⇒ 自動落在「召喚類」。⚠ 理解為「SSR、SR 各自每月 2 張」(兩種券各有自己的每月額度)。 */
+  { id:'summon_ticket_ssr_swap', name:'SSR 英雄替換券', icon:'🔁',
+    desc:'蘊含命運改寫之力的捲軸。使用後可以挑選一位你已經擁有的 SSR 英雄，把他替換成任何一位你還沒有的 SSR 英雄(和「SSR 自選召喚卷」選得到的範圍相同)。等級、經驗、素質投資、技能等級、爆發等級、天賦等級全部原封轉移過去；身上的至寶、寵物、裝備會先卸下來(東西都還在，只是不跟著過去)。每個月 1 號更新，免費限領 2 張。',
+    price:0, stock:'每月2張(免費)', monthlyLimit:2, pinTop:true },
+  { id:'summon_ticket_sr_swap', name:'SR 英雄替換券', icon:'🔁',
+    desc:'蘊含命運改寫之力的捲軸。使用後可以挑選一位你已經擁有的 SR 英雄，把他替換成任何一位你還沒有的 SR 英雄(和「SR 自選召喚卷」選得到的範圍相同)。等級、經驗、素質投資、技能等級、爆發等級、天賦等級全部原封轉移過去；身上的至寶、寵物、裝備會先卸下來(東西都還在，只是不跟著過去)。每個月 1 號更新，免費限領 2 張。',
+    price:0, stock:'每月2張(免費)', monthlyLimit:2, pinTop:true },
   // ★ v3.13.83 — 極限膠囊 ×4(每週限購各 1 顆,每顆 5 萬):突破素質投資上限
   //   只能用在「自由投資已達上限」的能力(HP→50 / 攻擊·特技·速度→30),每能力最多再 +20。
   //   在英雄詳細頁的「素質投資」處輸入要吃幾顆。
@@ -43457,12 +43470,35 @@ try{
  *   跨英雄硬搬很容易生出「兩件同部位」這種壞資料;卸下則永遠是合法狀態,學生再自己裝回去即可。
  * ══════════════════════════════════════════════════════════════════════════════ */
 window._URSWAP_TICKET_ID = 'summon_ticket_ur_swap';
-/* 我擁有的 UR(可當來源) */
-window._lxpsURSwapSources = function(){
+/* ★★ v5.454.0(老師 2026-11-25「不可思議超商新增 SSR 替換券和 SR 替換券,每個月可以免費購買 2 張」)★★
+ *   SSR/SR 替換券與 UR 替換卷共用整套流程(面板、雲端搬家 _fbURSwapApply、本機同步、開機對帳),只靠這張設定表切換稀有度:
+ *     ・UR  :來源/目標名單、判定、文字全部維持 v5.227.0 原樣(下面 UR 分支原封不動)。
+ *     ・SSR/SR:來源 = 我擁有的、且在「該稀有度自選召喚卷本來就選得到的名單」(_summonTicketPickUniverse)裡的英雄;
+ *              目標 = 該自選卷現在選得到、而我還沒有的英雄(_summonTicketUnrecorded(稀有度, true))。
+ *     ⇒ 主角(R/覺醒 SSR 動態稀有度、不在任何池)、BOSS 同名英雄、hero_db 沒資料的空殼英雄都自然進不來,
+ *       日後新增的 SSR/SR 只要進自選池,替換券就自動涵蓋(與 UR 的「數量隨未來新增而變動」同一個精神)。
+ *   ⚠ 換入帳本 source:UR 維持 'ticket_ur_swap'(GM「🔁 UR轉換紀錄」讀這個字串,不可動);SSR/SR 各用 'ticket_ssr_swap' / 'ticket_sr_swap'。
+ *   ⚠ 命星:被換掉英雄身上的命星退回成「同稀有度自選命星」(UR 的 13甲 裁定,SSR/SR 比照辦理)。 */
+window._SWAP_CFG = {
+  UR:  { rar:'UR',  tid:'summon_ticket_ur_swap',  name:'UR 英雄替換卷', unit:'卷', src:'ticket_ur_swap',  col:'#b070ff', bg:'rgba(180,90,255,0.12)', sub:'#c9b6ff', head:'#e0c8ff', border:'#b070ff', card1:'rgba(40,18,70,0.98)',  card2:'rgba(16,8,32,0.98)' },
+  SSR: { rar:'SSR', tid:'summon_ticket_ssr_swap', name:'SSR 英雄替換券', unit:'券', src:'ticket_ssr_swap', col:'#ffc23d', bg:'rgba(255,194,61,0.12)', sub:'#ffe3a0', head:'#ffe9b0', border:'#ffc23d', card1:'rgba(60,40,8,0.98)',   card2:'rgba(28,18,4,0.98)' },
+  SR:  { rar:'SR',  tid:'summon_ticket_sr_swap',  name:'SR 英雄替換券',  unit:'券', src:'ticket_sr_swap',  col:'#5cb8ff', bg:'rgba(92,184,255,0.12)', sub:'#b8dcff', head:'#d4ecff', border:'#5cb8ff', card1:'rgba(10,36,66,0.98)',  card2:'rgba(4,16,32,0.98)' }
+};
+window._swapCfg = function(rar){ return window._SWAP_CFG[rar] || window._SWAP_CFG.UR; };
+var _swapCurRar = 'UR';   /* 目前面板在處理哪個稀有度(面板同一時間只會開一個) */
+function _swapCur(){ return window._swapCfg(_swapCurRar); }
+/* 我擁有的某稀有度英雄(可當來源) */
+window._lxpsURSwapSources = function(rar){
+  rar = rar || 'UR';
   var _out = [];
   try{
     var _all = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
-    (_all || []).forEach(function(n){ if(n && window._lxpsIsUR(n) && _out.indexOf(n) < 0) _out.push(n); });
+    if(rar === 'UR'){
+      (_all || []).forEach(function(n){ if(n && window._lxpsIsUR(n) && _out.indexOf(n) < 0) _out.push(n); });
+    }else{
+      var _uni = (typeof window._summonTicketPickUniverse === 'function') ? (window._summonTicketPickUniverse(rar) || []) : [];
+      (_all || []).forEach(function(n){ if(n && _uni.indexOf(n) >= 0 && _out.indexOf(n) < 0) _out.push(n); });
+    }
   }catch(_){}
   return _out;
 };
@@ -43471,8 +43507,17 @@ window._lxpsURSwapSources = function(){
      完全符合老師說的「當前所有 UR(數量隨著未來新增而變動)」,不必再改任何程式。
    ⚠ 另外濾掉 `_lxpsHeroDataReady` 為 false 的(index 有名字、hero_db 還沒上傳資料的),
      否則會換到一隻打開圖鑑會出事的空殼英雄(v5.197.0 白頻事故的同一個成因)。 */
-window._lxpsURSwapTargets = function(exclude){
+window._lxpsURSwapTargets = function(exclude, rar){
   var _out = [];
+  rar = rar || 'UR';
+  if(rar !== 'UR'){
+    /* ★ v5.454.0 SSR/SR:目標 = 該稀有度「自選召喚卷」現在選得到、我還沒有的英雄(已濾擁有、資料完備) */
+    try{
+      var _pk = (typeof _summonTicketUnrecorded === 'function') ? (_summonTicketUnrecorded(rar, true) || []) : [];
+      _pk.forEach(function(n){ if(n && n !== exclude && _out.indexOf(n) < 0) _out.push(n); });
+    }catch(_){}
+    return _out;
+  }
   try{
     var _owned = {}, _all = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
     (_all || []).forEach(function(n){ _owned[n] = 1; });
@@ -43501,12 +43546,13 @@ function _urSwapCardHtml(name, kind){
   var _sub = (kind === 'from')
     ? ('Lv' + _lv + ' · 這些養成會一起搬過去')
     : '還沒收錄';
+  var _cf = _swapCur();   /* ★ v5.454.0 依稀有度換色(UR 紫維持原樣) */
   return '<button type="button" data-urswap="' + kind + '" data-name="' + String(name).replace(/"/g, '&quot;') + '"'
     + ' style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;margin-bottom:8px;border-radius:12px;'
-    + 'background:rgba(180,90,255,0.12);border:2px solid #b070ff;color:#f0e6ff;cursor:pointer;text-align:left;font-family:inherit;">'
+    + 'background:' + _cf.bg + ';border:2px solid ' + _cf.border + ';color:#f0e6ff;cursor:pointer;text-align:left;font-family:inherit;">'
     + '<span style="font-size:28px;flex-shrink:0;">' + _av + '</span>'
     + '<span style="flex:1;min-width:0;"><span style="display:block;font-size:18px;font-weight:900;">' + name + '</span>'
-    + '<span style="display:block;font-size:13px;color:#c9b6ff;">' + _sub + '</span></span>'
+    + '<span style="display:block;font-size:13px;color:' + _cf.sub + ';">' + _sub + '</span></span>'
     + '<span style="font-size:15px;color:#ffd166;font-weight:800;">選這位 ▶</span>'
     + '</button>';
 }
@@ -43518,9 +43564,10 @@ function _urSwapShell(title, bodyHtml, footHtml){
      不這樣寫在手機橫式會把底部按鈕推出畫面外、而且捲不到。 */
   w.style.cssText = 'position:fixed;inset:0;z-index:1250;display:flex;align-items:safe center;justify-content:center;'
     + 'background:rgba(8,3,24,0.93);padding:18px;font-family:"M PLUS Rounded 1c","Noto Sans TC",sans-serif;';
+  var _cf = _swapCur();   /* ★ v5.454.0 依稀有度換色(UR 紫維持原樣) */
   w.innerHTML = '<div class="lxps-ovfit-card" style="width:min(94vw,560px);max-height:min(92dvh,92vh);overflow-y:auto;box-sizing:border-box;'
-    + 'background:linear-gradient(160deg,rgba(40,18,70,0.98),rgba(16,8,32,0.98));border:2px solid #b070ff;border-radius:18px;padding:18px;">'
-    + '<div style="font-size:22px;font-weight:900;color:#e0c8ff;text-align:center;margin-bottom:6px;">🔁 ' + title + '</div>'
+    + 'background:linear-gradient(160deg,' + _cf.card1 + ',' + _cf.card2 + ');border:2px solid ' + _cf.border + ';border-radius:18px;padding:18px;">'
+    + '<div style="font-size:22px;font-weight:900;color:' + _cf.head + ';text-align:center;margin-bottom:6px;">🔁 ' + title + '</div>'
     + bodyHtml
     + (footHtml || '')
     + '</div>';
@@ -43528,29 +43575,32 @@ function _urSwapShell(title, bodyHtml, footHtml){
   return w;
 }
 function _urSwapClose(){ try{ var m = document.getElementById('_ur-swap-modal'); if(m) m.remove(); }catch(_){} }
-window._openURSwapModal = function(){
+window._openURSwapModal = function(rar){
   try{
-    var _cnt = (typeof backpackGet === 'function') ? backpackGet(window._URSWAP_TICKET_ID) : 0;
-    if(_cnt <= 0){ _showInGameToast('你沒有 UR 英雄替換卷了', '#ff8844', 2200); return; }
-    var _src = window._lxpsURSwapSources();
+    /* ★ v5.454.0 rar:'UR'(預設,維持舊行為)/'SSR'/'SR'。沒傳或傳錯一律當 UR。 */
+    _swapCurRar = (rar === 'SSR' || rar === 'SR') ? rar : 'UR';
+    var _cf = _swapCur(), _R = _cf.rar, _U = _cf.unit;
+    var _cnt = (typeof backpackGet === 'function') ? backpackGet(_cf.tid) : 0;
+    if(_cnt <= 0){ _showInGameToast('你沒有 ' + _cf.name + '了', '#ff8844', 2200); return; }
+    var _src = window._lxpsURSwapSources(_R);
     if(!_src.length){
-      _showInGameToast('你目前沒有任何 UR 英雄,沒有東西可以替換(替換卷還在背包裡)', '#ffaa44', 4200);
+      _showInGameToast('你目前沒有任何可替換的 ' + _R + ' 英雄,沒有東西可以替換(替換' + _U + '還在背包裡)', '#ffaa44', 4200);
       return;
     }
-    var _tgtAll = window._lxpsURSwapTargets();
+    var _tgtAll = window._lxpsURSwapTargets(null, _R);
     if(!_tgtAll.length){
       /* ⚠ 不扣券:全收齊是好事,不該因此罰學生一張券 */
-      _showInGameToast('🎉 你已經收齊目前所有的 UR 英雄了,沒有可以替換的對象。\n替換卷還在背包裡,等老師之後新增 UR 再用!', '#66ddaa', 6000);
+      _showInGameToast('🎉 你已經收齊目前所有的 ' + _R + ' 英雄了,沒有可以替換的對象。\n替換' + _U + '還在背包裡,等老師之後新增 ' + _R + ' 再用!', '#66ddaa', 6000);
       return;
     }
-    var h = '<div style="font-size:15px;color:#c9b6ff;text-align:center;line-height:1.7;margin-bottom:12px;">'
-      + '先選一位<b style="color:#ffd166;">要換掉</b>的 UR 英雄。<br>'
+    var h = '<div style="font-size:15px;color:' + _cf.sub + ';text-align:center;line-height:1.7;margin-bottom:12px;">'
+      + '先選一位<b style="color:#ffd166;">要換掉</b>的 ' + _R + ' 英雄。<br>'
       + '他的等級、經驗、素質投資、技能等級、爆發等級、天賦等級<b style="color:#ffd166;">會全部搬到新英雄身上</b>;<br>'
       + '身上的至寶、寵物、裝備會先卸下來(東西都還在,只是不跟著過去)。</div>';
     _src.forEach(function(n){ h += _urSwapCardHtml(n, 'from'); });
     var f = '<div style="text-align:center;margin-top:10px;"><button type="button" data-urswap="cancel"'
       + ' style="font-size:17px;padding:10px 26px;border-radius:14px;border:2px solid #888;background:rgba(255,255,255,0.06);color:#ddd;font-weight:800;">取消</button></div>';
-    var w = _urSwapShell('UR 英雄替換卷 — 第 1 步', h, f);
+    var w = _urSwapShell(_cf.name + ' — 第 1 步', h, f);
     w.onclick = function(ev){
       var t = ev.target;
       while(t && t !== w && !(t.getAttribute && t.getAttribute('data-urswap'))) t = t.parentNode;
@@ -43559,33 +43609,35 @@ window._openURSwapModal = function(){
       if(act === 'cancel'){ try{ playSfx('sfx-cancel', 0.5); }catch(_){} _urSwapClose(); return; }
       if(act === 'from'){ try{ playSfx('sfx-sel', 0.4); }catch(_){} _urSwapStep2(t.getAttribute('data-name')); }
     };
-  }catch(e){ console.warn('[UR 替換卷] 開啟面板例外', e); try{ _showInGameToast('替換面板打不開,請告訴老師', '#ff8844', 3000); }catch(_){} }
+  }catch(e){ console.warn('[替換券] 開啟面板例外', e); try{ _showInGameToast('替換面板打不開,請告訴老師', '#ff8844', 3000); }catch(_){} }
 };
 function _urSwapStep2(fromName){
-  var _tgt = window._lxpsURSwapTargets(fromName);
+  var _cf = _swapCur(), _R = _cf.rar, _U = _cf.unit;
+  var _tgt = window._lxpsURSwapTargets(fromName, _R);
   if(!_tgt.length){
-    _showInGameToast('沒有可以換成的 UR 英雄(其餘 UR 你都已經有了),替換卷還在背包裡', '#ffaa44', 5000);
+    _showInGameToast('沒有可以換成的 ' + _R + ' 英雄(其餘 ' + _R + ' 你都已經有了),替換' + _U + '還在背包裡', '#ffaa44', 5000);
     _urSwapClose(); return;
   }
-  var h = '<div style="font-size:15px;color:#c9b6ff;text-align:center;line-height:1.7;margin-bottom:12px;">'
+  var h = '<div style="font-size:15px;color:' + _cf.sub + ';text-align:center;line-height:1.7;margin-bottom:12px;">'
     + '要把 <b style="color:#ffd166;">' + fromName + '</b> 換成哪一位?<br>'
-    + '<span style="font-size:13px;opacity:.85;">(只會列出你<b>還沒有</b>的 UR,換成已經有的等於白白少一隻)</span></div>';
+    + '<span style="font-size:13px;opacity:.85;">(只會列出你<b>還沒有</b>的 ' + _R + ',換成已經有的等於白白少一隻)</span></div>';
   _tgt.forEach(function(n){ h += _urSwapCardHtml(n, 'to'); });
   var f = '<div style="text-align:center;margin-top:10px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">'
     + '<button type="button" data-urswap="back" style="font-size:17px;padding:10px 24px;border-radius:14px;border:2px solid #b070ff;background:rgba(255,255,255,0.06);color:#e0c8ff;font-weight:800;">◀ 上一步</button>'
     + '<button type="button" data-urswap="cancel" style="font-size:17px;padding:10px 24px;border-radius:14px;border:2px solid #888;background:rgba(255,255,255,0.06);color:#ddd;font-weight:800;">取消</button></div>';
-  var w = _urSwapShell('UR 英雄替換卷 — 第 2 步', h, f);
+  var w = _urSwapShell(_cf.name + ' — 第 2 步', h, f);
   w.onclick = function(ev){
     var t = ev.target;
     while(t && t !== w && !(t.getAttribute && t.getAttribute('data-urswap'))) t = t.parentNode;
     if(!t || t === w) return;
     var act = t.getAttribute('data-urswap');
     if(act === 'cancel'){ try{ playSfx('sfx-cancel', 0.5); }catch(_){} _urSwapClose(); return; }
-    if(act === 'back'){ try{ playSfx('sfx-sel', 0.35); }catch(_){} window._openURSwapModal(); return; }
+    if(act === 'back'){ try{ playSfx('sfx-sel', 0.35); }catch(_){} window._openURSwapModal(_swapCurRar); return; }
     if(act === 'to'){ try{ playSfx('sfx-sel', 0.4); }catch(_){} _urSwapConfirm(fromName, t.getAttribute('data-name')); }
   };
 }
 function _urSwapConfirm(fromName, toName){
+  var _cf = _swapCur(), _R = _cf.rar, _U = _cf.unit;
   var _lv = 1, _s1 = 1, _s2 = 1, _bl = 0;
   try{ _lv = (typeof getHeroLevel === 'function') ? (getHeroLevel(fromName) || 1) : 1; }catch(_){}
   try{ var _sk = (typeof _heroSkillLevels !== 'undefined' && _heroSkillLevels && _heroSkillLevels[fromName]) || {}; _s1 = (_sk.s1 || 0) + 1; _s2 = (_sk.s2 || 0) + 1; }catch(_){}
@@ -43595,9 +43647,9 @@ function _urSwapConfirm(fromName, toName){
     + '<div style="font-size:15px;color:#9ff0c0;">✅ 會一起搬過去:等級 Lv' + _lv + '、經驗、素質投資、技能 Lv' + _s1 + '/Lv' + _s2 + '、極限爆發 Lv' + (_bl + 1) + '、天賦等級</div>'
     + '<div style="font-size:15px;color:#ffc48a;margin-top:6px;">🧰 會先卸下來(東西都還在,可以再裝到別人身上):至寶、寵物、裝備</div>'
     + (function(){ try{ var _cn = (typeof window._cstHeld === 'function' && window._cstOpenForMe && window._cstOpenForMe()) ? window._cstHeld(fromName) : 0;
-        return _cn > 0 ? '<div style="font-size:15px;color:#ffe08a;margin-top:6px;">✨ ' + fromName + ' 的 ' + _cn + ' 顆命星會退回成 ' + _cn + ' 顆「UR 自選命星」(召喚星空的命星工坊可以送給你其他的 UR)</div>' : ''; }catch(_){ return ''; } })()
+        return _cn > 0 ? '<div style="font-size:15px;color:#ffe08a;margin-top:6px;">✨ ' + fromName + ' 的 ' + _cn + ' 顆命星會退回成 ' + _cn + ' 顆「' + _R + ' 自選命星」(召喚星空的命星工坊可以送給你其他的 ' + _R + ')</div>' : ''; }catch(_){ return ''; } })()
     + '<div style="font-size:15px;color:#ff9a9a;margin-top:6px;">⚠ <b>' + fromName + ' 會從你的英雄圖鑑裡消失</b>,而且<b>換不回來</b>。</div>'
-    + '<div style="font-size:13px;color:#a79ad0;margin-top:8px;">按下「確定替換」之後會消耗 1 張 UR 英雄替換卷。</div>'
+    + '<div style="font-size:13px;color:#a79ad0;margin-top:8px;">按下「確定替換」之後會消耗 1 張 ' + _cf.name + '。</div>'
     + '</div>';
   var f = '<div style="text-align:center;margin-top:8px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">'
     + '<button type="button" data-urswap="go" id="_urswap-go" style="font-size:18px;padding:12px 28px;border-radius:14px;border:2px solid #ffd166;background:rgba(255,200,80,0.18);color:#ffe9b0;font-weight:900;">✅ 確定替換</button>'
@@ -43624,25 +43676,34 @@ async function _urSwapRun(fromName, toName){
   /* 20 秒看門狗:任何想不到的中斷都把旗標解開,不讓功能永久卡住(v5.198.0 的教訓) */
   try{ clearTimeout(window._urSwapBusyT); }catch(_){}
   window._urSwapBusyT = setTimeout(function(){ window._urSwapBusy = false; }, 20000);
-  var _tid = window._URSWAP_TICKET_ID;
+  var _cf = _swapCur(), _R = _cf.rar, _U = _cf.unit;   /* ★ v5.454.0 稀有度(UR/SSR/SR)由面板開啟時決定 */
+  var _tid = _cf.tid;
   try{
     /* ── 出手前最後一次本機複查(面板開著的期間玩家可能在別的分頁動過東西)── */
     if(!window._gUserId || window._progressLoaded !== true){
       _urSwapFail('資料還沒載好,請稍等幾秒再試一次'); return;
     }
-    if(((typeof backpackGet === 'function') ? backpackGet(_tid) : 0) <= 0){ _urSwapFail('沒有替換卷了'); return; }
+    if(((typeof backpackGet === 'function') ? backpackGet(_tid) : 0) <= 0){ _urSwapFail('沒有替換' + _U + '了'); return; }
     var _own = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
     if(_own.indexOf(fromName) < 0){ _urSwapFail('你已經沒有 ' + fromName + ' 了'); return; }
     if(_own.indexOf(toName) >= 0){ _urSwapFail('你已經有 ' + toName + ' 了,不能換成已經擁有的'); return; }
     /* ★ v5.232.0 — 兩端都必須是 UR(新 UR 自動涵蓋;非 UR 一律擋下,券不扣) */
-    if(typeof window._lxpsIsUR === 'function' && (!window._lxpsIsUR(fromName) || !window._lxpsIsUR(toName))){
-      _urSwapFail('只能在 UR 角色之間替換'); return;
+    if(_R === 'UR'){
+      if(typeof window._lxpsIsUR === 'function' && (!window._lxpsIsUR(fromName) || !window._lxpsIsUR(toName))){
+        _urSwapFail('只能在 UR 角色之間替換'); return;
+      }
+    }else{
+      /* ★ v5.454.0 SSR/SR:兩端都必須在「該稀有度自選卷本來就選得到的名單」裡(主角、BOSS 同名、空殼英雄一律擋下,券不扣) */
+      var _uni = (typeof window._summonTicketPickUniverse === 'function') ? (window._summonTicketPickUniverse(_R) || []) : [];
+      if(_uni.indexOf(fromName) < 0 || _uni.indexOf(toName) < 0){
+        _urSwapFail('只能在 ' + _R + ' 角色之間替換'); return;
+      }
     }
     /* ── 交易帳(沿用召喚那一套):頁面若在雲端寫入途中被重載,下次開機 _lxpsURSwapRecover 會依雲端現況把券補正 ── */
     var _before = (typeof backpackGet === 'function') ? (backpackGet(_tid) | 0) : 0;
     try{
       localStorage.setItem('lxps_urswap_txn', JSON.stringify({
-        from: fromName, to: toName, ticketId: _tid, ticketBefore: _before,
+        from: fromName, to: toName, ticketId: _tid, ticketBefore: _before, rar: _R,
         uid: window._gUserId, ts: Date.now()
       }));
     }catch(_){}
@@ -43650,26 +43711,27 @@ async function _urSwapRun(fromName, toName){
     /* ── 真正的加減:三槽同寫、主檔最後寫(見 _fbURSwapApply 說明)── */
     if(typeof window._fbURSwapApply !== 'function') throw new Error('替換通道未載入');
     var _r = await window._fbURSwapApply(window._gUserId, fromName, toName, {
-      reason: '玩家使用「UR 英雄替換卷」(v5.227.0)'
+      rarity: _R,
+      reason: '玩家使用「' + _cf.name + '」(' + (_R === 'UR' ? 'v5.227.0' : 'v5.454.0') + ')'
     });
     if(!_r || !_r.ok){
       /* 雲端沒成功 ⇒ 本機一個位元組都沒改、券也沒扣 ⇒ 什麼都沒發生,請學生再試一次 */
       try{ localStorage.removeItem('lxps_urswap_txn'); }catch(_){}
       var _why = (_r && _r.reason) || 'unknown';
-      _urSwapFail(_why === 'not_owned' ? '你已經沒有這隻 UR 了'
-                : _why === 'target_owned' ? '你已經有這隻 UR 了'
-                : '雲端沒有寫入成功(' + _why + '),你的替換卷沒有被扣掉,請再試一次');
+      _urSwapFail(_why === 'not_owned' ? '你已經沒有這隻 ' + _R + ' 了'
+                : _why === 'target_owned' ? '你已經有這隻 ' + _R + ' 了'
+                : '雲端沒有寫入成功(' + _why + '),你的替換' + _U + '沒有被扣掉,請再試一次');
       return;
     }
 
     /* ── 雲端成功了,才同步本機記憶體(順序不可顛倒:先改本機、雲端又失敗 = 兩邊對不起來)── */
-    try{ window._lxpsURSwapApplyLocal(fromName, toName); }catch(_eL){ console.warn('[UR 替換卷] 本機同步例外(雲端已完成,重整後即正確)', _eL); }
-    /* ★ v5.254.0 命座(裁定 13甲):被換掉的 UR 身上所有命星(含已點亮)退回成等量「UR 自選命星」,只能用在已擁有的 UR */
-    try{ if(typeof window._cstOnURSwap === 'function') window._cstOnURSwap(fromName); }catch(_eCstSw){ console.warn('[UR 替換卷] 命星退回例外', _eCstSw); }
+    try{ window._lxpsURSwapApplyLocal(fromName, toName, _R); }catch(_eL){ console.warn('[替換券] 本機同步例外(雲端已完成,重整後即正確)', _eL); }
+    /* ★ v5.254.0 命座(裁定 13甲):被換掉的英雄身上所有命星(含已點亮)退回成等量「同稀有度自選命星」,只能用在已擁有的同稀有度英雄(★ v5.454.0 SSR/SR 比照 UR) */
+    try{ if(typeof window._cstOnURSwap === 'function') window._cstOnURSwap(fromName, _R); }catch(_eCstSw){ console.warn('[替換券] 命星退回例外', _eCstSw); }
     /* ── 最後才扣券,並即時落地(與召喚卷同一條車道)── */
     try{ backpackRemove(_tid, 1); }catch(_){}
-    try{ if(typeof window._lxpsInstantBackpackPersist === 'function') window._lxpsInstantBackpackPersist('UR英雄替換卷'); }catch(_){}
-    try{ if(typeof window._logActivity === 'function') window._logActivity('ur_swap', { from: fromName, to: toName }); }catch(_){}
+    try{ if(typeof window._lxpsInstantBackpackPersist === 'function') window._lxpsInstantBackpackPersist(_cf.name); }catch(_){}
+    try{ if(typeof window._logActivity === 'function') window._logActivity('ur_swap', { from: fromName, to: toName, rar: _R }); }catch(_){}
     try{ localStorage.removeItem('lxps_urswap_txn'); }catch(_){}
     try{ if(typeof gameCloudSave === 'function') Promise.resolve(gameCloudSave()).catch(function(){}); }catch(_){}
     try{ if(typeof _setNavDot === 'function') _setNavDot('英雄', true); }catch(_){}
@@ -43678,7 +43740,7 @@ async function _urSwapRun(fromName, toName){
     try{ clearTimeout(window._urSwapBusyT); }catch(_){}
     _urSwapDone(fromName, toName);
   }catch(e){
-    console.error('[UR 替換卷] 例外', e);
+    console.error('[替換券] 例外', e);
     try{ localStorage.removeItem('lxps_urswap_txn'); }catch(_){}
     _urSwapFail((e && e.message) ? e.message : '發生未知錯誤');
   }
@@ -43688,7 +43750,7 @@ function _urSwapFail(msg){
   try{ clearTimeout(window._urSwapBusyT); }catch(_){}
   _urSwapClose();
   try{ playSfx('sfx-cancel', 0.6); }catch(_){}
-  try{ _showInGameToast('🛠️ 這次替換沒有完成:' + msg + '\n你的替換卷沒有被扣掉,可以再試一次。', '#ffaa44', 7000); }catch(_){}
+  try{ _showInGameToast('🛠️ 這次替換沒有完成:' + msg + '\n你的替換' + _swapCur().unit + '沒有被扣掉,可以再試一次。', '#ffaa44', 7000); }catch(_){}
 }
 function _urSwapDone(fromName, toName){
   var h = '<div style="text-align:center;padding:6px 0;">'
@@ -43709,7 +43771,8 @@ function _urSwapDone(fromName, toName){
 }
 /* 本機記憶體同步(雲端成功之後才呼叫)。★ 與 _fbURSwapApply 的 patch 必須一一對應,少搬一張表就會讓
    「畫面看到的」與「雲端存的」不一致,下次 gameCloudSave 還會把錯的寫回去。 */
-window._lxpsURSwapApplyLocal = function(fromName, toName){
+window._lxpsURSwapApplyLocal = function(fromName, toName, rar){
+  var _cfL = window._swapCfg(rar);   /* ★ v5.454.0 帳本 source/說明依稀有度(UR 維持 'ticket_ur_swap') */
   var _move = function(obj){
     if(!obj || typeof obj !== 'object') return;
     if(Object.prototype.hasOwnProperty.call(obj, fromName)){ obj[toName] = obj[fromName]; delete obj[fromName]; }
@@ -43759,8 +43822,8 @@ window._lxpsURSwapApplyLocal = function(fromName, toName){
     var _rawH = localStorage.getItem('adv_hero_unlock_history'), _h = _rawH ? JSON.parse(_rawH) : [];
     if(!Array.isArray(_h)) _h = [];
     var _u12 = String(window._gUserId || '').slice(0, 12), _n = Date.now();
-    _h.push({ name: fromName, at: _n, source: 'admin_delete', uid: _u12, urSwap: true, swapTo: toName, reason: 'UR 英雄替換卷(v5.227.0)' });
-    _h.push({ name: toName, at: _n + 1, source: 'ticket_ur_swap', uid: _u12, urSwap: true, swapFrom: fromName });
+    _h.push({ name: fromName, at: _n, source: 'admin_delete', uid: _u12, urSwap: true, swapTo: toName, reason: _cfL.name + '(' + (_cfL.rar === 'UR' ? 'v5.227.0' : 'v5.454.0') + ')' });
+    _h.push({ name: toName, at: _n + 1, source: _cfL.src, uid: _u12, urSwap: true, swapFrom: fromName });
     if(_h.length > 300) _h = _h.slice(-300);
     localStorage.setItem('adv_hero_unlock_history', JSON.stringify(_h));
   }catch(_){}
@@ -43796,12 +43859,12 @@ window._lxpsURSwapRecover = function(){
         try{ if(typeof window._lxpsInstantBackpackPersist === 'function') window._lxpsInstantBackpackPersist('UR替換對帳補扣'); }catch(_){}
         try{ if(typeof gameCloudSave === 'function') Promise.resolve(gameCloudSave()).catch(function(){}); }catch(_){}
       }
-      try{ _showInGameToast('✅ 上次的 UR 替換已經完成了:' + o.from + ' ➜ ' + o.to, '#66ddaa', 7000); }catch(_){}
+      try{ _showInGameToast('✅ 上次的 ' + ((o.rar === 'SSR' || o.rar === 'SR') ? o.rar : 'UR') + ' 替換已經完成了:' + o.from + ' ➜ ' + o.to, '#66ddaa', 7000); }catch(_){}
       return;
     }
     if(_hasFrom && !_hasTo){
       /* 主檔沒寫到 ⇒ 什麼都沒發生。券本來就還沒扣,這裡什麼都不必補,只要告訴學生可以再試一次 */
-      try{ _showInGameToast('上次的 UR 替換沒有完成,替換卷還在背包裡,可以再試一次 🔁', '#ffd166', 6000); }catch(_){}
+      try{ _showInGameToast('上次的 ' + ((o.rar === 'SSR' || o.rar === 'SR') ? o.rar : 'UR') + ' 替換沒有完成,替換' + ((o.rar === 'SSR' || o.rar === 'SR') ? '券' : '卷') + '還在背包裡,可以再試一次 🔁', '#ffd166', 6000); }catch(_){}
       return;
     }
     /* 兩者都有 / 兩者都沒有 = 理論上不可能(主檔那一次 setDoc 是原子的)。
@@ -47749,7 +47812,13 @@ function useBackpackItem(id){
     /* ★ v5.227.0 — UR 英雄替換卷:直接開替換面板(不在這裡消耗,實際消耗在替換成功之後)。
        面板是 position:fixed,任何頁面都能蓋上去,與至寶召喚卷同一種處理,不必先導去特定頁。 */
     closeBackpackOverlay();
-    setTimeout(() => { try{ if(typeof window._openURSwapModal === 'function') window._openURSwapModal(); }catch(_){} }, 200);
+    setTimeout(() => { try{ if(typeof window._openURSwapModal === 'function') window._openURSwapModal('UR'); }catch(_){} }, 200);
+
+  } else if(id==='summon_ticket_ssr_swap' || id==='summon_ticket_sr_swap'){
+    /* ★ v5.454.0 — SSR/SR 英雄替換券:與 UR 替換卷同一個面板,以稀有度參數切換(不在這裡消耗,實際消耗在替換成功之後)。 */
+    const _swapRar = (id === 'summon_ticket_ssr_swap') ? 'SSR' : 'SR';
+    closeBackpackOverlay();
+    setTimeout(() => { try{ if(typeof window._openURSwapModal === 'function') window._openURSwapModal(_swapRar); }catch(_){} }, 200);
 
   } else if(id==='summon_ticket_treasure' || id==='summon_ticket_treasure_pick'){
     // ★ v3.13.82 — 至寶召喚卷:直接開「使用至寶召喚卷」面板(不消耗,實際消耗在使用時)
@@ -85908,15 +85977,17 @@ function makeRadar(dims, size) {
   };
 
   /* ── UR 替換卷(13甲):被換掉的 UR 身上所有命星(含已點亮)退回成等量「UR 自選命星」── */
-  W._cstOnURSwap = function(fromName){
+  /* ★ v5.454.0 rar:'UR'(預設)/'SSR'/'SR' ⇒ 退回成同稀有度自選命星('#pick_' + 稀有度);SSR/SR 替換券比照 UR 替換卷(13甲) */
+  W._cstOnURSwap = function(fromName, rar){
     try{
+      var _pk = '#pick_' + ((rar === 'SSR' || rar === 'SR') ? rar : 'UR');
       var k = W._cstKey(fromName), d = D();
       var n = Math.max(0, (d.got[k] | 0) - (d.used[k] | 0));
       if(n <= 0) return 0;
       d.used[k] = (d.used[k] | 0) + n;
-      d.got['#pick_UR'] = (d.got['#pick_UR'] | 0) + n;
+      d.got[_pk] = (d.got[_pk] | 0) + n;
       d.lit[k] = { s:[], at:Date.now() };
-      _log('urswap', k, n, '#pick_UR');
+      _log('urswap', k, n, _pk);
       _save();
       return n;
     }catch(e){ console.warn('[命座] UR 替換退回命星例外', e); return 0; }
