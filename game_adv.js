@@ -42775,6 +42775,18 @@ function _useGmTicket(gmId){
       try{ _showInGameToast(_gmBlock, '#ffaa44', 4000); }catch(_){}
       return;   // ★ 一張券都不扣
     }
+    /* ★★ v5.455.0(老師 2026-11-25「按下確定召喚那一刻才扣 GM 券」,起因:黃秉弘 GM UR 券按了使用後換出的一般券憑空消失)★★
+       自選類(UR/SSR/SR 自選)不再「先把 GM 券換成一般券」:只記一筆等待旗標、直接開挑選面板;
+       GM 券留在背包原封不動,直到學生在「英雄介紹」視窗按下「✅ 確定召喚」、真的要發英雄/命星的那一刻,
+       才由 window._gmPickMaterialize(tier) 同步換成一般自選卷並立刻被該流程扣掉(同一次原子寫入落地)。
+       只按使用、看一看就關掉 ⇒ GM 券完全沒動。 */
+    if(_base === 'summon_ticket_ur_pick' || _base === 'summon_ticket_ssr_pick' || _base === 'summon_ticket_sr_pick'){
+      var _tierDef = (_base === 'summon_ticket_ur_pick') ? 'UR' : (_base === 'summon_ticket_ssr_pick') ? 'SSR' : 'SR';
+      window._gmPickPending = { gmId: gmId, base: _base, tier: _tierDef, uid: String(window._gUserId || ''), at: Date.now() };
+      try{ var _mP = document.getElementById('_summon-ticket-modal'); if(_mP) _mP.remove(); }catch(_){}
+      _openSummonTicketPickModal(_tierDef);
+      return;
+    }
     // 消耗 gm_ 卷 + 實體化 base 卷(抑制帳本,避免多記一筆「獲得 base 卷」)
     window._suppressTicketLedger = true;
     try{ if(typeof backpackRemove === 'function') backpackRemove(gmId, 1); }catch(_){}
@@ -42799,6 +42811,33 @@ function _useGmTicket(gmId){
     }
   }catch(e){ window._suppressTicketLedger = false; try{ console.warn('[_useGmTicket]', e); }catch(_){} }
 }
+
+/* ★ v5.455.0 — GM 自選券「確定召喚才扣」:等待旗標＋即時實體化(見 _useGmTicket 註解)。
+   _gmPickAvail(tier):目前等著用的 GM 自選券張數(旗標 30 分鐘內、同帳號、背包真的還有)。
+   _gmPickMaterialize(tier):在「真的要發英雄/命星」的同一個同步流程裡,把 1 張 GM 券換成 1 張一般自選卷
+   (一般自選卷已有就不動,直接用它);回傳 true=現在背包有一般自選卷可扣。 */
+window._gmPickPending = null;
+window._gmPickAvail = function(tier){
+  try{
+    var p = window._gmPickPending;
+    if(!p || p.tier !== tier) return 0;
+    if(p.uid !== String(window._gUserId || '') || (Date.now() - (p.at || 0)) > 30 * 60 * 1000){ window._gmPickPending = null; return 0; }
+    return (typeof backpackGet === 'function') ? (backpackGet(p.gmId) | 0) : 0;
+  }catch(_){ return 0; }
+};
+window._gmPickMaterialize = function(tier){
+  try{
+    var p = window._gmPickPending;
+    if(!p || p.tier !== tier) return false;
+    if(window._gmPickAvail(tier) <= 0){ window._gmPickPending = null; return false; }
+    if((typeof backpackGet === 'function' ? backpackGet(p.base) : 0) > 0) return true;   /* 學生自己還有一般自選卷 ⇒ 先用它,GM 券不動 */
+    window._suppressTicketLedger = true;
+    try{ backpackRemove(p.gmId, 1); backpackAdd(p.base, 1); }finally{ window._suppressTicketLedger = false; }
+    window._gmPickPending = null;
+    try{ if(typeof window._lxpsInstantBackpackPersist === 'function') window._lxpsInstantBackpackPersist('GM券確定召喚換發:' + p.gmId); }catch(_){}
+    return (typeof backpackGet === 'function' ? backpackGet(p.base) : 0) > 0;
+  }catch(e){ window._suppressTicketLedger = false; try{ console.warn('[_gmPickMaterialize]', e); }catch(_){} return false; }
+};
 
 // 使用一張召喚卷:必得隨機未收錄對應稀有度英雄
 async function _useSummonTicket(tier){
@@ -42940,7 +42979,7 @@ window._lxpsTicketPoolInfo = function(rarity, forPick){
 function _openSummonTicketPickModal(tier){
   try{
     const _ticketId = (tier === 'UR') ? 'summon_ticket_ur_pick' : (tier === 'SSR') ? 'summon_ticket_ssr_pick' : 'summon_ticket_sr_pick';
-    const _have = (typeof backpackGet === 'function') ? backpackGet(_ticketId) : 0;
+    const _have = ((typeof backpackGet === 'function') ? backpackGet(_ticketId) : 0) + (window._gmPickAvail ? window._gmPickAvail(tier) : 0);   /* ★ v5.455.0 含等著用的 GM 券 */
     if(_have <= 0){ _showInGameToast('沒有這張自選召喚卷了', '#ff8844', 2000); return; }
     const _pool = _summonTicketUnrecorded(tier, true);   /* ★ v5.67.0 forPick=true:自選卷不排除測試期角色(老師裁定) */
     // ★ v5.254.0 命座(裁定 4甲／風險 A7):UR 自選卷多一區「已擁有的 UR → 轉 1 顆命星」(滿 6 命者不列;隨命座開關,已全員開放)
@@ -43214,7 +43253,7 @@ async function _confirmSummonTicketPick(tier, heroName, skipAsk){
 async function _useSummonTicketPick(tier, heroName){
   try{
     const _ticketId = (tier === 'UR') ? 'summon_ticket_ur_pick' : (tier === 'SSR') ? 'summon_ticket_ssr_pick' : 'summon_ticket_sr_pick';
-    if((typeof backpackGet === 'function' ? backpackGet(_ticketId) : 0) <= 0){
+    if(((typeof backpackGet === 'function' ? backpackGet(_ticketId) : 0) + (window._gmPickAvail ? window._gmPickAvail(tier) : 0)) <= 0){   /* ★ v5.455.0 含等著用的 GM 券 */
       _showInGameToast('沒有這張自選召喚卷了', '#ff8844', 2000); return;
     }
     // 再次驗證:該英雄確實尚未收錄、且屬於此稀有度池(防作弊/重複)
@@ -43232,6 +43271,16 @@ async function _useSummonTicketPick(tier, heroName){
        加一道 20 秒看門狗,任何情況都會自己解開。 */
     try{ clearTimeout(window._summonTicketUsingT); }catch(_){}
     window._summonTicketUsingT = setTimeout(function(){ window._summonTicketUsing = false; }, 20000);
+    /* ★ v5.455.0 — 到這裡才是「真的要發英雄」:GM 自選券此刻才換成一般自選卷(換不到 ⇒ 什麼都沒動就收手) */
+    if((typeof backpackGet === 'function' ? backpackGet(_ticketId) : 0) <= 0){
+      var _gmOk = false;
+      try{ _gmOk = !!(window._gmPickMaterialize && window._gmPickMaterialize(tier)); }catch(_){ _gmOk = false; }
+      if(!_gmOk){
+        window._summonTicketUsing = false;
+        try{ clearTimeout(window._summonTicketUsingT); }catch(_){}
+        _showInGameToast('沒有這張自選召喚卷了', '#ff8844', 2000); return;
+      }
+    }
     try{
       /* ══ ★ v5.198.0 關鍵改動:順序由「先扣券→再發英雄」改成「先發英雄→驗證真的到手→才扣券」══
          【為什麼要改】舊順序一旦在發英雄這段出事,學生的狀態是「券本機扣了、英雄沒拿到」——
@@ -86257,7 +86306,7 @@ function makeRadar(dims, size) {
     try{
       if(!_ready()){ _toast(_T('資料還在載入,等一下再試', '資料尚未載入完成,請稍候再試'), '#ffaa44'); return; }
       if(!_okName()){ _toast(isRnd ? _T('沒有可以換命星的 ' + tier + ' 了', '已無可轉為命星的 ' + tier + ' 英雄') : _T('這位 ' + tier + ' 不能選', '此 ' + tier + ' 不符合條件(未擁有或已滿 6 命)'), '#ffaa44'); return; }
-      if(((typeof backpackGet === 'function') ? backpackGet(tid) : 0) <= 0){ _toast(_T('沒有 ' + tkNm + '了', '沒有 ' + tkNm), '#ffaa44'); return; }
+      if(((typeof backpackGet === 'function') ? backpackGet(tid) : 0) + ((!isRnd && typeof W._gmPickAvail === 'function') ? W._gmPickAvail(tier) : 0) <= 0){ _toast(_T('沒有 ' + tkNm + '了', '沒有 ' + tkNm), '#ffaa44'); return; }   /* ★ v5.455.0 含等著用的 GM 自選券 */
       var msg = wish
         ? _T('🌠 祈願中!這是你本週第一次召喚 ' + tier + '。\n「' + name + '」你已經有了,這張 ' + tier + ' 召喚卷會換成「' + name + '」的 1 顆命星,並用掉本週的 ' + tier + ' 願望。\n(現在 ' + W._cstHeld(name) + '/6;不想這樣的話,先到召喚星空「祈願」取消指定)',
              '🌠 祈願生效:本週首次 ' + tier + ' 召喚。\n「' + name + '」已收錄,本張 ' + tier + ' 召喚卷將轉為「' + name + '」命星 ×1,並消耗本週 ' + tier + ' 願望。\n(目前命星 ' + W._cstHeld(name) + '/6;如不需要,請先至召喚星空「祈願」取消指定)')
@@ -86277,6 +86326,8 @@ function makeRadar(dims, size) {
           try{ if(typeof W._lxpsUidDrift === 'function' && W._lxpsUidDrift()){ _toast(_T('帳號狀態不穩,等一下再試', '帳號狀態異常,請稍候再試'), '#ffaa44'); return; } }catch(_){}
           /* ★ v5.279.0 防幽靈卷:券實例還沒從雲端載入時不准用(否則扣的是背包數字、實例沒消耗,下次登入券會復活) */
           try{ if(typeof W._isTicketInstId === 'function' && W._isTicketInstId(tid) && !W._ticketHydrated){ _toast(_T('召喚卷資料還在載入,等一下再試', '召喚卷資料尚未載入完成,請稍候再試'), '#ffaa44'); return; } }catch(_){}
+          /* ★ v5.455.0 GM 自選券:按下確定這一刻才換成一般自選卷(下面 backpackRemove 緊接著扣掉) */
+          if(!isRnd && ((typeof backpackGet === 'function') ? backpackGet(tid) : 0) <= 0){ try{ if(typeof W._gmPickMaterialize === 'function') W._gmPickMaterialize(tier); }catch(_){} }
           if(((typeof backpackGet === 'function') ? backpackGet(tid) : 0) <= 0){ _toast(_T('沒有 ' + tkNm + '了', '沒有 ' + tkNm), '#ffaa44'); return; }
           if(wish && !_wishStill()){ _toast(_T('🌠 本週願望已經用掉了,請重新打開召喚卷', '🌠 本週願望已使用,請重新開啟召喚卷'), '#ffaa44'); return; }
           if(isRnd && !wish){   /* ★ v5.339.0 隨機模式:按下確認這一刻才抽,抽的是當下仍可換的名單 */
