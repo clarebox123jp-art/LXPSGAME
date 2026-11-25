@@ -36,7 +36,7 @@
 (function(){
 'use strict';
 if(window.ARTW) return;
-var ART_VER = 'v1.3.1';   /* ★ v1.3.1(2026-11-23・老師「旋轉畫布功能,顯示當前角度、復原原本角度、45/90/180 度順逆時針旋轉」):👁 檢視加旋轉區(目前角度、逆/順 45°/90°/180°、復原 0°)+ 畫布左上角度標籤(viewRotTo/degTxt/rotBadge) */ void 'v1.3.0';   /* ★ v1.3.0(2026-11-19 15:09・老師選「乙」:跟 Procreate 比還缺的 17 項 +「畫筆感壓、即時反應和流暢感再提升」「網路上推薦的其他繪圖 APP 好用功能學起來」)
+var ART_VER = 'v1.3.2';   /* ★ v1.3.2(2026-11-25・老師「平板會不小心旋轉…圖片看起來被壓扁,又轉不回原本的視角」)— 轉螢幕後螢幕畫布重新量大小(延遲重量+ResizeObserver+每格檢查比例),畫面中心不跑;繪圖板筆修正在 paintkit v1.2.0 */ void 'v1.3.1';   /* ★ v1.3.1(2026-11-23・老師「旋轉畫布功能,顯示當前角度、復原原本角度、45/90/180 度順逆時針旋轉」):👁 檢視加旋轉區(目前角度、逆/順 45°/90°/180°、復原 0°)+ 畫布左上角度標籤(viewRotTo/degTxt/rotBadge) */ void 'v1.3.0';   /* ★ v1.3.0(2026-11-19 15:09・老師選「乙」:跟 Procreate 比還缺的 17 項 +「畫筆感壓、即時反應和流暢感再提升」「網路上推薦的其他繪圖 APP 好用功能學起來」)
    ① 色彩和諧(選色器下 🎡 配色:互補/相近/三等分/分割互補)② 圖層 ⧉ 複製、⤓ 向下合併(Ctrl+J/E)③ ✂️ 剪切遮罩 ④ 〰 防抖 StreamLine ⑤ 👆 塗抹筆
    ⑥ ↔ 翻轉檢視 ⑦ 兩指旋轉畫布(Shift+滾輪)⑧ 四指點一下/Tab 全螢幕 ⑨ 🦋 對稱輔助(左右/上下/四向/放射,所有筆刷)⑩ 📐 透視格線一點/兩點+線條吸附
    ⑪ ⬚ 選取(矩形/橢圓/手繪/魔術棒/反轉/移動選取,畫/擦/填/調整都只在選取裡)⑫ 🎛 調整(色相/彩度/明度/模糊)+ 🌗 灰階檢視 ⑬ 🔁 重新著色 ⑭ 🎭 混合模式
@@ -2212,7 +2212,19 @@ function canvasOpen(opt){
   else { addLayer(); addLayer(); S.li = 1; }
 
   /* ── 繪製 ── */
-  function resize(){ var r = stage.getBoundingClientRect(); dc.width = Math.max(1, Math.round(r.width * dpr)); dc.height = Math.max(1, Math.round(r.height * dpr)); if(bbuf){ bbuf.width = dc.width; bbuf.height = dc.height; } req(); }
+  /* ★ v1.3.2(2026-11-25・老師「平板會不小心旋轉到畫布的透視角度,導致圖片看起來被壓扁,又轉不回原本的視角,重新開啟作品檔案才可以」)
+     根因:iPad 轉直/轉橫時,resize 事件當下量到的舞台大小常常還是「轉之前」的,螢幕畫布的像素寬高跟畫面上的寬高比例對不上 ⇒ 整張被壓扁/拉長;
+     之後就算轉回來,也可能又量到舊的,一直歪著。修法:①轉動後 0/0.15/0.4/0.9 秒各重量一次+ResizeObserver;②每一格畫面先檢查比例對不對,不對就立刻重量;
+     ③大小變了,畫面中心那一點維持在中心(不會跑掉) */
+  function sizeDc(){ var r = stage.getBoundingClientRect(), nw = Math.max(1, Math.round(r.width * dpr)), nh = Math.max(1, Math.round(r.height * dpr)), ow, oh, m, det, lx, ly, wp;
+    if(r.width < 2 || r.height < 2 || (dc.width === nw && dc.height === nh)) return false;
+    ow = dc.width / dpr; oh = dc.height / dpr; m = vm(); det = m.a * m.d - m.b * m.c;
+    if(dc.width > 2 && dc.height > 2 && det){ lx = ow / 2 - m.e; ly = oh / 2 - m.f; wp = { x: (m.d * lx - m.c * ly) / det, y: (-m.b * lx + m.a * ly) / det }; }
+    dc.width = nw; dc.height = nh; if(bbuf){ bbuf.width = dc.width; bbuf.height = dc.height; }
+    if(wp) anchor(wp, r.width / 2, r.height / 2);
+    return true; }
+  function resize(){ sizeDc(); req(); }
+  function resizeSoon(){ resize(); setTimeout(function(){ if(!S.closed) resize(); }, 150); setTimeout(function(){ if(!S.closed) resize(); }, 400); setTimeout(function(){ if(!S.closed) resize(); }, 900); }
   /* ★ v1.3.0 檢視矩陣:螢幕 = 平移 + 旋轉(r) × 縮放(s) × 左右翻轉(fx) × 畫布座標 */
   function vm(){ var v = S.view, c = Math.cos(v.r || 0) * v.s, s = Math.sin(v.r || 0) * v.s, f = v.fx || 1; return { a: c * f, b: s * f, c: -s, d: c, e: v.x, f: v.y }; }
   /* 讓畫布上的點 wp 出現在舞台上的 (lx, ly)(縮放/旋轉時手指下面的那一點不跑掉) */
@@ -2221,6 +2233,7 @@ function canvasOpen(opt){
   function req(){ if(S.rafq) return; S.rafq = true; requestAnimationFrame(render); }
   function render(){
     S.rafq = false; if(S.closed) return;
+    if(Math.abs(stage.clientWidth * dpr - dc.width) > dpr * 2 || Math.abs(stage.clientHeight * dpr - dc.height) > dpr * 2) sizeDc();   /* ★ v1.3.2 比例對不上(轉螢幕量到舊大小)⇒ 先重量再畫 */
     rotBadge();
     var v = S.view, i, L, m = vm();
     dx.setTransform(1, 0, 0, 1, 0, 0); dx.globalAlpha = 1; dx.globalCompositeOperation = 'source-over'; dx.fillStyle = '#3d3449'; dx.fillRect(0, 0, dc.width, dc.height);
@@ -3170,11 +3183,12 @@ function canvasOpen(opt){
     cloudWorkPut(rec);   /* ★ v1.1.0 第 3 項 */
     try{ dailyHit('paint', paintInfo(analyzeImg())); }catch(e){}   /* ★ v1.1.0 第 19 項:畫室作品類的每日挑戰 */
   }
-  function close(silent){ if(S.closed) return; if(S.adj) adjEnd(false); popClose(); if(S.float) floatCommit(); tolClose(); try{ if(S.cdrag) S.cdrag.destroy(); if(S.wheel) S.wheel.destroy(); }catch(_){} clearTimeout(dT); sDraftNow(); document.removeEventListener('visibilitychange', onHide); S.closed = true; clearInterval(tmr); clearTimeout(plT); clearTimeout(S.lp); document.removeEventListener('keydown', onKey); document.removeEventListener('keyup', onKey); window.removeEventListener('blur', onBlur); window.removeEventListener('resize', resize); if(wrap.parentNode) wrap.parentNode.removeChild(wrap); if(A.cv === cvObj) A.cv = null; if(A.on) music($('art-lv') ? 'lv' : 'hub'); if(!silent && opt.onClose) opt.onClose(); }
+  function close(silent){ if(S.closed) return; if(S.adj) adjEnd(false); popClose(); if(S.float) floatCommit(); tolClose(); try{ if(S.cdrag) S.cdrag.destroy(); if(S.wheel) S.wheel.destroy(); }catch(_){} clearTimeout(dT); sDraftNow(); document.removeEventListener('visibilitychange', onHide); S.closed = true; clearInterval(tmr); clearTimeout(plT); clearTimeout(S.lp); document.removeEventListener('keydown', onKey); document.removeEventListener('keyup', onKey); window.removeEventListener('blur', onBlur); window.removeEventListener('resize', resizeSoon); window.removeEventListener('orientationchange', resizeSoon); try{ if(S.ro) S.ro.disconnect(); }catch(_ro){} if(wrap.parentNode) wrap.parentNode.removeChild(wrap); if(A.cv === cvObj) A.cv = null; if(A.on) music($('art-lv') ? 'lv' : 'hub'); if(!silent && opt.onClose) opt.onClose(); }
   var cvObj = { close: close, flatten: flatten };
   music(opt.endMs ? 'contest' : 'cv');   /* ★ v1.1.1 畫畫用安靜的曲子;比賽用緊湊的 */
   A.cv = cvObj; A.cvId = opt.task ? ('draft_' + dId) : (opt.workId || '');   /* ★ v1.1.8 正在畫的那件,雲端同步不去覆蓋 */
-  window.addEventListener('resize', resize);
+  window.addEventListener('resize', resizeSoon); window.addEventListener('orientationchange', resizeSoon);   /* ★ v1.3.2 轉螢幕後多量幾次 */
+  try{ if(window.ResizeObserver){ S.ro = new ResizeObserver(function(){ if(!S.closed) resize(); }); S.ro.observe(stage); } }catch(_ro2){ S.ro = null; }
   paintTools(); paintColor(); paintLayers(); paintStk();
   /* ★ v1.1.3(檢查報告第 8 項):有草稿要問「接著畫嗎?」時,新手教學等問完再出來(原本教學蓋在確認框上) */
   var draftAsk = !!(opt.task && !opt.layers && draftKey);

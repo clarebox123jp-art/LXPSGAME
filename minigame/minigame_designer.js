@@ -17,7 +17,7 @@
 (function(){
 'use strict';
 if(window.DSGW) return;
-var VER = 'v1.2.1';   /* ★ v1.2.1(2026-11-23・老師「美術設計師的作品增加『不存檔直接退出』的選項」):回工作室的取名視窗多「🚪 不存檔直接退出」(discardExit) */ void 'v1.2.0';   /* ★ v1.2.0(2026-11-19 15:09・老師「美術設計師的面板適當縮小左右的工具介面面板尺寸和字體,讓中央畫圖區域加大些」「畫筆感壓、即時反應和流暢感再提升」)
+var VER = 'v1.2.2';   /* ★ v1.2.2(2026-11-25・老師「美術設計師的投稿要求步數增加至500步」+平板轉螢幕後重新對齊畫布)— 門檻 ops 500(舊雲端 100 視為沒改)、轉向後延遲重新 fitStage */ void 'v1.2.1';   /* ★ v1.2.1(2026-11-23・老師「美術設計師的作品增加『不存檔直接退出』的選項」):回工作室的取名視窗多「🚪 不存檔直接退出」(discardExit) */ void 'v1.2.0';   /* ★ v1.2.0(2026-11-19 15:09・老師「美術設計師的面板適當縮小左右的工具介面面板尺寸和字體,讓中央畫圖區域加大些」「畫筆感壓、即時反應和流暢感再提升」)
    橫放左欄 28vw→21vw、右欄 22vw→18vw,面板字級約縮 15%;自由手繪接共用筆畫濾波器(防抖/筆壓平滑與軟硬/速度模擬筆壓/曲線內插,設定跟創藝工坊共用);↔ 翻轉檢視;
    每一筆下筆/收筆不再整串重算所有圖層的指紋(plsHash 快取)⇒ 舊 iPad 下筆不頓。選色器多了 🎡 配色(MGPK)。 */ void 'v1.1.4';   /* ★ v1.1.4(2026-11-18・老師「設計師成功投稿時,可預先勾選至多三種希望的獎勵」)— 繳交作品資料視窗多一區「🎁 希望獲得的獎勵」(D.WISH,最多 3 種,「其他」要自己寫);
    寫進 designSubmit.wish / wishTxt / em(信箱)。Firestore 規則還沒發布新版時,這三格會被擋 ⇒ 自動改放進 mod.wish/mod.wishTxt/mod.em 再交一次(作品照常繳交成功)。 */ void 'v1.1.3';/* ★ v1.1.3(2026-11-13・老師)①「每次復原,要減去操作數」:undo/redo 整份換回快照(含 ops 與指紋 oh)②「我的作品」⬇️ 下載圖片 PNG(透明/白色背景;recEd/dlWork/dlSave,iPad 走分享選單「儲存影像」)③ 13:58「設計師畫布也改成同樣的固定方式」:右欄選色器固定、圖層小視窗 .dsg-lwin 自己捲(＋▲▼🗑 在標題列 #dsg-lwh)、物件屬性在下;直式維持整欄捲 */ void 'v1.1.2';   /* ★ v1.1.2(2026-11-11 20:50・老師)PC 快捷鍵 Ctrl+Z 復原/Ctrl+Y 重做、按住空白鍵游標變手掌拖曳畫布(dsgKey/handSet) */ void 'v1.1.1';   /* ★ v1.1.1(2026-11-11・老師「PC 版手繪、點陣、像素畫出來的點(線)都比滑鼠游標低」)滑鼠/筆座標改用畫布在螢幕上的實際大小換算(stPt/vzOf),PC 放大後也精準 */ void 'v1.1.0';   /* ★ v1.1.0(2026-11-10・老師)圖層(可改名、⋯ 透明度/參照/阿爾法鎖定)、選色器+圖層常駐右欄、環形色相+三角形選色器、7 種畫筆(鉛筆/水彩/蠟筆/毛筆/圓頭麥克筆/平頭麥克筆/向量筆)、油漆桶(拖顏色+臨界值)、長按 2 秒變向量形狀、剪刀剪下移到指定圖層、變形、小提示與繳交標準收進「怎麼玩」、存檔時間標記、每月繳交 皮膚 1 件+荒島裝飾 1 件分開計算 */ void 'v1.0.7';   /* ★ v1.0.7(2026-11-09)有條件解鎖(創藝工坊全部關卡 ≥2★,unlockCheck/gate('stars'))+ 作品集/設定自動雙向雲端同步(MG_CSYNC;「☁ 立即同步」= 手動保險) */ void 'v1.0.6';   /* ★ v1.0.6(2026-11-08 18:07)雙指捏合縮放/挪動畫布(PC 滾輪、空白鍵/中鍵拖曳)、手機平板直式版面、◧ 面板收合 */ void 'v1.0.5';   /*★ v1.0.5(2026-11-08 13:06~13:24)動作骨架改成 3D 關節人偶:拖關節擺姿勢、拖空白處轉視角、範本當起手式;脊椎 3 節、頭部球體+十字線定位眼鼻(fc 臉方向點)、立體圓柱四肢與關節球;骨架功能鍵 復原/重做/向前/向後/拉近/拉遠;我的姿勢命名儲存(見 pzDraw/pzDragTo/pzNudge/pzCmd) */ void 'v1.0.4';   /* ★ v1.0.4(2026-11-08 11:27)作品名不可與已上架商品同名(nameAsk/繳交都查)、角色皮膚繳交存透明全身圖 th→上架複製成 designShopItems.img、老師台「🛒 上架商品」改價/上下架/分紅比例 */ void 'v1.0.3';   /* ★ v1.0.3(2026-11-08 11:03)手繪原創:皮膚只留畫筆+動作骨架、荒島裝飾素材收進參考圖片(描圖層不進作品)、預設畫筆、回工作室先命名、作品集可改名 */ void 'v1.0.2';   /* ★ v1.0.2(2026-11-08 10:51)操作次數算「增加、變色」,且改完要跟原本不一樣(見 endOp/opKey) */ void 'v1.0.1';   /* ★ v1.0.1(2026-11-08)操作次數只算「增加」的動作(見 endOp) */ void 'v1.0.0';
@@ -85,7 +85,11 @@ var ACC_KEY = 'lxps_dsg_access_cache';
 function accCache(){ var o = null; try{ o = JSON.parse(lsGet(ACC_KEY) || 'null'); }catch(e){} return (o && o.at && now() - o.at < 14 * 86400000) ? o.c : null; }
 function accCfg(){ return S.cfg || accCache() || {}; }
 function dsgOpen(){ var c = accCfg(); return (typeof c.open === 'boolean') ? c.open : !!D.OPEN; }
-function qOf(kind){ var b = D.QUALITY[kind], c = (accCfg().q || {})[kind] || {}, o = {}, k; for(k in b){ if(b.hasOwnProperty(k)) o[k] = (typeof c[k] === 'number') ? c[k] : b[k]; } return o; }
+function qOf(kind){ var cf = accCfg(), b = D.QUALITY[kind], c = (cf.q || {})[kind] || {}, o = {}, k; for(k in b){ if(b.hasOwnProperty(k)) o[k] = (typeof c[k] === 'number') ? c[k] : b[k]; }
+  /* ★ v1.2.2(2026-11-25・老師「投稿要求步數增加至500步」)GM 選單以前按過「💾 儲存設定」會把舊預設 100 一起存上雲端並蓋過新預設;
+     2026-11-25 以前存的 100 視為「沒改過」⇒ 用新預設 500。之後 GM 自己再存的數字照用 */
+  if(o.ops === 100 && (+cf.updatedAt || 0) < 1795579200000) o.ops = b.ops;   /* 1795579200000 = 2026-11-25 12:00 台北 */
+  return o; }
 function vth(){ var c = accCfg().vth || {}, o = {}, k; for(k in D.VTH_DEF){ if(D.VTH_DEF.hasOwnProperty(k)) o[k] = (c[k] >= 2 && c[k] <= 5) ? c[k] : D.VTH_DEF[k]; } return o; }
 function accFetch(cb){
   var f = fb(), n = 0, done = false, t;
@@ -400,7 +404,9 @@ function enter(){
   if(!S.tick) S.tick = setInterval(backupTick, 30000);
   document.addEventListener('visibilitychange', function(){ if(document.hidden && S.ed){ saveLocal(false); backupNow(false); } });
   window.addEventListener('pagehide', function(){ if(S.ed) saveLocal(false); });
-  window.addEventListener('resize', function(){ if(S.ed) fitStage(); });
+  /* ★ v1.2.2 平板轉直/轉橫時當下量到的大小可能還是舊的 ⇒ 0.15/0.4/0.9 秒後再對一次 */
+  function fitSoon(){ if(!S.ed) return; fitStage(); setTimeout(function(){ if(S.ed) fitStage(); }, 150); setTimeout(function(){ if(S.ed) fitStage(); }, 400); setTimeout(function(){ if(S.ed) fitStage(); }, 900); }
+  window.addEventListener('resize', fitSoon); window.addEventListener('orientationchange', fitSoon);
 }
 function bindUser(u){ S.uid = u ? u.uid : ''; S.guest = !u; }
 function onUser(u){

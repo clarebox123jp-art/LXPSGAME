@@ -12,10 +12,12 @@
    ★ v1.1.0(2026-11-19・老師選乙+「畫筆感壓、即時反應和流暢感再提升」「網路上推薦的其他繪圖 APP 好用功能學起來」)新增:
      K.stroke 筆畫濾波器(防抖/筆壓平滑+曲線/速度模擬筆壓/曲線內插)、K.strokeReplay、K.tiltOf、K.rng、K.taperK;
      K.fillMaskGap 縫隙偵測(學 Clip Studio Paint)、K.recolorPaint 重新著色、K.adjustData/K.blurData 調整、K.sel* 選取範圍、K.maskCut、
-     K.BM 混合模式表、K.loupe 吸色放大鏡;選色器 K.wheel 加 🎡 色彩和諧(o.harm === false 可關);新功能 ? 說明 K.layerHelp。 */
+     K.BM 混合模式表、K.loupe 吸色放大鏡;選色器 K.wheel 加 🎡 色彩和諧(o.harm === false 可關);新功能 ? 說明 K.layerHelp。
+   ★ v1.2.0(2026-11-25・老師「PC 版用繪圖板+觸控筆:只能畫圖但無法點擊所有功能鍵;感壓筆刷收筆時容易留下一大圓點」):
+     K.stroke 筆壓 0(繪圖板收筆/下筆那一點)不再當成滿壓,改沿用上一點壓力並收細;K.penTap 筆點按鈕沒送 click 時自動補按(只管筆)。 */
 (function(){
 'use strict';
-var K = { ver: 'v1.1.0' };
+var K = { ver: 'v1.2.0' };
 function clamp(v, a, b){ return v < a ? a : (v > b ? b : v); }
 function now(){ return Date.now(); }
 
@@ -568,6 +570,9 @@ K.stroke = function(o){
   function pz(pr, x, y, t){
     var p, dt, v;
     if(o.pen && pr > 0){ F.ps = F.ps == null ? pr : F.ps + (pr - F.ps) * 0.45; p = Math.pow(clamp(F.ps, 0.01, 1), gm); return p; }
+    /* ★ v1.2.0(老師「PC 繪圖板+觸控筆:感壓筆刷收筆時容易留下一大圓點」)根因:繪圖板筆離開前最後幾點(和某些板子剛下筆那一點)回報壓力 0,
+       原本落到下面「沒有筆壓 ⇒ 1」= 用最粗的寬度畫最後一點 ⇒ 大圓點。改成:筆的壓力 0 ⇒ 沿用上一點壓力再減半(自然收細);還沒有任何壓力就用很細的 0.1 */
+    if(o.pen){ if(F.ps == null) return Math.pow(0.1, gm); F.ps = F.ps * 0.5; return Math.pow(clamp(F.ps, 0.01, 1), gm); }
     if(o.speed){ if(F.tl){ dt = Math.max(1, t - F.tl.t); v = Math.sqrt((x - F.tl.x) * (x - F.tl.x) + (y - F.tl.y) * (y - F.tl.y)) / dt; F.vp = F.vp + (clamp(1.08 - v * 0.42, 0.28, 1) - F.vp) * 0.18; } F.tl = { x: x, y: y, t: t }; return F.vp; }
     return 1;
   }
@@ -691,5 +696,52 @@ K.loupe = function(cx, cy, hex, old){ var e = document.getElementById('pk-loupe'
   e.style.left = cx + 'px'; e.style.top = cy + 'px'; e.style.opacity = '1';
   e.style.background = 'radial-gradient(circle,' + (old || hex) + ' 0 38%,#fff 38% 44%,' + hex + ' 44%)';
   clearTimeout(K._lpT); K._lpT = setTimeout(function(){ e.style.opacity = '0'; }, 700); };
+
+/* ══ ★ v1.2.0(老師「PC 版用繪圖板+觸控筆:只能畫圖,但無法點擊所有功能鍵」)筆點按鈕保險 ══
+   Windows 上 Chrome/Edge 把觸控筆的「點一下」當成觸控手勢:筆尖稍微晃一下(被當成要捲動)、或按得稍久(Windows Ink「按住 = 右鍵」)
+   ⇒ 只送 pointerdown/pointerup(或 pointercancel),不送 click ⇒ 按鈕都沒反應(畫布自己聽 pointer 事件,所以畫圖正常)。
+   修法:只管 pointerType === 'pen'。筆在同一個可按的東西上按下又放開(移動 < 18px、2 秒內),80ms 內沒等到真的 click ⇒ 我們替它補按一下;
+   補按之後 0.8 秒內同一個目標又來真的 click ⇒ 吃掉(不會按兩次)。畫布、輸入框、滑桿、下拉選單不補(它們自己聽 pointer 事件)。
+   滑鼠、手指完全不受影響。 */
+K.penTap = (function(){
+  var P = null, synT = null, synAt = 0;
+  function skip(t){ var tg = t && t.tagName, ty; if(!tg) return true; tg = tg.toUpperCase();
+    if(tg === 'CANVAS' || tg === 'TEXTAREA' || tg === 'SELECT' || tg === 'OPTION' || tg === 'HTML' || tg === 'BODY') return true;
+    if(tg === 'INPUT'){ ty = String(t.type || '').toLowerCase(); return !(ty === 'checkbox' || ty === 'radio' || ty === 'button' || ty === 'submit' || ty === 'color' || ty === 'file'); }
+    return !!t.isContentEditable; }
+  function bigCv(t){ var cs = t.getElementsByTagName ? t.getElementsByTagName('canvas') : [], i; for(i = 0; i < cs.length && i < 30; i++){ if((cs[i].offsetWidth || 0) > 300) return true; } return false; }   /* 圖層縮圖這種小畫布不算 */
+  function hasData(t){ var a = t.attributes, i; if(!a) return false; for(i = 0; i < a.length; i++){ if(a[i].name.indexOf('data-') === 0) return true; } return false; }
+  /* 可以按的東西:按鈕/連結/標籤/勾選框、有 onclick、role=button,或帶 data-* 的格子(圖層列、色票、選項卡都是 data-* + 外層代理 click);
+     碰到畫布或「裡面有畫布的大框」就停(那是畫畫區,不補按) */
+  function hot(t){ var n = 0; while(t && t.nodeType === 1 && n < 8){ var tg = t.tagName.toUpperCase();
+      if(tg === 'BUTTON' || tg === 'A' || tg === 'LABEL' || tg === 'SUMMARY' || tg === 'INPUT' || t.onclick || t.getAttribute('role') === 'button') return t;
+      if(tg === 'CANVAS' || bigCv(t)) return null;
+      if(hasData(t)) return t;
+      t = t.parentNode; n++; } return null; }
+  function contains(a, b){ return !!(a && b && (a === b || (a.contains && a.contains(b)))); }
+  function fire(el, x, y){ var ev; synAt = Date.now(); synT = el;
+    try{ ev = new MouseEvent('click', { bubbles: true, cancelable: true, view: window, clientX: x, clientY: y, button: 0, detail: 1 }); el.dispatchEvent(ev); }catch(_){ try{ el.click(); }catch(_2){} } }
+  function settle(e, cancelled){ var d = P; if(!d || e.pointerId !== d.id) return; P = null;
+    if(Math.abs(e.clientX - d.x) + Math.abs(e.clientY - d.y) > 18 || Date.now() - d.t > 2000) return;
+    var up = cancelled ? d.t0 : (document.elementFromPoint(e.clientX, e.clientY) || e.target);
+    if(!cancelled && !(contains(d.h, up) || contains(up, d.t0))) return;
+    d.wait = setTimeout(function(){ if(d.got) return; if(!d.t0.isConnected) return; fire(d.t0, e.clientX, e.clientY); }, 80);
+    K._ptLast = d; }
+  if(typeof document === 'undefined' || document._mgpkPenTap) return { on: false };
+  document._mgpkPenTap = 1;
+  document.addEventListener('pointerdown', function(e){ P = null; if(e.pointerType !== 'pen' || (e.button && e.button !== 0)) return;
+    if(skip(e.target)) return; var h = hot(e.target); if(!h) return;
+    P = { id: e.pointerId, x: e.clientX, y: e.clientY, t: Date.now(), t0: e.target, h: h, got: false }; }, true);
+  document.addEventListener('pointerup', function(e){ if(e.pointerType === 'pen') settle(e, false); }, true);
+  document.addEventListener('pointercancel', function(e){ if(e.pointerType === 'pen') settle(e, true); }, true);
+  document.addEventListener('click', function(e){
+    if(!e.isTrusted) return;   /* 我們自己補的 */
+    var d = K._ptLast; if(d && !d.got && (contains(d.h, e.target) || contains(e.target, d.t0))){ d.got = true; clearTimeout(d.wait); }   /* 真的 click 有來 ⇒ 不補 */
+    if(synT && Date.now() - synAt < 800 && (contains(synT, e.target) || contains(e.target, synT))){ synT = null; e.stopPropagation(); e.preventDefault(); }   /* 補按過了,遲到的真 click 吃掉 */
+  }, true);
+  /* Windows Ink 筆按住會跳右鍵選單:在按鈕上不要跳 */
+  document.addEventListener('contextmenu', function(e){ if(e.pointerType === 'pen' || (P && Date.now() - P.t < 3000)){ if(hot(e.target)) e.preventDefault(); } }, true);
+  return { on: true };
+})();
 window.MGPK = K;
 })();
