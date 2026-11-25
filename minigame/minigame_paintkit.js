@@ -14,7 +14,9 @@
      K.fillMaskGap 縫隙偵測(學 Clip Studio Paint)、K.recolorPaint 重新著色、K.adjustData/K.blurData 調整、K.sel* 選取範圍、K.maskCut、
      K.BM 混合模式表、K.loupe 吸色放大鏡;選色器 K.wheel 加 🎡 色彩和諧(o.harm === false 可關);新功能 ? 說明 K.layerHelp。
    ★ v1.2.0(2026-11-25・老師「PC 版用繪圖板+觸控筆:只能畫圖但無法點擊所有功能鍵;感壓筆刷收筆時容易留下一大圓點」):
-     K.stroke 筆壓 0(繪圖板收筆/下筆那一點)不再當成滿壓,改沿用上一點壓力並收細;K.penTap 筆點按鈕沒送 click 時自動補按(只管筆)。 */
+     K.stroke 筆壓 0(繪圖板收筆/下筆那一點)不再當成滿壓,改沿用上一點壓力並收細;K.penTap 筆點按鈕沒送 click 時自動補按(只管筆)。
+   ★ v1.2.1(2026-11-25・老師「PC 版的繪圖板筆觸無法拖曳筆刷、透明度粗細、圖層位置等」):K.penRange 筆拖滑桿自己接手(pointer capture 換算數值、送 input/change)、
+     所有滑桿 touch-action:none(筆拖滑桿不再被瀏覽器當成捲動面板)。 */
 (function(){
 'use strict';
 var K = { ver: 'v1.2.0' };
@@ -741,6 +743,43 @@ K.penTap = (function(){
   }, true);
   /* Windows Ink 筆按住會跳右鍵選單:在按鈕上不要跳 */
   document.addEventListener('contextmenu', function(e){ if(e.pointerType === 'pen' || (P && Date.now() - P.t < 3000)){ if(hot(e.target)) e.preventDefault(); } }, true);
+  return { on: true };
+})();
+/* ══ ★ v1.2.1(2026-11-25・老師「PC 版的繪圖板筆觸無法拖曳筆刷、透明度、粗細、圖層位置等」)筆拖滑桿保險 ══
+   Windows 的 Chrome/Edge 把觸控筆的拖曳當成觸控手勢:滑桿在可以上下捲動的面板裡(touch-action:pan-y)或沒設 touch-action 時,
+   筆一拖,瀏覽器就判定「要捲動」⇒ 送 pointercancel ⇒ 滑桿不動(手指在 iPad 上不受影響,因為 Safari 自己處理滑桿)。
+   修法:只管 pointerType === 'pen' 在 <input type=range> 上按下 ⇒ 我們自己接手:抓住這支筆(setPointerCapture),
+   依筆的水平位置換算數值、送出 input 事件(跟手拖一樣即時),放開送 change。另外所有滑桿加 touch-action:none,不讓筆被當成捲動。
+   滑鼠、手指完全不受影響;停用中的滑桿不理。 */
+K.penRange = (function(){
+  var R = null;
+  if(typeof document === 'undefined' || document._mgpkPenRange) return { on: false };
+  document._mgpkPenRange = 1;
+  try{ var st = document.createElement('style'); st.id = 'mgpk-pen-range-css'; st.textContent = 'input[type=range]{touch-action:none}'; (document.head || document.documentElement).appendChild(st); }catch(_){}
+  function isR(t){ return !!(t && t.tagName && t.tagName.toUpperCase() === 'INPUT' && String(t.type || '').toLowerCase() === 'range' && !t.disabled); }
+  function setFrom(el, x){
+    var rc = el.getBoundingClientRect(), mn = parseFloat(el.min), mx = parseFloat(el.max), stp = parseFloat(el.step), tw, u, v, old;
+    if(isNaN(mn)) mn = 0; if(isNaN(mx)) mx = 100; if(!(rc.width > 4) || mx <= mn) return;
+    tw = Math.min(rc.height || 16, 22, rc.width / 4);   /* 圓鈕寬度:頭尾各留半顆,跟原生滑桿手感一樣 */
+    u = clamp((x - rc.left - tw / 2) / Math.max(1, rc.width - tw), 0, 1);
+    v = mn + (mx - mn) * u;
+    if(!isNaN(stp) && stp > 0) v = mn + Math.round((v - mn) / stp) * stp;
+    v = clamp(v, mn, mx); old = el.value; el.value = String(v);
+    if(el.value !== old){ try{ el.dispatchEvent(new Event('input', { bubbles: true })); }catch(_){ try{ var e1 = document.createEvent('Event'); e1.initEvent('input', true, true); el.dispatchEvent(e1); }catch(_2){} } R.ch = true; } }
+  function fin(e){ if(!R || e.pointerId !== R.id) return; var d = R; R = null;
+    try{ d.el.releasePointerCapture(e.pointerId); }catch(_){}
+    if(d.ch){ try{ d.el.dispatchEvent(new Event('change', { bubbles: true })); }catch(_){ try{ var e2 = document.createEvent('Event'); e2.initEvent('change', true, true); d.el.dispatchEvent(e2); }catch(_2){} } } }
+  document.addEventListener('pointerdown', function(e){
+    if(e.pointerType !== 'pen' || (e.button && e.button !== 0) || !isR(e.target)) return;
+    R = { id: e.pointerId, el: e.target, ch: false };
+    try{ e.target.setPointerCapture(e.pointerId); }catch(_){}
+    if(e.cancelable) e.preventDefault();   /* 原生滑桿 + 捲動手勢都不要搶 */
+    try{ e.target.focus({ preventScroll: true }); }catch(_f){}
+    setFrom(e.target, e.clientX); }, true);
+  document.addEventListener('pointermove', function(e){ if(!R || e.pointerId !== R.id) return; if(e.cancelable) e.preventDefault(); setFrom(R.el, e.clientX); }, true);
+  document.addEventListener('pointerup', fin, true);
+  document.addEventListener('pointercancel', fin, true);
+  document.addEventListener('lostpointercapture', function(e){ if(R && e.pointerId === R.id) fin(e); }, true);
   return { on: true };
 })();
 window.MGPK = K;

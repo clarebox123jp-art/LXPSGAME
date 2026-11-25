@@ -17,7 +17,7 @@
 (function(){
 'use strict';
 if(window.DSGW) return;
-var VER = 'v1.2.8';   /* ★ v1.2.8(2026-11-25・老師「筆刷新增『液化』功能,同 procreate」「角色皮膚新增 參考(同荒島裝飾描圖功能),可以從現有所有角色中挑選出來」)— 🫠 液化 liqDab/liqStart(推移/扭轉/收縮/膨脹/還原);角色皮膚 🖼 參考分頁(D.REF_HEROES 140 位,srcUrl 'hero:') */ void 'v1.2.7';   /* ★ v1.2.7(2026-11-25・老師「右下角的圖層功能鍵太佔空間,高度縮小些。圖層可看的高度提高到三層」「繳交作品改成打字命名,最多10字。智慧金鑰審核增加不雅字詞判別」)— 圖層小視窗/選色區按鈕不吃全域 min-height、清單至少 3 列;TITLE_MAX 10、拿掉詞組下拉;審核查作品說明/希望獎勵文字、圖上文字逐塊+串接查 */ void 'v1.2.6';   /* ★ v1.2.6(2026-11-25・老師「角色皮膚和荒島裝飾要有吸色滴管在色環旁邊可以使用」「用橡皮擦擦掉的東西,要減去相對應的步數」)— 🧪 吸管 eyeToggle/eyePick(I 鍵);重疊格記筆畫編號,擦掉七成以上扣回步數(清/刪圖層也扣);像素筆拖曳補點 */ void 'v1.2.5';   /* ★ v1.2.5(2026-11-25・老師「皮膚和裝飾繳交追加『作品說明』20字到100字內」)— 作品資料加 #dsg-desc、存 mod.desc、老師台倉庫卡片顯示 */ void 'v1.2.4';   /* ★ v1.2.4(2026-11-25・老師「步數計算,在同一條線或色塊上用相同的筆刷或色彩重疊,只算一步」)— 重疊格 ovStroke:同筆刷或同色重疊 ≥70% 不加步數 */ void 'v1.2.3';   /* ★ v1.2.3(2026-11-25・老師「角色皮膚設計的人物骨架,走路和奔跑的姿勢是嚴重錯誤的,請重新以多角度檢視」)— pzFromSag 真 3D 走路/奔跑範本(D.POSE_SAG),正面選到時自動轉斜側 */ void 'v1.2.2';   /* ★ v1.2.2(2026-11-25・老師「美術設計師的投稿要求步數增加至500步」+平板轉螢幕後重新對齊畫布)— 門檻 ops 500(舊雲端 100 視為沒改)、轉向後延遲重新 fitStage */ void 'v1.2.1';   /* ★ v1.2.1(2026-11-23・老師「美術設計師的作品增加『不存檔直接退出』的選項」):回工作室的取名視窗多「🚪 不存檔直接退出」(discardExit) */ void 'v1.2.0';   /* ★ v1.2.0(2026-11-19 15:09・老師「美術設計師的面板適當縮小左右的工具介面面板尺寸和字體,讓中央畫圖區域加大些」「畫筆感壓、即時反應和流暢感再提升」)
+var VER = 'v1.2.9';   /* ★ v1.2.9(2026-11-25・老師「角色皮膚和裝飾的筆刷新增 噴槍」+「有更新時不要強制中斷畫圖」)— 💨 噴槍 BRUSH.air/airDab(軟邊霧+細點、按住不動持續噴);DSGW.busy;繪圖板筆拖滑桿在 paintkit v1.2.1 */ void 'v1.2.8';   /*★ v1.2.8(2026-11-25・老師「筆刷新增『液化』功能,同 procreate」「角色皮膚新增 參考(同荒島裝飾描圖功能),可以從現有所有角色中挑選出來」)— 🫠 液化 liqDab/liqStart(推移/扭轉/收縮/膨脹/還原);角色皮膚 🖼 參考分頁(D.REF_HEROES 140 位,srcUrl 'hero:') */ void 'v1.2.7';   /* ★ v1.2.7(2026-11-25・老師「右下角的圖層功能鍵太佔空間,高度縮小些。圖層可看的高度提高到三層」「繳交作品改成打字命名,最多10字。智慧金鑰審核增加不雅字詞判別」)— 圖層小視窗/選色區按鈕不吃全域 min-height、清單至少 3 列;TITLE_MAX 10、拿掉詞組下拉;審核查作品說明/希望獎勵文字、圖上文字逐塊+串接查 */ void 'v1.2.6';   /* ★ v1.2.6(2026-11-25・老師「角色皮膚和荒島裝飾要有吸色滴管在色環旁邊可以使用」「用橡皮擦擦掉的東西,要減去相對應的步數」)— 🧪 吸管 eyeToggle/eyePick(I 鍵);重疊格記筆畫編號,擦掉七成以上扣回步數(清/刪圖層也扣);像素筆拖曳補點 */ void 'v1.2.5';   /* ★ v1.2.5(2026-11-25・老師「皮膚和裝飾繳交追加『作品說明』20字到100字內」)— 作品資料加 #dsg-desc、存 mod.desc、老師台倉庫卡片顯示 */ void 'v1.2.4';   /* ★ v1.2.4(2026-11-25・老師「步數計算,在同一條線或色塊上用相同的筆刷或色彩重疊,只算一步」)— 重疊格 ovStroke:同筆刷或同色重疊 ≥70% 不加步數 */ void 'v1.2.3';   /* ★ v1.2.3(2026-11-25・老師「角色皮膚設計的人物骨架,走路和奔跑的姿勢是嚴重錯誤的,請重新以多角度檢視」)— pzFromSag 真 3D 走路/奔跑範本(D.POSE_SAG),正面選到時自動轉斜側 */ void 'v1.2.2';   /* ★ v1.2.2(2026-11-25・老師「美術設計師的投稿要求步數增加至500步」+平板轉螢幕後重新對齊畫布)— 門檻 ops 500(舊雲端 100 視為沒改)、轉向後延遲重新 fitStage */ void 'v1.2.1';   /* ★ v1.2.1(2026-11-23・老師「美術設計師的作品增加『不存檔直接退出』的選項」):回工作室的取名視窗多「🚪 不存檔直接退出」(discardExit) */ void 'v1.2.0';   /* ★ v1.2.0(2026-11-19 15:09・老師「美術設計師的面板適當縮小左右的工具介面面板尺寸和字體,讓中央畫圖區域加大些」「畫筆感壓、即時反應和流暢感再提升」)
    橫放左欄 28vw→21vw、右欄 22vw→18vw,面板字級約縮 15%;自由手繪接共用筆畫濾波器(防抖/筆壓平滑與軟硬/速度模擬筆壓/曲線內插,設定跟創藝工坊共用);↔ 翻轉檢視;
    每一筆下筆/收筆不再整串重算所有圖層的指紋(plsHash 快取)⇒ 舊 iPad 下筆不頓。選色器多了 🎡 配色(MGPK)。 */ void 'v1.1.4';   /* ★ v1.1.4(2026-11-18・老師「設計師成功投稿時,可預先勾選至多三種希望的獎勵」)— 繳交作品資料視窗多一區「🎁 希望獲得的獎勵」(D.WISH,最多 3 種,「其他」要自己寫);
    寫進 designSubmit.wish / wishTxt / em(信箱)。Firestore 規則還沒發布新版時,這三格會被擋 ⇒ 自動改放進 mod.wish/mod.wishTxt/mod.em 再交一次(作品照常繳交成功)。 */ void 'v1.1.3';/* ★ v1.1.3(2026-11-13・老師)①「每次復原,要減去操作數」:undo/redo 整份換回快照(含 ops 與指紋 oh)②「我的作品」⬇️ 下載圖片 PNG(透明/白色背景;recEd/dlWork/dlSave,iPad 走分享選單「儲存影像」)③ 13:58「設計師畫布也改成同樣的固定方式」:右欄選色器固定、圖層小視窗 .dsg-lwin 自己捲(＋▲▼🗑 在標題列 #dsg-lwh)、物件屬性在下;直式維持整欄捲 */ void 'v1.1.2';   /* ★ v1.1.2(2026-11-11 20:50・老師)PC 快捷鍵 Ctrl+Z 復原/Ctrl+Y 重做、按住空白鍵游標變手掌拖曳畫布(dsgKey/handSet) */ void 'v1.1.1';   /* ★ v1.1.1(2026-11-11・老師「PC 版手繪、點陣、像素畫出來的點(線)都比滑鼠游標低」)滑鼠/筆座標改用畫布在螢幕上的實際大小換算(stPt/vzOf),PC 放大後也精準 */ void 'v1.1.0';   /* ★ v1.1.0(2026-11-10・老師)圖層(可改名、⋯ 透明度/參照/阿爾法鎖定)、選色器+圖層常駐右欄、環形色相+三角形選色器、7 種畫筆(鉛筆/水彩/蠟筆/毛筆/圓頭麥克筆/平頭麥克筆/向量筆)、油漆桶(拖顏色+臨界值)、長按 2 秒變向量形狀、剪刀剪下移到指定圖層、變形、小提示與繳交標準收進「怎麼玩」、存檔時間標記、每月繳交 皮膚 1 件+荒島裝飾 1 件分開計算 */ void 'v1.0.7';   /* ★ v1.0.7(2026-11-09)有條件解鎖(創藝工坊全部關卡 ≥2★,unlockCheck/gate('stars'))+ 作品集/設定自動雙向雲端同步(MG_CSYNC;「☁ 立即同步」= 手動保險) */ void 'v1.0.6';   /* ★ v1.0.6(2026-11-08 18:07)雙指捏合縮放/挪動畫布(PC 滾輪、空白鍵/中鍵拖曳)、手機平板直式版面、◧ 面板收合 */ void 'v1.0.5';   /*★ v1.0.5(2026-11-08 13:06~13:24)動作骨架改成 3D 關節人偶:拖關節擺姿勢、拖空白處轉視角、範本當起手式;脊椎 3 節、頭部球體+十字線定位眼鼻(fc 臉方向點)、立體圓柱四肢與關節球;骨架功能鍵 復原/重做/向前/向後/拉近/拉遠;我的姿勢命名儲存(見 pzDraw/pzDragTo/pzNudge/pzCmd) */ void 'v1.0.4';   /* ★ v1.0.4(2026-11-08 11:27)作品名不可與已上架商品同名(nameAsk/繳交都查)、角色皮膚繳交存透明全身圖 th→上架複製成 designShopItems.img、老師台「🛒 上架商品」改價/上下架/分紅比例 */ void 'v1.0.3';   /* ★ v1.0.3(2026-11-08 11:03)手繪原創:皮膚只留畫筆+動作骨架、荒島裝飾素材收進參考圖片(描圖層不進作品)、預設畫筆、回工作室先命名、作品集可改名 */ void 'v1.0.2';   /* ★ v1.0.2(2026-11-08 10:51)操作次數算「增加、變色」,且改完要跟原本不一樣(見 endOp/opKey) */ void 'v1.0.1';   /* ★ v1.0.1(2026-11-08)操作次數只算「增加」的動作(見 endOp) */ void 'v1.0.0';
@@ -1490,7 +1490,8 @@ function pmPanel(){
         + '<div class="r">🖊 <span class="lb">筆壓</span><button data-dpc="soft"' + (pp.pc === 'soft' ? ' class="on"' : '') + '>軟</button><button data-dpc="std"' + (pp.pc === 'std' ? ' class="on"' : '') + '>標準</button><button data-dpc="hard"' + (pp.pc === 'hard' ? ' class="on"' : '') + '>硬</button></div>'
         + '<div class="r"><label style="display:flex;align-items:center;gap:.4vmin"><input type="checkbox" id="dsg-spd"' + (pp.spd ? ' checked' : '') + '><span class="lb">手指/滑鼠模擬筆壓</span><span>⚡</span></label></div></div>'; }
     h += '<div class="dsg-chips" style="margin-top:1vmin"><button data-pclr="1">🗑<span class="lb"> 清掉這個圖層</span></button>' + (PKon ? '<button data-dflip="1"' + (E.flip ? ' class="on"' : '') + '>↔<span class="lb"> 翻轉檢視</span></button>' : '') + '</div>';
-    h += '<div class="dsg-tip">' + esc(T({ c: '📐 畫完一筆,筆先不要拿起來停 2 秒,會變成工整的直線、圓、三角形、長方形(向量形狀)。', p: '📐 筆畫結束停留 2 秒即自動轉為向量幾何形狀。' })) + '</div>';
+    if(bt === 'air') h += '<div class="dsg-tip">' + esc(T({ c: '💨 噴槍:像噴漆一樣噴出軟軟的霧,邊緣會淡掉;同一個地方多噴幾次或按住不動會越來越濃,適合畫腮紅、陰影、光暈和漸層。', p: '💨 噴槍:柔邊霧化筆觸,重複噴塗或停留會逐漸加深,適合陰影、腮紅、光暈與漸層。' })) + '</div>';   /* ★ v1.2.9 */
+    else h += '<div class="dsg-tip">' + esc(T({ c: '📐 畫完一筆,筆先不要拿起來停 2 秒,會變成工整的直線、圓、三角形、長方形(向量形狀)。', p: '📐 筆畫結束停留 2 秒即自動轉為向量幾何形狀。' })) + '</div>';
   } else if(E.pm === 'pixel'){
     h += '<div class="dsg-sec">👾 <span class="lb">像素點陣(格子對齊)</span></div>';
     h += '<div class="dsg-sec"><span class="lb">格子數(橫向)</span></div><div class="dsg-chips">'; for(i = 0; i < ns.length; i++) h += '<button data-pxn="' + ns[i] + '"' + (E.px.n === ns[i] ? ' class="on"' : '') + '>' + ns[i] + '</button>'; h += '</div>';
@@ -1729,7 +1730,9 @@ function stageBind(){
         q.f = PK.stroke({ sl: pp.sl / 100, gamma: PK_GAMMA[pp.pc] || 1, pen: pen, speed: spd, step: Math.max(1, Math.min(3, b.w * 0.12)), onSeg: function(a2, b2){ q.pr = q.pen ? b2.p : q.pr0; bseg(q, a2, b2); } });
         q.f.add(p.x, p.y, e.pressure || 0, PK.tiltOf(e), e.timeStamp || now()); }
       else bseg(q, p, { x: p.x + 0.01, y: p.y }); }
-    if(PK && !q.er) q.hold = PK.holdTimer(2000, 8, function(){ qsFire(q); });
+    if(t === 'air' && !q.er){   /* ★ v1.2.9 噴槍:筆停住不動也一直噴(像真的噴槍),所以不做「長按 2 秒變向量形狀」 */
+      q.ap = { x: p.x, y: p.y }; q.airT = setInterval(function(){ if(g !== q || q.m !== 'paint' || !q.ap){ clearInterval(q.airT); q.airT = 0; return; } airDab(q, q.ap.x, q.ap.y, 0.55); }, 60); }
+    else if(PK && !q.er) q.hold = PK.holdTimer(2000, 8, function(){ qsFire(q); });
     return q;
   }
   function brushMove(q, e){
@@ -1743,11 +1746,21 @@ function stageBind(){
       q.last = { x: p.x, y: p.y }; if(q.pts.length < 4000) q.pts.push(q.last); }
     if(q.hold){ q.hold.move(q.last.x, q.last.y, 8 / E.k); holdAnim(q); }
   }
+  /* ★ v1.2.9 噴槍一團霧:軟邊圓形漸層(中心濃、邊緣透明)+ 幾顆細小噴點;筆壓越大越濃,k = 按住不動時每 60ms 補噴的比例 */
+  function airDab(q, x, y, k){
+    var X = q.x, r = Math.max(2, q.w * 0.8), al = Math.min(1, 0.075 * (0.35 + 0.9 * (q.pr || 0.5)) * k), gr, i, an, rr;
+    if(!X) return;
+    gr = X.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, q.c); gr.addColorStop(1, q.c + '00');
+    X.globalAlpha = al; X.fillStyle = gr; X.beginPath(); X.arc(x, y, r, 0, Math.PI * 2); X.fill();
+    X.fillStyle = q.c;
+    for(i = 0; i < 3; i++){ an = Math.random() * Math.PI * 2; rr = r * Math.sqrt(Math.random()); X.globalAlpha = Math.min(1, al * 2.2); X.fillRect(x + Math.cos(an) * rr - 0.6, y + Math.sin(an) * rr - 0.6, 1.2, 1.2); }
+    X.globalAlpha = 1; }
   function bseg(q, a, b){
     var X = q.x, t = q.t, w = q.w, dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx * dx + dy * dy), n, i, k, u, x0, y0, r;
     X.fillStyle = X.strokeStyle = q.c; X.lineCap = X.lineJoin = 'round'; X.globalAlpha = 1;
     if(t === 'pencil'){ X.globalAlpha = 0.85; X.lineWidth = Math.max(1, w * 0.4 * (0.6 + 0.8 * q.pr)); X.beginPath(); X.moveTo(a.x, a.y); X.lineTo(b.x, b.y); X.stroke();
       n = Math.ceil(d / 3); for(i = 0; i < n; i++){ if(Math.random() < 0.35){ u = Math.random(); X.globalAlpha = 0.25; X.fillRect(a.x + dx * u + (Math.random() - 0.5) * w * 0.5, a.y + dy * u + (Math.random() - 0.5) * w * 0.5, 1.2, 1.2); } } X.globalAlpha = 1; return; }
+    if(t === 'air'){ n = Math.max(1, Math.ceil(d / Math.max(0.8, w * 0.14))); for(i = 1; i <= n; i++){ u = i / n; airDab(q, a.x + dx * u, a.y + dy * u, 1); } q.ap = { x: b.x, y: b.y }; X.globalAlpha = 1; return; }   /* ★ v1.2.9 噴槍 */
     if(t === 'water'){ n = Math.max(1, Math.ceil(d / Math.max(1, w * 0.22))); for(i = 1; i <= n; i++){ u = i / n; x0 = a.x + dx * u; y0 = a.y + dy * u; r = w * 0.6;
         var gr = X.createRadialGradient(x0, y0, 0, x0, y0, r); gr.addColorStop(0, q.c); gr.addColorStop(1, q.c + '00'); X.globalAlpha = 0.14; X.fillStyle = gr; X.beginPath(); X.arc(x0, y0, r, 0, Math.PI * 2); X.fill(); } X.globalAlpha = 1; return; }
     if(t === 'crayon'){ n = Math.max(1, Math.ceil(d / Math.max(1, w * 0.18))); for(i = 1; i <= n; i++){ u = i / n; x0 = a.x + dx * u; y0 = a.y + dy * u;
@@ -1761,12 +1774,14 @@ function stageBind(){
       X.lineWidth = h2; X.lineCap = 'butt'; X.beginPath(); X.moveTo(b.x + vx, b.y + vy); X.lineTo(b.x - vx, b.y - vy); X.stroke(); return; }
     X.lineWidth = t === 'vec' ? Math.max(2, w * 0.6) : w; X.beginPath(); X.moveTo(a.x, a.y); X.lineTo(b.x, b.y); X.stroke();   /* 圓頭麥克筆、向量筆(預覽) */
   }
-  function brushAbort(q){ if(q.er){ if(q.snap){ try{ ctx.putImageData(q.snap, 0, 0); }catch(x){} } } else scrOff(); }
+  function airStop(q){ if(q && q.airT){ clearInterval(q.airT); q.airT = 0; } }
+  function brushAbort(q){ airStop(q); if(q.er){ if(q.snap){ try{ ctx.putImageData(q.snap, 0, 0); }catch(x){} } } else scrOff(); }
   function brushEnd(q){
     if(q.er){ var ovE = ovStroke(E.al, q.pts, q.w, '', '', true); ovSub(ovE.sub); plSave(cv); endOp(false); return; }   /* 橡皮擦不算操作次數(★ v1.2.4 擦過的格子從重疊格清掉;★ v1.2.6 擦掉七成以上的筆畫扣回步數) */
     if(q.t === 'vec'){ scrOff(); var it = pathItem(q.pts, q.c, Math.max(2, Math.round(q.w * 0.6))); if(!it){ E.undo.pop(); E.redo = q.rd || []; E._bk = null; return; }
       objPush(it); endOp(true); layersPaint(); propPaint(); return; }
     if(q.f) q.f.end();   /* ★ v1.2.0 防抖收筆:追上最後一點 */
+    airStop(q);
     scrMerge(cv, (BRUSH[q.t] ? BRUSH[q.t].a : 1) * (E.brush.op || 1)); plSave(cv);
     var ovR = ovStroke(E.al, q.pts, q.w, q.t, q.c, false);   /* ★ v1.2.4 描同一條線/塗同一塊(同筆刷或同色重疊 ≥70%)⇒ 不加步數 */
     if(ovR.same){ endOp(false); ovReg(E.al, ovR.cs, false); if(!E.ovTold){ E.ovTold = 1; toast(T({ c: '✋ 在同一條線或同一塊上,用一樣的筆刷或顏色重複塗,只算一步喔', p: '✋ 以相同筆刷或顏色重疊描繪同一處,不重複計算操作次數' })); } }
@@ -1887,9 +1902,10 @@ function stageBind(){
    舊作品:只有一張畫筆層 r.paint + d.pb(畫的東西在最下層) ⇒ 自動轉成 [圖層 1, 物件層] 或 [物件層, 圖層 1]。 */
 var BRUSH = {
   pencil: { n: '鉛筆', e: '✏️', a: 0.9 }, water: { n: '水彩', e: '💧', a: 0.8 }, crayon: { n: '蠟筆', e: '🖍', a: 0.95 }, ink: { n: '毛筆', e: '🖌', a: 1 },
-  mround: { n: '圓頭麥克筆', e: '🖊', a: 0.88 }, mflat: { n: '平頭麥克筆', e: '🖋', a: 0.8 }, vec: { n: '向量筆', e: '✒️', a: 1 }
+  mround: { n: '圓頭麥克筆', e: '🖊', a: 0.88 }, mflat: { n: '平頭麥克筆', e: '🖋', a: 0.8 }, vec: { n: '向量筆', e: '✒️', a: 1 },
+  air: { n: '噴槍', e: '💨', a: 1 }   /* ★ v1.2.9(2026-11-25・老師「角色皮膚和裝飾的筆刷新增 噴槍」)軟邊霧狀,來回噴會越來越濃;按住不動會一直噴 */
 };
-var BR_ORDER = ['pencil', 'water', 'crayon', 'ink', 'mround', 'mflat', 'vec'];
+var BR_ORDER = ['pencil', 'water', 'air', 'crayon', 'ink', 'mround', 'mflat', 'vec'];
 var PL_MAX = 6;
 function fmtStamp(t){ var d = new Date(+t || now()); function z(n){ return (n < 10 ? '0' : '') + n; } return d.getFullYear() + '/' + z(d.getMonth() + 1) + '/' + z(d.getDate()) + ' ' + z(d.getHours()) + ':' + z(d.getMinutes()); }   /* ★ v1.1.0 老師「存檔自動標記年月日+幾點幾分(24 小時制)」 */
 function lyList(){ return (S.ed && S.ed.d.layers) || []; }
@@ -2683,6 +2699,7 @@ function gmSet(){
   };
 }
 
-window.DSGW = { ver: VER, enter: enter, onUser: onUser, isOn: function(){ return S.on; }, qShow: function(){ qShow(); },
+window.DSGW = { ver: VER, enter: enter, onUser: onUser, isOn: function(){ return S.on; },
+  busy: function(){ return !!(S.on && S.ed); },   /* ★ v1.2.9 正在編輯作品 ⇒ 小遊戲本體的自動更新不打斷(改頂部提示) */ qShow: function(){ qShow(); },
   _t: { S: S, wordHits: wordHits, qualityStats: qualityStats, renderComposite: renderComposite, ymOf: ymOf, norm: norm, newWork: newWork, editorOpen: editorOpen, plsJoin: plsJoin, subIdOf: subIdOf } };
 })();

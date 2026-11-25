@@ -36,7 +36,7 @@
 (function(){
 'use strict';
 if(window.ARTW) return;
-var ART_VER = 'v1.3.2';   /* ★ v1.3.2(2026-11-25・老師「平板會不小心旋轉…圖片看起來被壓扁,又轉不回原本的視角」)— 轉螢幕後螢幕畫布重新量大小(延遲重量+ResizeObserver+每格檢查比例),畫面中心不跑;繪圖板筆修正在 paintkit v1.2.0 */ void 'v1.3.1';   /* ★ v1.3.1(2026-11-23・老師「旋轉畫布功能,顯示當前角度、復原原本角度、45/90/180 度順逆時針旋轉」):👁 檢視加旋轉區(目前角度、逆/順 45°/90°/180°、復原 0°)+ 畫布左上角度標籤(viewRotTo/degTxt/rotBadge) */ void 'v1.3.0';   /* ★ v1.3.0(2026-11-19 15:09・老師選「乙」:跟 Procreate 比還缺的 17 項 +「畫筆感壓、即時反應和流暢感再提升」「網路上推薦的其他繪圖 APP 好用功能學起來」)
+var ART_VER = 'v1.3.3';   /* ★ v1.3.3(2026-11-25・老師「秀拉點描法關卡的審核太嚴苛,降低標準」+「有更新時不要強制中斷畫圖」)— 點描 3★ ≥25 點≥2 色/2★ ≥12/1★ ≥6、線條多改成降等不直接 0★、黑灰點算一色;ARTW.busy/flush 給小遊戲本體判斷畫圖中;繪圖板筆拖滑桿在 paintkit v1.2.1 */ void 'v1.3.2';   /*★ v1.3.2(2026-11-25・老師「平板會不小心旋轉…圖片看起來被壓扁,又轉不回原本的視角」)— 轉螢幕後螢幕畫布重新量大小(延遲重量+ResizeObserver+每格檢查比例),畫面中心不跑;繪圖板筆修正在 paintkit v1.2.0 */ void 'v1.3.1';   /* ★ v1.3.1(2026-11-23・老師「旋轉畫布功能,顯示當前角度、復原原本角度、45/90/180 度順逆時針旋轉」):👁 檢視加旋轉區(目前角度、逆/順 45°/90°/180°、復原 0°)+ 畫布左上角度標籤(viewRotTo/degTxt/rotBadge) */ void 'v1.3.0';   /* ★ v1.3.0(2026-11-19 15:09・老師選「乙」:跟 Procreate 比還缺的 17 項 +「畫筆感壓、即時反應和流暢感再提升」「網路上推薦的其他繪圖 APP 好用功能學起來」)
    ① 色彩和諧(選色器下 🎡 配色:互補/相近/三等分/分割互補)② 圖層 ⧉ 複製、⤓ 向下合併(Ctrl+J/E)③ ✂️ 剪切遮罩 ④ 〰 防抖 StreamLine ⑤ 👆 塗抹筆
    ⑥ ↔ 翻轉檢視 ⑦ 兩指旋轉畫布(Shift+滾輪)⑧ 四指點一下/Tab 全螢幕 ⑨ 🦋 對稱輔助(左右/上下/四向/放射,所有筆刷)⑩ 📐 透視格線一點/兩點+線條吸附
    ⑪ ⬚ 選取(矩形/橢圓/手繪/魔術棒/反轉/移動選取,畫/擦/填/調整都只在選取裡)⑫ 🎛 調整(色相/彩度/明度/模糊)+ 🌗 灰階檢視 ⑬ 🔁 重新著色 ⑭ 🎭 混合模式
@@ -3276,13 +3276,18 @@ function evalDraw(task, img){
     if(k >= 2) card.push({ ok: 1, t: '你用了 ' + k + ' 種不同的筆刷,畫面的質感很豐富!' });
     if(k < 3) card.push({ ok: 0, t: '再換一種筆刷(例如水彩或噴槍)畫一部分,感受不同的筆觸。' });
   } else if(task === 'dots'){   /* ★ v1.1.0 大師畫廊:點描 — 數「分開的小色塊」 */
-    var dr = dotCount(img); k = dr.n;
-    if(dr.lines > 0.35) return { stars: 0, card: [{ ok: 0, t: '畫面裡有很多連在一起的線條,點描要「一點一點」分開點喔。' }] };
-    stars = k >= 40 ? 3 : (k >= 20 ? 2 : (k >= 10 ? 1 : 0));
-    if(stars && dr.hues < 3){ stars = Math.min(stars, 2); card.push({ ok: 0, t: '再多用一兩種顏色(至少 3 種),點描會更有秀拉的感覺。' }); }
-    if(k >= 10) card.push({ ok: 1, t: '你點了大約 ' + k + ' 個小色點,有點描的味道了!' });
-    if(stars < 3 && dr.hues >= 3) card.push({ ok: 0, t: '再多點一些小點(40 個以上),遠看畫面會更完整。' });
-    if(!stars) card.push({ ok: 0, t: '目前只數到 ' + k + ' 個分開的小點,至少要 10 個。' });
+    /* ★ v1.3.3(2026-11-25・老師「秀拉點描法關卡的審核太嚴苛,降低標準」)放寬:
+       ⭐⭐⭐ 25 點以上且 2 種以上顏色(原 40 點、3 色)・⭐⭐ 12 點(原 20)・⭐ 6 點(原 10);
+       線條占比 >35% 原本直接 0★ ⇒ 改成:>70% 才 0★(幾乎全是線)、45~70% 最多 1★、35~45% 最多 2★,點照樣算;黑/灰色點也算一種顏色。 */
+    var dr = dotCount(img), lnCap = 3; k = dr.n;
+    if(dr.lines > 0.7 && k < 25) return { stars: 0, card: [{ ok: 0, t: '畫面幾乎都是連在一起的線條,點描要「一點一點」分開點喔。' }] };
+    if(dr.lines > 0.45) lnCap = 1; else if(dr.lines > 0.35) lnCap = 2;
+    stars = k >= 25 ? 3 : (k >= 12 ? 2 : (k >= 6 ? 1 : 0));
+    if(stars && dr.hues < 2){ stars = Math.min(stars, 2); card.push({ ok: 0, t: '再多用一種顏色(至少 2 種),點描會更有秀拉的感覺。' }); }
+    if(stars > lnCap){ stars = lnCap; card.push({ ok: 0, t: '有一部分畫成了連在一起的線條或大色塊,改成一點一點分開點,就能拿更多星星。' }); }
+    if(k >= 6) card.push({ ok: 1, t: '你點了大約 ' + k + ' 個小色點,有點描的味道了!' });
+    if(stars < 3 && k < 25 && dr.hues >= 2) card.push({ ok: 0, t: '再多點一些小點(25 個以上),遠看畫面會更完整。' });
+    if(!stars) card.push({ ok: 0, t: '目前只數到 ' + k + ' 個分開的小點,至少要 6 個。' });
   } else if(task === 'free'){   /* 比賽/主題的自由題:系統只看完成度 */
     if(cover < 0.05) return { stars: 0, card: [{ ok: 0, t: '畫面幾乎是空白的。' }] };
     stars = cover >= 0.35 && img.strokes >= 25 ? 3 : (cover >= 0.15 ? 2 : 1);
@@ -3374,20 +3379,22 @@ function dotCount(img){
      · 細長或空心的(線條、輪廓)、或超過畫面 4% 的大色塊 ⇒ 才算線條 */
   var blobs = [], areas = [], bx0, bx1, by0, by1, bwB, bhB, elB, flB, med, j2;
   for(i = 0; i < w * h; i++){ if(seen[i] || !isP(i)) continue;
-    st = [i]; seen[i] = 1; cnt = 0; var bestP = i, bestS = -1, ss; bx0 = w; bx1 = 0; by0 = h; by1 = 0;
+    st = [i]; seen[i] = 1; cnt = 0; var bestP = i, bestS = -1, ss, hb = {}, nhb = 0, hk; bx0 = w; bx1 = 0; by0 = h; by1 = 0;
     while(st.length){ p = st.pop(); cnt++; x = p % w; y = (p - x) / w; if(x < bx0) bx0 = x; if(x > bx1) bx1 = x; if(y < by0) by0 = y; if(y > by1) by1 = y;
-      ss = Math.max(d[p * 4], d[p * 4 + 1], d[p * 4 + 2]) - Math.min(d[p * 4], d[p * 4 + 1], d[p * 4 + 2]); if(ss > bestS){ bestS = ss; bestP = p; }   /* 用這一點裡最鮮豔的像素判斷顏色(邊緣反鋸齒比較淡) */
+      ss = Math.max(d[p * 4], d[p * 4 + 1], d[p * 4 + 2]) - Math.min(d[p * 4], d[p * 4 + 1], d[p * 4 + 2]); if(ss > bestS){ bestS = ss; bestP = p; }
+      if(nhb < 3){ hk = ss > 60 ? (d[p * 4] >= d[p * 4 + 1] ? (d[p * 4] >= d[p * 4 + 2] ? (d[p * 4 + 1] > d[p * 4 + 2] ? 'ry' : 'rm') : 'b') : (d[p * 4 + 1] >= d[p * 4 + 2] ? 'g' : 'b')) : (Math.max(d[p * 4], d[p * 4 + 1], d[p * 4 + 2]) < 110 ? 'k' : ''); if(hk && !hb[hk]){ hb[hk] = 1; nhb++; } }   /* ★ v1.3.3 這一塊裡有幾種顏色(粗分) */   /* 用這一點裡最鮮豔的像素判斷顏色(邊緣反鋸齒比較淡) */
       if(x > 0 && !seen[p - 1] && isP(p - 1)){ seen[p - 1] = 1; st.push(p - 1); } if(x < w - 1 && !seen[p + 1] && isP(p + 1)){ seen[p + 1] = 1; st.push(p + 1); }
       if(y > 0 && !seen[p - w] && isP(p - w)){ seen[p - w] = 1; st.push(p - w); } if(y < h - 1 && !seen[p + w] && isP(p + w)){ seen[p + w] = 1; st.push(p + w); } }
     painted += cnt; if(cnt < 2) continue;
     bwB = bx1 - bx0 + 1; bhB = by1 - by0 + 1; elB = Math.max(bwB, bhB) / Math.min(bwB, bhB); flB = cnt / (bwB * bhB);
-    blobs.push({ c: cnt, p: bestP, k: cnt > w * h * 0.04 ? 'big' : (cnt <= 60 || (elB <= 1.8 && flB >= 0.5) ? 'dot' : (elB <= 3 && flB >= 0.35 ? 'grp' : 'big')) }); }
+    blobs.push({ c: cnt, p: bestP, hb: nhb >= 2 ? hb : null, k: cnt > w * h * 0.06 ? (cnt <= w * h * 0.3 && elB <= 3 && flB >= 0.45 && nhb >= 2 ? 'grp' : 'big') : (cnt <= 80 || (elB <= 2 && flB >= 0.45) ? 'dot' : (elB <= 4 && flB >= 0.28 ? 'grp' : 'big')) }); }   /* ★ v1.3.3 秀拉那種密密麻麻、點跟點黏在一起的一大片:只要不細長、有 2 種以上顏色混在一起,就當成「一群點」估算個數 */   /* ★ v1.3.3 放寬:單點 ≤80 格或長寬比 ≤2、一堆點長寬比 ≤4 填滿率 ≥0.28、大色塊門檻 4%→6% */
   for(j2 = 0; j2 < blobs.length; j2++){ if(blobs[j2].k === 'dot') areas.push(blobs[j2].c); }
   areas.sort(function(a, b2){ return a - b2; }); med = areas.length ? Math.max(4, areas[Math.floor(areas.length / 2)]) : 30;
   for(j2 = 0; j2 < blobs.length; j2++){ cnt = blobs[j2].c;
     if(blobs[j2].k === 'big'){ big += cnt; continue; }
     n += blobs[j2].k === 'grp' ? Math.max(2, Math.round(cnt / med)) : 1;
-    r = d[blobs[j2].p * 4]; g = d[blobs[j2].p * 4 + 1]; b = d[blobs[j2].p * 4 + 2]; mx = Math.max(r, g, b); mn = Math.min(r, g, b); if(mx - mn > 40){ hh = hex2hsv('#' + ('0' + r.toString(16)).slice(-2) + ('0' + g.toString(16)).slice(-2) + ('0' + b.toString(16)).slice(-2)).h; hues[Math.floor(((hh + 15) % 360) / 30)] = 1; } }
+    if(blobs[j2].hb && blobs[j2].k === 'grp'){ for(hk in blobs[j2].hb){ if(blobs[j2].hb.hasOwnProperty(hk)) hues['m' + hk] = 1; } }   /* ★ v1.3.3 黏在一起的一群彩色點:裡面每種顏色都算 */
+    r = d[blobs[j2].p * 4]; g = d[blobs[j2].p * 4 + 1]; b = d[blobs[j2].p * 4 + 2]; mx = Math.max(r, g, b); mn = Math.min(r, g, b); if(mx - mn <= 40){ hues[mx < 110 ? 'k' : 'g'] = 1; } else {   /* ★ v1.3.3 黑色/灰色點也算一種顏色 */ hh = hex2hsv('#' + ('0' + r.toString(16)).slice(-2) + ('0' + g.toString(16)).slice(-2) + ('0' + b.toString(16)).slice(-2)).h; hues[Math.floor(((hh + 15) % 360) / 30)] = 1; } }
   return { n: n, lines: painted ? big / painted : 0, hues: Object.keys(hues).length };
 }
 
@@ -3431,6 +3438,8 @@ function ratioPick(){
 
 /* ══ 對外 ══ */
 window.ARTW = { ver: ART_VER, enter: function(){ enter(); setTimeout(idbSweep, 4000); }, onUser: onUser, isOn: function(){ return A.on; },
+  busy: function(){ return !!(A.on && (A.cv || A.lv)); },   /* ★ v1.3.3 正在畫圖/闖關 ⇒ 小遊戲本體的自動更新不打斷(改頂部提示) */
+  flush: function(){ try{ if(A.on && isDirty()) saveNow(); }catch(e){} },
   _mapBad: function(){ if(A.mapBad) return; A.mapBad = true; try{ if(A.screen === 'hub' && !$('art-modal')) paintHub(); }catch(e){} },   /* ★ v1.1.4 地圖圖片載不到 ⇒ 退回 SVG 村子 */
   _test: { canvasOpen: canvasOpen, merge: merge, norm: norm, resEarned: resEarned, evalDraw: evalDraw, weekKey: weekKey, dayKey: dayKey, dayAdd: dayAdd, A: A, SRV: SRV, DEV: DEV, ptsAdd: ptsAdd, ptsSanitize: ptsSanitize, cloudDoc: cloudDoc,
     dailyList: dailyList, dailyHit: dailyHit, subjectCheck: subjectCheck, dotCount: dotCount, paintInfo: paintInfo, quizShuffle: quizShuffle, liteAuto: liteAuto, hasCard: hasCard, weekPts: weekPts, srvNow: srvNow, cloudSync: cloudSync, evRefresh: evRefresh, svgStyle: svgStyle, svgPrinciple: svgPrinciple, lvStart: lvStart, canvasOpen: canvasOpen, studioOpen: studioOpen, perfPts: perfPts, capNow: capNow } };
