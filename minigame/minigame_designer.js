@@ -17,7 +17,7 @@
 (function(){
 'use strict';
 if(window.DSGW) return;
-var VER = 'v1.2.2';   /* ★ v1.2.2(2026-11-25・老師「美術設計師的投稿要求步數增加至500步」+平板轉螢幕後重新對齊畫布)— 門檻 ops 500(舊雲端 100 視為沒改)、轉向後延遲重新 fitStage */ void 'v1.2.1';   /* ★ v1.2.1(2026-11-23・老師「美術設計師的作品增加『不存檔直接退出』的選項」):回工作室的取名視窗多「🚪 不存檔直接退出」(discardExit) */ void 'v1.2.0';   /* ★ v1.2.0(2026-11-19 15:09・老師「美術設計師的面板適當縮小左右的工具介面面板尺寸和字體,讓中央畫圖區域加大些」「畫筆感壓、即時反應和流暢感再提升」)
+var VER = 'v1.2.7';   /* ★ v1.2.7(2026-11-25・老師「右下角的圖層功能鍵太佔空間,高度縮小些。圖層可看的高度提高到三層」「繳交作品改成打字命名,最多10字。智慧金鑰審核增加不雅字詞判別」)— 圖層小視窗/選色區按鈕不吃全域 min-height、清單至少 3 列;TITLE_MAX 10、拿掉詞組下拉;審核查作品說明/希望獎勵文字、圖上文字逐塊+串接查 */ void 'v1.2.6';   /* ★ v1.2.6(2026-11-25・老師「角色皮膚和荒島裝飾要有吸色滴管在色環旁邊可以使用」「用橡皮擦擦掉的東西,要減去相對應的步數」)— 🧪 吸管 eyeToggle/eyePick(I 鍵);重疊格記筆畫編號,擦掉七成以上扣回步數(清/刪圖層也扣);像素筆拖曳補點 */ void 'v1.2.5';   /* ★ v1.2.5(2026-11-25・老師「皮膚和裝飾繳交追加『作品說明』20字到100字內」)— 作品資料加 #dsg-desc、存 mod.desc、老師台倉庫卡片顯示 */ void 'v1.2.4';   /* ★ v1.2.4(2026-11-25・老師「步數計算,在同一條線或色塊上用相同的筆刷或色彩重疊,只算一步」)— 重疊格 ovStroke:同筆刷或同色重疊 ≥70% 不加步數 */ void 'v1.2.3';   /* ★ v1.2.3(2026-11-25・老師「角色皮膚設計的人物骨架,走路和奔跑的姿勢是嚴重錯誤的,請重新以多角度檢視」)— pzFromSag 真 3D 走路/奔跑範本(D.POSE_SAG),正面選到時自動轉斜側 */ void 'v1.2.2';   /* ★ v1.2.2(2026-11-25・老師「美術設計師的投稿要求步數增加至500步」+平板轉螢幕後重新對齊畫布)— 門檻 ops 500(舊雲端 100 視為沒改)、轉向後延遲重新 fitStage */ void 'v1.2.1';   /* ★ v1.2.1(2026-11-23・老師「美術設計師的作品增加『不存檔直接退出』的選項」):回工作室的取名視窗多「🚪 不存檔直接退出」(discardExit) */ void 'v1.2.0';   /* ★ v1.2.0(2026-11-19 15:09・老師「美術設計師的面板適當縮小左右的工具介面面板尺寸和字體,讓中央畫圖區域加大些」「畫筆感壓、即時反應和流暢感再提升」)
    橫放左欄 28vw→21vw、右欄 22vw→18vw,面板字級約縮 15%;自由手繪接共用筆畫濾波器(防抖/筆壓平滑與軟硬/速度模擬筆壓/曲線內插,設定跟創藝工坊共用);↔ 翻轉檢視;
    每一筆下筆/收筆不再整串重算所有圖層的指紋(plsHash 快取)⇒ 舊 iPad 下筆不頓。選色器多了 🎡 配色(MGPK)。 */ void 'v1.1.4';   /* ★ v1.1.4(2026-11-18・老師「設計師成功投稿時,可預先勾選至多三種希望的獎勵」)— 繳交作品資料視窗多一區「🎁 希望獲得的獎勵」(D.WISH,最多 3 種,「其他」要自己寫);
    寫進 designSubmit.wish / wishTxt / em(信箱)。Firestore 規則還沒發布新版時,這三格會被擋 ⇒ 自動改放進 mod.wish/mod.wishTxt/mod.em 再交一次(作品照常繳交成功)。 */ void 'v1.1.3';/* ★ v1.1.3(2026-11-13・老師)①「每次復原,要減去操作數」:undo/redo 整份換回快照(含 ops 與指紋 oh)②「我的作品」⬇️ 下載圖片 PNG(透明/白色背景;recEd/dlWork/dlSave,iPad 走分享選單「儲存影像」)③ 13:58「設計師畫布也改成同樣的固定方式」:右欄選色器固定、圖層小視窗 .dsg-lwin 自己捲(＋▲▼🗑 在標題列 #dsg-lwh)、物件屬性在下;直式維持整欄捲 */ void 'v1.1.2';   /* ★ v1.1.2(2026-11-11 20:50・老師)PC 快捷鍵 Ctrl+Z 復原/Ctrl+Y 重做、按住空白鍵游標變手掌拖曳畫布(dsgKey/handSet) */ void 'v1.1.1';   /* ★ v1.1.1(2026-11-11・老師「PC 版手繪、點陣、像素畫出來的點(線)都比滑鼠游標低」)滑鼠/筆座標改用畫布在螢幕上的實際大小換算(stPt/vzOf),PC 放大後也精準 */ void 'v1.1.0';   /* ★ v1.1.0(2026-11-10・老師)圖層(可改名、⋯ 透明度/參照/阿爾法鎖定)、選色器+圖層常駐右欄、環形色相+三角形選色器、7 種畫筆(鉛筆/水彩/蠟筆/毛筆/圓頭麥克筆/平頭麥克筆/向量筆)、油漆桶(拖顏色+臨界值)、長按 2 秒變向量形狀、剪刀剪下移到指定圖層、變形、小提示與繳交標準收進「怎麼玩」、存檔時間標記、每月繳交 皮膚 1 件+荒島裝飾 1 件分開計算 */ void 'v1.0.7';   /* ★ v1.0.7(2026-11-09)有條件解鎖(創藝工坊全部關卡 ≥2★,unlockCheck/gate('stars'))+ 作品集/設定自動雙向雲端同步(MG_CSYNC;「☁ 立即同步」= 手動保險) */ void 'v1.0.6';   /* ★ v1.0.6(2026-11-08 18:07)雙指捏合縮放/挪動畫布(PC 滾輪、空白鍵/中鍵拖曳)、手機平板直式版面、◧ 面板收合 */ void 'v1.0.5';   /*★ v1.0.5(2026-11-08 13:06~13:24)動作骨架改成 3D 關節人偶:拖關節擺姿勢、拖空白處轉視角、範本當起手式;脊椎 3 節、頭部球體+十字線定位眼鼻(fc 臉方向點)、立體圓柱四肢與關節球;骨架功能鍵 復原/重做/向前/向後/拉近/拉遠;我的姿勢命名儲存(見 pzDraw/pzDragTo/pzNudge/pzCmd) */ void 'v1.0.4';   /* ★ v1.0.4(2026-11-08 11:27)作品名不可與已上架商品同名(nameAsk/繳交都查)、角色皮膚繳交存透明全身圖 th→上架複製成 designShopItems.img、老師台「🛒 上架商品」改價/上下架/分紅比例 */ void 'v1.0.3';   /* ★ v1.0.3(2026-11-08 11:03)手繪原創:皮膚只留畫筆+動作骨架、荒島裝飾素材收進參考圖片(描圖層不進作品)、預設畫筆、回工作室先命名、作品集可改名 */ void 'v1.0.2';   /* ★ v1.0.2(2026-11-08 10:51)操作次數算「增加、變色」,且改完要跟原本不一樣(見 endOp/opKey) */ void 'v1.0.1';   /* ★ v1.0.1(2026-11-08)操作次數只算「增加」的動作(見 endOp) */ void 'v1.0.0';
@@ -257,7 +257,7 @@ var CSS = [
 '#dsg-stage canvas.dsg-pl,#dsg-scr,#dsg-fx{position:absolute;left:0;top:0;pointer-events:none}#dsg-scr{display:none}#dsg-fx{z-index:70}#dsg-guide{z-index:0}#dsg-stage.posing #dsg-guide{z-index:90}',
 '.dsg-brs{display:grid;grid-template-columns:repeat(auto-fill,minmax(8.4vmin,1fr));gap:.6vmin}.dsg-brs button{border:0;border-radius:1.2vmin;padding:.6vmin .2vmin;font-size:1.55vmin;font-weight:900;background:rgba(255,255,255,.85);color:#333;line-height:1.15}.dsg-brs button b{display:block;font-size:3.2vmin}.dsg-brs button.on{background:#ffd45a;color:#4a2a00;box-shadow:0 0 0 .3vmin #fff inset}',
 '#dsg-root.nolb .dsg-brs b{font-size:3.8vmin}',
-'.dsg-curc{display:flex;align-items:center;gap:1vmin;margin-bottom:.6vmin}.dsg-curc .dsg-sw{width:6vmin;height:6vmin;border-radius:1.4vmin;touch-action:none;cursor:grab}.dsg-curc b{font-size:1.8vmin}#dsg-wheel{margin:.4vmin 0}.dsg-qsw .dsg-sw{width:3.8vmin;height:3.8vmin;touch-action:none;cursor:pointer}',
+'.dsg-curc{display:flex;align-items:center;gap:1vmin;margin-bottom:.6vmin}.dsg-eyed{margin-left:auto;font:inherit;font-weight:900;font-size:1.9vmin;padding:.6vmin 1.1vmin;border-radius:1.2vmin;border:.3vmin solid #8a6cc9;background:#fff;color:#3d2f57;cursor:pointer;white-space:nowrap;touch-action:manipulation}.dsg-eyed.on{background:#ffd93b;border-color:#e0a800;box-shadow:0 0 0 .4vmin rgba(255,217,59,.45)}.dsg-curc .dsg-sw{width:6vmin;height:6vmin;border-radius:1.4vmin;touch-action:none;cursor:grab}.dsg-curc b{font-size:1.8vmin}#dsg-wheel{margin:.4vmin 0}.dsg-qsw .dsg-sw{width:3.8vmin;height:3.8vmin;touch-action:none;cursor:pointer}',
 '.dsg-lyr{display:flex;align-items:center;gap:.6vmin;background:rgba(255,255,255,.14);border:.3vmin solid transparent;border-radius:1.2vmin;padding:.4vmin;margin:.4vmin 0;cursor:pointer;font-size:1.8vmin;font-weight:800}',
 '.dsg-lyr.on{background:rgba(255,212,90,.35);border-color:#ffd45a}.dsg-lyr.tg,.dsg-lyr.hot{border-color:#7fd0ff;box-shadow:0 0 0 .4vmin #3b8fe0}.dsg-lyr img,.dsg-lyr .lic{width:5vmin;height:5vmin;object-fit:contain;background:#fff;border-radius:.6vmin;flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:#333;font-size:2.6vmin}',
 '.dsg-lyr .nm{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.dsg-lyr button{border:0;border-radius:.8vmin;background:rgba(255,255,255,.85);font-size:1.8vmin;padding:.3vmin .6vmin;flex:0 0 auto}.dsg-lyr .tags{font-size:1.5vmin;opacity:.85}',
@@ -330,7 +330,7 @@ var CSS = [
 '@media (orientation:landscape) and (max-height:520px){.dsg-brs{grid-template-columns:repeat(auto-fill,minmax(12vmin,1fr))}.dsg-brs button{font-size:2.3vmin}.dsg-brs button b{font-size:4.4vmin}.dsg-lyr,.dsg-lyr button,.dsg-lyb button,.dsg-lya{font-size:2.7vmin}.dsg-lyr img,.dsg-lyr .lic{width:7vmin;height:7vmin}.dsg-curc b{font-size:2.6vmin}.dsg-curc .dsg-sw{width:8vmin;height:8vmin}.dsg-qsw .dsg-sw{width:5.4vmin;height:5.4vmin}.dsg-lmn{font-size:2.7vmin}.dsg-lmn button{width:5.4vmin;height:5.4vmin;font-size:2.8vmin}.dsg-lmn input[type=checkbox]{width:4.4vmin;height:4.4vmin}}',
 '@media (orientation:portrait) and (max-width:600px){.dsg-brs{grid-template-columns:repeat(auto-fill,minmax(13vmin,1fr))}.dsg-brs button{font-size:2.6vmin}.dsg-brs button b{font-size:5vmin}.dsg-lyr,.dsg-lyr button,.dsg-lyb button,.dsg-lya{font-size:3.1vmin}.dsg-lyr img,.dsg-lyr .lic{width:8vmin;height:8vmin}.dsg-curc b{font-size:3vmin}.dsg-qsw .dsg-sw{width:6vmin;height:6vmin}.dsg-lmn{font-size:3.1vmin}.dsg-lmn button{width:6vmin;height:6vmin;font-size:3.2vmin}.dsg-lmn input[type=checkbox]{width:5vmin;height:5vmin}}',
 /* ★ v1.1.3 手機橫放:右欄矮,選色器縮到約三成畫面高,留空間給圖層小視窗 */
-'@media (orientation:landscape) and (max-height:520px){#dsg-wheel canvas{max-width:min(230px,27vh) !important}#dsg-pcol>.dsg-sec{display:none}#dsg-pcol .dsg-curc{margin:0 0 .4vmin}#dsg-pcol .dsg-curc .dsg-sw{width:5.4vmin;height:5.4vmin}#dsg-pcol .dsg-qsw .dsg-sw{width:4.6vmin;height:4.6vmin}#dsg-ed .dsg-lwin{min-height:16vmin;margin-top:.4vmin}#dsg-ed .dsg-lwh .dsg-sec{font-size:2.6vmin}}',
+'@media (orientation:landscape) and (max-height:520px){#dsg-wheel canvas{max-width:min(230px,27vh) !important}#dsg-pcol>.dsg-sec{display:none}#dsg-pcol .dsg-curc{margin:0 0 .4vmin}#dsg-pcol .dsg-eyed{font-size:2.8vmin;padding:.4vmin .9vmin}#dsg-pcol .dsg-curc .dsg-sw{width:5.4vmin;height:5.4vmin}#dsg-pcol .dsg-qsw .dsg-sw{width:4.6vmin;height:4.6vmin}#dsg-ed .dsg-lwin{min-height:16vmin;margin-top:.4vmin}#dsg-ed .dsg-lwh .dsg-sec{font-size:2.6vmin}}',
 /* ★ v1.1.4(2026-11-18・老師「圖層的欄位太擁擠,適當調整讓圖層區至少可以完整顯示三層,縮小上下搬移和重新命名等功能按鈕」)
    圖層列變矮(縮圖 4.2vmin、列距縮小)、✏️ ⋯ 與標題列 ＋▲▼🗑 縮小;圖層小視窗最小高度 = 標題列＋三列,選到物件時屬性區自己捲,不再把圖層擠掉。
    放在整個 CSS 最後(各尺寸的 @media 都在這裡重寫一次,避免被前面的規則蓋掉) */
@@ -353,7 +353,14 @@ var CSS = [
 ' #dsg-ed .dsg-chips button{font-size:2.3vmin}#dsg-ed .dsg-sec{font-size:2.5vmin}#dsg-ed .prop{font-size:2.5vmin}#dsg-ed .prop .row .dsg-b{font-size:2.3vmin}#dsg-ed .prop label{font-size:2.4vmin}#dsg-ed .dsg-pm button,#dsg-ed .dsg-tip{font-size:2.3vmin}#dsg-ed .dsg-pm b{font-size:3.8vmin}',
 ' #dsg-ed .dsg-brs{grid-template-columns:repeat(auto-fill,minmax(10.5vmin,1fr))}#dsg-ed .dsg-brs button{font-size:2vmin}#dsg-ed .dsg-brs button b{font-size:3.8vmin}#dsg-ed .dsg-pkset{font-size:2.2vmin}#dsg-ed .lbody>label,#dsg-ed .lbody label[style]{font-size:2.4vmin}}',
 /* ★ v1.2.0 筆跡設定小區塊(防抖/筆壓,跟創藝工坊共用這台裝置的設定) */
-'.dsg-pkset{background:rgba(0,0,0,.22);border-radius:1.2vmin;padding:.5vmin .8vmin;margin:.6vmin 0;font-size:1.7vmin;font-weight:800}.dsg-pkset .r{display:flex;align-items:center;gap:.6vmin;margin:.3vmin 0;flex-wrap:wrap}.dsg-pkset input[type=range]{flex:1;min-width:0}.dsg-pkset button{border:0;border-radius:.8vmin;padding:.2vmin .7vmin;font:inherit;background:rgba(255,255,255,.85);color:#333}.dsg-pkset button.on{background:#ffd45a;color:#4a2a00}'
+'.dsg-pkset{background:rgba(0,0,0,.22);border-radius:1.2vmin;padding:.5vmin .8vmin;margin:.6vmin 0;font-size:1.7vmin;font-weight:800}.dsg-pkset .r{display:flex;align-items:center;gap:.6vmin;margin:.3vmin 0;flex-wrap:wrap}.dsg-pkset input[type=range]{flex:1;min-width:0}.dsg-pkset button{border:0;border-radius:.8vmin;padding:.2vmin .7vmin;font:inherit;background:rgba(255,255,255,.85);color:#333}.dsg-pkset button.on{background:#ffd45a;color:#4a2a00}',
+/* ★ v1.2.7(2026-11-25・老師「右下角的圖層功能鍵太佔空間,高度縮小些。圖層可看的高度提高到三層」)
+   根因:小遊戲全域規則 button{min-height:64px}(手機 52px)把圖層小視窗的 ＋▲▼🗑 和每列的 👁 ✏️ ⋯ 都撐到 64px ⇒ 標題列 73px、每列 72px,iPad 只看得到不到兩層。
+   修法:圖層小視窗裡的按鈕不吃那條最小高度;標題列按鈕固定矮高度;清單最少留三列的高度。放整個 CSS 最後(鐵律〇之二)。 */
+'#dsg-ed #dsg-lwin button,#dsg-ed #dsg-pcol button{min-height:0}#dsg-ed .dsg-lwh{padding:.15vmin .5vmin}#dsg-ed .dsg-lwh .dsg-lyb{margin:.15vmin 0}',
+'#dsg-ed .dsg-lwh .dsg-lyb button{height:max(22px,3.2vmin);padding:0;line-height:1}#dsg-ed #dsg-lwin .dsg-lyr{min-height:0;padding-top:.2vmin;padding-bottom:.2vmin}#dsg-ed #dsg-lwin .dsg-lyr button{min-height:max(22px,3.6vmin)}',
+'#dsg-ed #dsg-lys{min-height:calc(3 * max(30px,5.6vmin) + 1.6vmin)}',
+'@media (orientation:landscape) and (max-height:520px){#dsg-ed .dsg-lwh .dsg-lyb button{height:max(18px,4.4vmin)}#dsg-ed #dsg-lwin .dsg-lyr button{min-height:max(18px,4.6vmin)}#dsg-ed #dsg-lys{min-height:calc(3 * max(24px,6.4vmin) + 1.6vmin)}}'
 ].join('\n');
 function injectCss(){ if($('dsg-css')) return; var s = document.createElement('style'); s.id = 'dsg-css'; s.textContent = CSS; document.head.appendChild(s); }
 
@@ -557,8 +564,13 @@ function rulesCard(cb){
 
 /* ★ v1.0.3(2026-11-08 11:03・老師「回工作室按下時先彈出幫作品命名的輸入視窗,也可以在我的作品集修改作品名稱」)
    名字最多 16 字、不能空白、會過不雅字詞檢查(wordHits);鎖住(已繳交/已通過)的作品不能改名。 */
-var TITLE_MAX = 16;
-function titleCheck(v){ v = String(v || '').replace(/\s+/g, ' ').replace(/^ | $/g, ''); if(!v) return { e: '請幫作品取一個名字' }; if(v.length > TITLE_MAX) v = v.slice(0, TITLE_MAX); if(wordHits(v).length) return { e: '名字裡有不適合的字詞,請換一個' }; return { v: v }; }
+var TITLE_MAX = 10;   /* ★ v1.2.7(2026-11-25・老師「繳交作品改成打字命名,最多10字」)16 → 10;繳交表單拿掉「想不到?用詞組」下拉選單,只能自己打字 */
+/* ★ v1.2.5(2026-11-25・老師「皮膚和裝飾繳交追加『作品說明』20字到100字內」)作品說明:20~100 字(中英文、標點都算一個字;emoji 算一個),查不雅字;
+   存在 designSubmit.mod.desc(mod 是現有規則允許的欄位 ⇒ 不用改 Firebase 規則);大對抗 GM「🎨 美術設計師投稿區」與小遊戲老師台倉庫卡片都顯示。 */
+var DESC_MIN = 20, DESC_MAX = 100;
+function descLen(s){ return String(s || '').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '_').length; }
+function descOf(x){ return String((x && (x.desc || (x.mod && x.mod.desc))) || ''); }
+function titleCheck(v){ v = String(v || '').replace(/\s+/g, ' ').replace(/^ | $/g, ''); if(!v) return { e: '請幫作品取一個名字' }; if(v.length > TITLE_MAX) return { e: '作品名最多 ' + TITLE_MAX + ' 個字(現在 ' + v.length + ' 個字),請改短一點' }; if(wordHits(v).length) return { e: '名字裡有不適合的字詞,請換一個' }; return { v: v }; }
 /* ★ v1.2.1 不存檔直接退出:先確認;編輯中自動存到平板(1.5 秒)或雲端(每 5 分鐘)的都換回開啟時的原樣(時間改成現在,雲端同步才會以它為準);
    這次才開的新作品 ⇒ 平板與雲端都刪掉(不留空白草稿) */
 function discardExit(){
@@ -810,7 +822,7 @@ function zoomBind(){
     if(cnt() === 1) tap = { t: now(), n: 1, mv: false, st: {}, z: E.z || 1, px: E.panX || 0, py: E.panY || 0 };
     if(tap){ tap.n = Math.max(tap.n, cnt()); tap.st[e.pointerId] = T0[e.pointerId]; }
     /* ★ v1.1.4 防手掌:最近 3 分鐘用過觸控筆 ⇒ 單根手指不畫(筆負責畫,手指只負責兩指縮放/兩指三指輕點) */
-    if(cnt() === 1 && penRecent()){ hold = true; block(e); return; }
+    if(cnt() === 1 && penRecent() && !E.eyed){ hold = true; block(e); return; }   /* ★ v1.2.6 吸管開著時手指點一下可以吸色 */
     if(cnt() >= 2){ block(e); if(!pin) startPinch(); else { var a = two(); pin.d0 = Math.max(20, Math.sqrt((a[1].x - a[0].x) * (a[1].x - a[0].x) + (a[1].y - a[0].y) * (a[1].y - a[0].y))); pin.z0 = E.z; pin.mx = (a[0].x + a[1].x) / 2; pin.my = (a[0].y + a[1].y) / 2; pin.k0 = E.k; pin.ox = E.ox; pin.oy = E.oy; } return; }
     if(hold) block(e);   /* 捏合後還有手指沒離開:不開始畫 */
   }, true);
@@ -883,7 +895,9 @@ function dsgKey2(e, ctrl){
   if(k === '?' || (c === 'Slash' && e.shiftKey)){ keysHelp(); return true; }
   if(c === 'Equal' || c === 'NumpadAdd' || c === 'Minus' || c === 'NumpadSubtract'){ if(!mid) return true; zoomAt((E.z || 1) * (c === 'Equal' || c === 'NumpadAdd' ? 1.2 : 1 / 1.2), mid.clientWidth / 2, mid.clientHeight / 2); return true; }
   if((c === 'Delete' || c === 'Backspace') && E.sel >= 0 && E.d.items[E.sel] && !locked()){ beginOp(); E.d.items.splice(E.sel, 1); E.sel = -1; endOp(false); layersPaint(); propPaint(); selPaint(); toast('🗑 刪掉選取的物件(Ctrl+Z 可以復原)'); return true; }
+  if((k === 'Escape' || c === 'Escape') && E.eyed){ eyeOff(); return true; }   /* ★ v1.2.6 Esc 關吸管 */
   if((k === 'Escape' || c === 'Escape') && E.sel >= 0){ E.sel = -1; propPaint(); selPaint(); return true; }
+  if(c === 'KeyI' && !locked()){ eyeToggle(); return true; }   /* ★ v1.2.6 I = 吸管(Photoshop/Procreate 慣例) */
   if(locked() || E.tab !== 'paint') return false;
   if(c === 'BracketLeft' || c === 'BracketRight'){ var w = E.brush.w | 0, st = Math.max(1, Math.round(w * 0.15)); E.brush.w = clamp(w + (c === 'BracketRight' ? st : -st), 2, 60); var sl = $('dsg-bw'), sv = $('dsg-bwv'); if(sl) sl.value = E.brush.w; if(sv) sv.textContent = E.brush.w; toast('📏 粗細 ' + E.brush.w); return true; }
   if(E.pm !== 'free') return false;
@@ -899,7 +913,57 @@ function keysHelp(){
     '<p>🔷 選到物件時:Delete 刪除・Esc 取消選取</p><p>📱 平板:兩指捏合縮放・<b>兩指點一下 復原・三指點一下 重做</b>;用觸控筆畫畫時,手掌放在螢幕上不會亂畫或亂按</p>');
 }
 /* 一次操作完成:記復原、計次數、存本機 */
-function snapNow(){ var E = S.ed, p = {}, k; for(k in E.pls){ if(E.pls.hasOwnProperty(k)) p[k] = E.pls[k]; } return { d: JSON.stringify(E.d), p: p }; }   /* ★ v1.1.0 各圖層 PNG 字串(同一份字串共用,不多佔記憶體) */
+function snapNow(){ var E = S.ed, p = {}, k; for(k in E.pls){ if(E.pls.hasOwnProperty(k)) p[k] = E.pls[k]; } return { d: JSON.stringify(E.d), p: p, g: ovSnap() }; }   /* ★ v1.1.0 各圖層 PNG 字串(同一份字串共用,不多佔記憶體);★ v1.2.4 + 重疊格(復原時一起退回) */
+/* ══ ★ v1.2.4(2026-11-25・老師「步數計算,在同一條線或色塊上用相同的筆刷或色彩重疊,只算一步」)══
+   每個手繪圖層有一張 8px 一格的「重疊格」(504×720 ⇒ 63×90 格),記每格最後是哪種筆刷(b)、什麼顏色(c)畫的。
+   收筆時看這一筆蓋到的格子:有 70% 以上落在「同一種筆刷 或 同一個顏色」已經畫過的格子上 ⇒ 算描同一條線/塗同一塊 ⇒ 不加步數(照樣可復原、照樣存)。
+   橡皮擦擦過的格子清空;重疊格跟著復原/重做一起退回;不存進作品(重開草稿從頭記)。 */
+/* ══ ★ v1.2.6(2026-11-25・老師「用橡皮擦擦掉的東西,要減去相對應的步數」)══
+   重疊格每格再記「蓋過這格的筆畫編號」o[k](最多記 8 筆);每一筆畫有紀錄 E.ovs[編號] = { L 圖層, n 格數, left 還在的格數, on, cnt 當初有沒有算步數 }。
+   橡皮擦擦過的格子 ⇒ 格子上所有筆畫 left 減 1;某一筆剩不到 30%(= 擦掉七成以上)⇒ 這一筆算「被擦掉了」,當初有算步數的就扣回 1 步。
+   清掉圖層、刪掉圖層 = 那一層的筆畫全部算擦掉。手繪筆刷、像素筆都適用(像素油漆桶填色範圍不追蹤)。復原/重做會連扣掉的步數一起退回。 */
+var OV_CELL = 8, OV_SAME = 0.7, OV_GONE = 0.3, OV_OMAX = 8;
+function ovGrid(id){ var E = S.ed, nx = Math.ceil(E.d.W / OV_CELL), ny = Math.ceil(E.d.H / OV_CELL); if(!E.ovg) E.ovg = {};
+  if(!E.ovg[id]) E.ovg[id] = { nx: nx, ny: ny, b: [], c: [], o: [] }; if(!E.ovg[id].o) E.ovg[id].o = []; return E.ovg[id]; }
+function ovSnap(){ var E = S.ed, o = {}, r = {}, k, g, i; if(!E || !E.ovg) return null;
+  for(k in E.ovg){ if(E.ovg.hasOwnProperty(k)){ g = E.ovg[k]; o[k] = { nx: g.nx, ny: g.ny, b: g.b.slice(), c: g.c.slice(), o: [] }; for(i = 0; g.o && i < g.o.length; i++){ if(g.o[i]) o[k].o[i] = g.o[i].slice(); } } }
+  for(k in (E.ovs || {})){ if(E.ovs.hasOwnProperty(k)){ g = E.ovs[k]; r[k] = { L: g.L, n: g.n, left: g.left, on: g.on, cnt: g.cnt }; } }
+  return { G: o, R: r, N: E.ovN | 0 }; }
+function ovRestore(sg){ var E = S.ed; if(sg && sg.G){ E.ovg = sg.G; E.ovs = sg.R || {}; E.ovN = sg.N | 0; } else if(sg && !sg.G){ E.ovg = sg; E.ovs = {}; } else { E.ovg = {}; E.ovs = {}; } }
+/* 收筆後登記這一筆(cnt = 這一筆有沒有加步數) */
+function ovReg(id, cs, cnt){ var E = S.ed, g = ovGrid(id), sid, i, k; if(!cs || !cs.length) return; if(!E.ovs) E.ovs = {};
+  sid = E.ovN = (E.ovN | 0) + 1; E.ovs[sid] = { L: id, n: cs.length, left: cs.length, on: 1, cnt: cnt ? 1 : 0 };
+  for(i = 0; i < cs.length; i++){ k = cs[i]; if(!g.o[k]) g.o[k] = []; g.o[k].push(sid); if(g.o[k].length > OV_OMAX) g.o[k].shift(); } }
+/* 某些筆畫少了格子之後,檢查是不是「被擦掉了」;回傳要扣的步數 */
+function ovGone(sids){ var E = S.ed, k, r, sub = 0; for(k in sids){ if(!sids.hasOwnProperty(k)) continue; r = E.ovs && E.ovs[k];
+    if(r && r.on && r.left <= r.n * OV_GONE){ r.on = 0; if(r.cnt) sub++; } } return sub; }
+/* 扣步數(不會低於 0),第一次跳說明 */
+function ovSub(sub){ var E = S.ed; if(!(sub > 0)) return; E.d.ops = Math.max(0, (E.d.ops | 0) - sub);
+  if(!E.ovSubTold){ E.ovSubTold = 1; toast(T({ c: '🧽 擦掉的線條,當初算過的步數會扣回去(這次 −' + sub + ' 步)', p: '🧽 擦除的筆畫已扣回對應操作次數(−' + sub + ')' })); } }
+/* 清掉/刪掉整個圖層 = 那一層的筆畫全部擦掉 */
+function ovClearLayer(id){ var E = S.ed, k, r, sub = 0; if(E.ovs){ for(k in E.ovs){ if(E.ovs.hasOwnProperty(k)){ r = E.ovs[k]; if(r.L === id && r.on){ r.on = 0; r.left = 0; if(r.cnt) sub++; } } } }
+  if(E.ovg) delete E.ovg[id]; ovSub(sub); return sub; }
+/* 這一筆蓋到哪些格子(點與點之間每半格取樣,筆寬一半當半徑) */
+function ovCells(g, pts, w){ var seen = {}, out = [], i, j, a, b, n, x, y, r = Math.max(OV_CELL / 2, w / 2), rc = Math.ceil(r / OV_CELL), cx, cy, ix, iy, key;
+  function mark(px, py){ cx = Math.floor(px / OV_CELL); cy = Math.floor(py / OV_CELL);
+    for(iy = cy - rc; iy <= cy + rc; iy++){ for(ix = cx - rc; ix <= cx + rc; ix++){ if(ix < 0 || iy < 0 || ix >= g.nx || iy >= g.ny) continue;
+      x = (ix + 0.5) * OV_CELL - px; y = (iy + 0.5) * OV_CELL - py; if(x * x + y * y > (r + OV_CELL * 0.35) * (r + OV_CELL * 0.35)) continue;
+      key = iy * g.nx + ix; if(!seen[key]){ seen[key] = 1; out.push(key); } } } }
+  if(!pts || !pts.length) return out;
+  mark(pts[0].x, pts[0].y);
+  for(i = 1; i < pts.length; i++){ a = pts[i - 1]; b = pts[i]; n = Math.max(1, Math.ceil(Math.sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y)) / (OV_CELL / 2)));
+    for(j = 1; j <= n; j++) mark(a.x + (b.x - a.x) * j / n, a.y + (b.y - a.y) * j / n); }
+  return out; }
+/* 收筆:回傳 { same: 大部分是重疊(不算步數), cs: 蓋到的格子 };順便把筆刷/顏色記進格子。
+   橡皮擦(erase)⇒ 清掉格子、格子上的筆畫 left 減 1,回傳 { sub: 要扣的步數 } */
+function ovStroke(id, pts, w, br, col, erase){ var g = ovGrid(id), cs = ovCells(g, pts, w), i, j, k, hit = 0, E = S.ed, hitS = {}, r;
+  if(erase){ for(i = 0; i < cs.length; i++){ k = cs[i]; g.b[k] = null; g.c[k] = null;
+      if(g.o[k]){ for(j = 0; j < g.o[k].length; j++){ r = E.ovs && E.ovs[g.o[k][j]]; if(r && r.left > 0){ r.left--; hitS[g.o[k][j]] = 1; } } g.o[k] = null; } }
+    return { same: false, cs: cs, sub: ovGone(hitS) }; }
+  col = String(col || '').toLowerCase();
+  for(i = 0; i < cs.length; i++){ k = cs[i]; if(g.b[k] != null && (g.b[k] === br || g.c[k] === col)) hit++; }
+  for(i = 0; i < cs.length; i++){ g.b[cs[i]] = br; g.c[cs[i]] = col; }
+  return { same: cs.length > 0 && hit / cs.length >= OV_SAME, cs: cs, sub: 0 }; }
 function beginOp(){ var E = S.ed; E.undo.push(snapNow()); if(E.undo.length > 30) E.undo.shift(); E.redo = []; E._bk = opKey(); }
 /* ★ v1.0.1(2026-11-08・老師「拖曳、縮放、往前、往後都不列入操作步驟。只有『增加』性質的操作才列入」)
    endOp(add):每個動作照樣記復原、標 dirty;只有 add 為 true(放素材/文字/形狀、畫一筆、像素點/填色、複製一份、選人物部件)才 +1。
@@ -916,13 +980,13 @@ function opKey(){ var E = S.ed, o = E.d.ops, oh = E.d.oh, gd = E.d.guide, s; E.d
 function plsHash(){ var E = S.ed, a = lyList(), o = [], i, id, s, c; if(!E.plh) E.plh = {};
   for(i = 0; i < a.length; i++){ if(a[i].k !== 'p') continue; id = a[i].id; s = E.pls[id] || ''; c = E.plh[id]; if(!c || c.s !== s){ c = E.plh[id] = { s: s, h: opHash(s) }; } o.push(id + ':' + c.h); }
   return opHash(o.join('|')); }   /* ★ v1.1.0 所有圖層的筆跡 */
-function endOp(add){ var E = S.ed, k, oh;
+function endOp(add){ var E = S.ed, k, oh, inc = false;
   if(add){ k = opKey(); oh = E.d.oh = (E.d.oh && E.d.oh.push) ? E.d.oh : [];
     if(E._bk && oh.indexOf(E._bk) < 0) oh.push(E._bk);   /* 改之前的樣子也記下來:之後換回原本的樣子不算 */
-    if(k !== E._bk && oh.indexOf(k) < 0){ oh.push(k); E.d.ops = (E.d.ops | 0) + 1; }
+    if(k !== E._bk && oh.indexOf(k) < 0){ oh.push(k); E.d.ops = (E.d.ops | 0) + 1; inc = true; }
     while(oh.length > 600) oh.shift(); }
-  E._bk = null; opsPaint(); dirty(); }
-function restore(sn){ var E = S.ed, k, gd = E.d.guide; E.d = JSON.parse(sn.d); E.d.guide = gd; E.r.d = E.d;   /* ★ v1.0.5 復原/重做作品時,骨架姿勢維持現在的樣子(骨架有自己的上一步) */
+  E._bk = null; opsPaint(); dirty(); return inc; }   /* ★ v1.2.6 回傳這一步有沒有加步數(橡皮擦扣回時要知道) */
+function restore(sn){ var E = S.ed, k, gd = E.d.guide; E.d = JSON.parse(sn.d); E.d.guide = gd; E.r.d = E.d; if(sn.g !== undefined) ovRestore(sn.g);   /* ★ v1.2.4 重疊格一起退回(★ v1.2.6 連筆畫紀錄) */   /* ★ v1.0.5 復原/重做作品時,骨架姿勢維持現在的樣子(骨架有自己的上一步) */
   E.pls = {}; for(k in sn.p){ if(sn.p.hasOwnProperty(k)) E.pls[k] = sn.p[k]; }   /* ★ v1.1.0 每個圖層各自換回來(內容一樣的不重畫) */
   if(!lyGet(E.al) || lyGet(E.al).k !== 'p'){ var a = lyList(), i; for(i = a.length - 1; i >= 0; i--){ if(a[i].k === 'p'){ E.al = a[i].id; break; } } }
   plsBuild(); lyPanel();
@@ -1020,7 +1084,32 @@ function pzHeadR(W){ return W * 0.075; }
 /* 身體前方(視角或世界都可用):(左肩−右肩)×(頸−胸椎下) */
 function pzFwd(J){ var a = v3sub(J.ls, J.rs), b = v3sub(J.n, J.s2 || J.p), f = v3cross(a, b), l = v3len(f) || 1; return [f[0] / l, f[1] / l, f[2] / l]; }
 function pzFixFc(j, W){ var f = pzFwd(j), R = pzHeadR(W); j.fc = [j.h[0] + f[0] * R, j.h[1] + f[1] * R, j.h[2] + f[2] * R]; }
+/* ★ v1.2.3 走路/奔跑:真 3D 範本(D.POSE_SAG)。從「站好」的骨頭出發逐節旋轉 ⇒ 骨頭長度完全不變,轉到任何角度都對。
+   座標:x 右、y 下、z 朝鏡頭 = 人物正前方(正面視角時人物面向我們)。rx = 繞左右軸前後擺(正 = 往前)、ry = 繞直立軸扭轉。 */
+function pzRotX(v, a){ var c = Math.cos(a), s = Math.sin(a); return [v[0], v[1] * c - v[2] * s, v[1] * s + v[2] * c]; }
+function pzRotY(v, a){ var c = Math.cos(a), s = Math.sin(a); return [v[0] * c + v[2] * s, v[1], -v[0] * s + v[2] * c]; }
+function pzFromSag(id, W, H){
+  var C = D.POSE_SAG[id], S0 = pzFrom('stand', W, H), o = {}, i, k, pa, v, d2r = Math.PI / 180, ang, tw = (C.tw || 0) * d2r, lean = -(C.lean || 0) * d2r, gnd, cur, dy;
+  var UP = { s1: 1, s2: 1, s3: 1, n: 1, h: 1, ls: 1, rs: 1 };
+  o.p = [S0.p[0], S0.p[1], 0];
+  for(i = 1; i < D.POSE_ORD.length; i++){ k = D.POSE_ORD[i]; pa = D.POSE_PAR[k]; if(k === 'fc') continue;
+    v = [S0[k][0] - S0[pa][0], S0[k][1] - S0[pa][1], 0];
+    if(k === 'lp' || k === 'rp') v = pzRotY(v, tw);   /* 骨盆:跨前那隻腳的髖往前 */
+    else if(k === 'ls' || k === 'rs') v = pzRotX(pzRotY(v, -tw * 1.2), lean);   /* 肩膀反向扭(手跟腳相反) */
+    else if(k === 'h') v = pzRotX(v, lean + (C.head || 0) * d2r);   /* 頭跟上身前傾,再抬頭看前面 */
+    else if(UP[k]) v = pzRotX(v, lean);   /* 脊椎、脖子跟著前傾 */
+    else { ang = k === 'lk' ? C.lt : k === 'lf' ? C.lt - C.lkf : k === 'rk' ? C.rt : k === 'rf' ? C.rt - C.rkf
+             : k === 'le' ? C.la : k === 'lh' ? C.la + C.lef : k === 're' ? C.ra : k === 'rh' ? C.ra + C.ref : 0;
+      v = pzRotX(v, (ang || 0) * d2r); }
+    o[k] = [o[pa][0] + v[0], o[pa][1] + v[1], o[pa][2] + v[2]]; }
+  /* 放回地面:最低的腳 = 站好時的腳底(奔跑騰空再抬高 air) */
+  gnd = Math.max(S0.lf[1], S0.rf[1]); cur = Math.max(o.lf[1], o.rf[1]); dy = gnd - cur - (C.air || 0) * H;
+  for(k in o){ if(o.hasOwnProperty(k)) o[k][1] += dy; }
+  pzFixFc(o, W);
+  return o;
+}
 function pzFrom(id, W, H){
+  if(D.POSE_SAG && D.POSE_SAG[id] && id !== 'stand') return pzFromSag(id, W, H);
   var R = pzP2('stand'), P = pzP2(id), zb = D.POSE_ZB[id] || {}, o = {}, i, k, pa, dx, dy, d, L, s, z;
   o.p = [P.p[0] * W, P.p[1] * H, 0];
   for(i = 1; i < D.POSE_ORD.length; i++){ k = D.POSE_ORD[i]; pa = D.POSE_PAR[k]; if(k === 'fc') continue;
@@ -1415,6 +1504,8 @@ function libClick(ev){
   if(gk === 'gp' || gk === 'gr'){ sfx('sfx-sel', 0.3); var oa = (E.d.guide && E.d.guide.a) || 0.35, og = E.d.guide && E.d.guide.t === 'pose' ? E.d.guide : null;
     if(gk === 'gp' && og) pzSnap();   /* ★ v1.0.5 換範本前記一步,按「↶ 骨架上一步」可以回來 */
     E.d.guide = gv ? (gk === 'gp' ? { t: 'pose', id: gv, on: 1, a: oa, j: pzFrom(gv, E.d.W, E.d.H), yw: og ? (og.yw || 0) : 0, pt: og ? (og.pt || 0) : 0 } : { t: 'ref', src: gv, on: 1, a: oa }) : null;
+    /* ★ v1.2.3 走路/奔跑是前後擺動,正面看手腳幾乎重疊 ⇒ 原本在正面視角時自動轉到「斜側」(35°)讓學生一眼看出步伐 */
+    if(gk === 'gp' && E.d.guide && D.POSE_SAG && D.POSE_SAG[gv] && !Math.round(E.d.guide.yw || 0) && !Math.round(E.d.guide.pt || 0)){ E.d.guide.yw = 35; E.d.guide.pt = -8; }
     E.pj = null; pmApply(); libPaint(); dirty(); if(gv) toast(gk === 'gp' ? T({ c: '🦴 人偶擺好了!拖圓點彎手腳,拖空白處轉一圈看', p: '🦴 已載入範本:拖曳關節調整姿勢,拖曳空白處旋轉視角' }) : '🖼 參考圖片放在畫布下面了,看著它自己畫出來吧!'); return; }
   while(t && t !== this){ if(t.getAttribute && !a){ if(t.getAttribute('data-add')) a = ['add', t.getAttribute('data-add')]; else if(t.getAttribute('data-slot')) a = ['slot', t.getAttribute('data-slot'), t.getAttribute('data-f')];
       else if(t.getAttribute('data-bt')) a = ['bt', t.getAttribute('data-bt')]; else if(t.getAttribute('data-tk')) a = ['tk', t.getAttribute('data-tk')]; else if(t.getAttribute('data-font')) a = ['font', t.getAttribute('data-font')];
@@ -1447,7 +1538,7 @@ function libClick(ev){
     if(E.sel >= 0 && E.d.items[E.sel] && E.d.items[E.sel].t === 'shape'){ beginOp(); if(a[0] === 'vf') E.d.items[E.sel].fill = a[1]; else E.d.items[E.sel].st = a[1]; endOp(true); layersPaint(); }   /* ★ v1.0.2 形狀填色/外框色 = 變色 */
     libPaint(); }
   else if(a[0] === 'pe'){ E.brush.er = a[1] === '1'; libPaint(); }
-  else if(a[0] === 'pclr'){ var cl = lyGet(E.al); if(!cl || cl.k !== 'p'){ toast('先在右邊選一個一般圖層'); return; } confirmBox('清掉「' + esc(cl.n) + '」畫的東西?(可以按 ↶ 復原)', function(ok){ if(!ok) return; var cv = plCv(cl.id); if(!cv) return; beginOp(); cv.getContext('2d').clearRect(0, 0, cv.width, cv.height); plSave(cv); endOp(); }); }   /* ★ v1.1.0 只清目前選的圖層 */
+  else if(a[0] === 'pclr'){ var cl = lyGet(E.al); if(!cl || cl.k !== 'p'){ toast('先在右邊選一個一般圖層'); return; } confirmBox('清掉「' + esc(cl.n) + '」畫的東西?(可以按 ↶ 復原)', function(ok){ if(!ok) return; var cv = plCv(cl.id); if(!cv) return; beginOp(); cv.getContext('2d').clearRect(0, 0, cv.width, cv.height); ovClearLayer(cl.id); plSave(cv); endOp(); }); }   /* ★ v1.2.4 清圖層也清掉它的重疊格;★ v1.2.6 那一層畫過的筆畫步數扣回 */   /* ★ v1.1.0 只清目前選的圖層 */
   else if(a[0] === 'br'){ E.brush.t = a[1]; if(BRUSH[a[1]]){ E.lastBr = a[1]; lsSet('dsg_br', a[1]); } E.brush.er = a[1] === 'eraser'; if(a[1] !== 'bucket') tolClose(); libPaint();
     if(a[1] === 'lasso') toast(T({ c: '✂️ 把要剪下來的地方圈起來', p: '✂️ 圈選要剪下的範圍' })); else if(a[1] === 'bucket') toast(T({ c: '🪣 點一下要填色的地方,或把右邊的顏色拖進線條圍起來的地方', p: '🪣 點擊填色,或將右側色票拖曳至封閉區域' })); }
   else if(a[0] === 'xf'){ xformStart(); }
@@ -1567,6 +1658,7 @@ function stageBind(){
   function pt(e){ return stPt(e.clientX, e.clientY); }   /* ★ v1.1.1 用畫布在螢幕上的實際大小換算(PC zoom 不再往下偏) */
   /* ★ v1.0.6 捏合縮放用:按下時先記「復原的下一步清單」與時間 */
   st.onpointerdown = function(e){
+    if(E.eyed && !locked()){ e.preventDefault(); e.stopPropagation(); eyePick(pt(e), e.clientX, e.clientY); return; }   /* ★ v1.2.6 吸管開著:點畫布 = 吸色,不畫 */
     if(locked() || g) return;
     var rd0 = E.redo.slice(), t0 = now();
     downG(e);
@@ -1578,7 +1670,11 @@ function stageBind(){
     if(q.hold) q.hold.stop();
     if(q.m === 'paint') brushEnd(q);
     else if(q.m === 'qs'){ endOp(true); layersPaint(); propPaint(); }
-    else if(q.m === 'px'){ plSave(cv); endOp(E.px.tool !== 'er'); }   /* 點格子/填色算增加,擦掉不算 */
+    else if(q.m === 'px'){   /* 點格子/填色算增加,擦掉不算 */
+      var pxw = E.d.W / E.px.n, ovP;   /* ★ v1.2.6 像素筆也登記格子;像素橡皮擦擦掉的筆畫扣回步數(油漆桶填色不追蹤) */
+      if(E.px.tool === 'er'){ ovP = ovStroke(E.al, q.pts || [], pxw, '', '', true); ovSub(ovP.sub); plSave(cv); endOp(false); }
+      else if(E.px.tool === 'fill'){ plSave(cv); endOp(true); }
+      else { plSave(cv); ovP = ovStroke(E.al, q.pts || [], pxw, 'px', E.brush.c, false); ovReg(E.al, ovP.cs, endOp(true)); } }
     else if(q.m === 'bk') bucketAt(q.p, E.brush.c, E.tol, true);
     else if(q.m === 'lasso'){ E.lassoPts = null; lassoEnd(q.pts); }
     else if(q.m === 'fl') flUp(q);
@@ -1644,11 +1740,14 @@ function stageBind(){
   }
   function brushAbort(q){ if(q.er){ if(q.snap){ try{ ctx.putImageData(q.snap, 0, 0); }catch(x){} } } else scrOff(); }
   function brushEnd(q){
-    if(q.er){ plSave(cv); endOp(false); return; }   /* 橡皮擦不算操作次數 */
+    if(q.er){ var ovE = ovStroke(E.al, q.pts, q.w, '', '', true); ovSub(ovE.sub); plSave(cv); endOp(false); return; }   /* 橡皮擦不算操作次數(★ v1.2.4 擦過的格子從重疊格清掉;★ v1.2.6 擦掉七成以上的筆畫扣回步數) */
     if(q.t === 'vec'){ scrOff(); var it = pathItem(q.pts, q.c, Math.max(2, Math.round(q.w * 0.6))); if(!it){ E.undo.pop(); E.redo = q.rd || []; E._bk = null; return; }
       objPush(it); endOp(true); layersPaint(); propPaint(); return; }
     if(q.f) q.f.end();   /* ★ v1.2.0 防抖收筆:追上最後一點 */
-    scrMerge(cv, (BRUSH[q.t] ? BRUSH[q.t].a : 1) * (E.brush.op || 1)); plSave(cv); endOp(true);
+    scrMerge(cv, (BRUSH[q.t] ? BRUSH[q.t].a : 1) * (E.brush.op || 1)); plSave(cv);
+    var ovR = ovStroke(E.al, q.pts, q.w, q.t, q.c, false);   /* ★ v1.2.4 描同一條線/塗同一塊(同筆刷或同色重疊 ≥70%)⇒ 不加步數 */
+    if(ovR.same){ endOp(false); ovReg(E.al, ovR.cs, false); if(!E.ovTold){ E.ovTold = 1; toast(T({ c: '✋ 在同一條線或同一塊上,用一樣的筆刷或顏色重複塗,只算一步喔', p: '✋ 以相同筆刷或顏色重疊描繪同一處,不重複計算操作次數' })); } }
+    else ovReg(E.al, ovR.cs, endOp(true));   /* ★ v1.2.6 登記這一筆(有沒有算步數),之後被擦掉才扣得回來 */
   }
   function qsFire(q){
     if(g !== q || q.m !== 'paint') return;
@@ -1666,7 +1765,7 @@ function stageBind(){
   function downG(e){
     var t = e.target, p = pt(e), i, it, rc, tl;
     if(E.float){ e.preventDefault(); var hk = PK.floatHit(E.float.F, p, 14 / E.k, E.xmode); if(!hk) return; g = { m: 'fl', pid: e.pointerId, k: hk, st: PK.floatDragStart(E.float.F, hk, p) }; E.float.hot = hk; cap(e); fxDraw(); return; }   /* ★ v1.1.0 剪下/變形中只操作浮動圖片 */
-    if(E.tab === 'paint' && E.pm === 'pixel'){ cv = apc(); if(!cv) return; ctx = cv.getContext('2d'); if(!plVisOk()) return; e.preventDefault(); beginOp(); g = { m: 'px', pid: e.pointerId };
+    if(E.tab === 'paint' && E.pm === 'pixel'){ cv = apc(); if(!cv) return; ctx = cv.getContext('2d'); if(!plVisOk()) return; e.preventDefault(); beginOp(); g = { m: 'px', pid: e.pointerId, pts: [{ x: p.x, y: p.y }] };
       if(e.pointerType === 'touch'){ try{ g.snap = ctx.getImageData(0, 0, cv.width, cv.height); }catch(x0){} }
       cap(e);
       if(E.px.tool === 'fill'){ pxFill(p); g.done = true; } else pxDot(p); return; }
@@ -1695,7 +1794,10 @@ function stageBind(){
     var p = pt(e), it, d;
     if(g.m === 'paint'){ brushMove(g, e); return; }
     if(g.m === 'qs'){ qsAdjust(g, p); return; }
-    if(g.m === 'px'){ if(!g.done) pxDot(p); return; }
+    if(g.m === 'px'){ if(!g.done){   /* ★ v1.2.6 快速拖曳時,兩點之間每半格補一點(原本只畫取樣點,線會斷、橡皮擦會漏擦) */
+        var lp = g.pts && g.pts.length ? g.pts[g.pts.length - 1] : p, cs0 = E.d.W / E.px.n, dl = Math.sqrt((p.x - lp.x) * (p.x - lp.x) + (p.y - lp.y) * (p.y - lp.y)), nn = Math.min(400, Math.max(1, Math.ceil(dl / (cs0 / 2)))), ii;
+        for(ii = 1; ii <= nn; ii++) pxDot({ x: lp.x + (p.x - lp.x) * ii / nn, y: lp.y + (p.y - lp.y) * ii / nn });
+        if(g.pts && g.pts.length < 4000) g.pts.push({ x: p.x, y: p.y }); } return; }
     if(g.m === 'bk') return;
     if(g.m === 'lasso'){ var lq = g.pts[g.pts.length - 1]; if(Math.abs(p.x - lq.x) + Math.abs(p.y - lq.y) > 2 / E.k && g.pts.length < 5000){ g.pts.push(p); fxDraw(); } return; }
     if(g.m === 'fl'){ flMove(g, p, e); return; }
@@ -1962,19 +2064,43 @@ function lyClick(ev){
   if(k === 'dn' && i > 0){ beginOp(); tmp = a[i]; a[i] = a[i - 1]; a[i - 1] = tmp; endOp(false); plsBuild(); lyPanel(); return; }
   if(k === 'del'){ L = a[i]; if(!L) return; if(L.k === 'o'){ toast(T({ c: '物件層不能刪(要刪文字或形狀,點它再按 🗑)', p: '物件層無法刪除' })); return; }
     var np = 0, j; for(j = 0; j < a.length; j++){ if(a[j].k === 'p') np++; } if(np <= 1){ toast('至少要留一個一般圖層'); return; }
-    beginOp(); a.splice(i, 1); delete E.pls[L.id]; for(j = Math.min(i, a.length - 1); j >= 0; j--){ if(a[j].k === 'p'){ E.al = a[j].id; break; } } if(!lyGet(E.al) || lyGet(E.al).k !== 'p'){ for(j = 0; j < a.length; j++){ if(a[j].k === 'p'){ E.al = a[j].id; break; } } }
+    beginOp(); a.splice(i, 1); delete E.pls[L.id]; ovClearLayer(L.id);   /* ★ v1.2.6 刪掉圖層 = 那一層的筆畫步數扣回 */ for(j = Math.min(i, a.length - 1); j >= 0; j--){ if(a[j].k === 'p'){ E.al = a[j].id; break; } } if(!lyGet(E.al) || lyGet(E.al).k !== 'p'){ for(j = 0; j < a.length; j++){ if(a[j].k === 'p'){ E.al = a[j].id; break; } } }
     endOp(false); plsBuild(); lyPanel(); toast('🗑 刪掉「' + L.n + '」了,按 ↶ 復原可以救回來'); }
 }
 /* ── 🎨 選色器(右欄,常駐;外圈色相+內三角形明度彩度)── */
 function colorPanel(){
   var E = S.ed, el = $('dsg-pcol'), PK = window.MGPK, h, i;
   if(!el) return;
-  h = '<div class="dsg-sec">🎨 <span class="lb">顏色</span></div><div class="dsg-curc"><span class="dsg-sw on" id="dsg-cur" style="background:' + E.brush.c + '" title="按住拖到畫布上 = 油漆桶"></span><b id="dsg-curx">' + esc(E.brush.c) + '</b></div><div id="dsg-wheel"></div><div class="dsg-qsw">';
+  h = '<div class="dsg-sec">🎨 <span class="lb">顏色</span></div><div class="dsg-curc"><span class="dsg-sw on" id="dsg-cur" style="background:' + E.brush.c + '" title="按住拖到畫布上 = 油漆桶"></span><b id="dsg-curx">' + esc(E.brush.c) + '</b>'
+    + '<button type="button" class="dsg-eyed' + (E.eyed ? ' on' : '') + '" id="dsg-eyed" title="吸管:按一下,再點畫布上想要的顏色">🧪<span class="lb"> 吸管</span></button></div><div id="dsg-wheel"></div><div class="dsg-qsw">';   /* ★ v1.2.6 吸管 */
   for(i = 0; i < D.PAINT_COLORS.length; i++) h += '<span class="dsg-sw" data-pc="' + D.PAINT_COLORS[i] + '" style="background:' + D.PAINT_COLORS[i] + '"></span>';
   el.innerHTML = h + '</div>';
   if(E.wheel){ try{ E.wheel.destroy(); }catch(e){} E.wheel = null; }
   if(PK) E.wheel = PK.wheel($('dsg-wheel'), { hex: E.brush.c, max: 230, onChange: function(hx, fin){ colorSet(hx, true, fin); } });
+  var eb = $('dsg-eyed'); if(eb){ eb.onclick = function(ev){ ev.stopPropagation(); eyeToggle(); }; eb.addEventListener('pointerdown', function(ev){ ev.stopPropagation(); }); }
 }
+/* ══ ★ v1.2.6(2026-11-25・老師「角色皮膚和荒島裝飾要有吸色滴管在色環旁邊可以使用」)🧪 吸管 ══
+   按吸管 ⇒ 先把整張作品(人物部件/素材/文字/形狀/所有看得見的圖層)合成一張圖 ⇒ 點畫布任何地方吸那裡看到的顏色(3×3 平均),
+   吸到就變成目前顏色(色環一起跳過去)、放大鏡顯示新舊顏色、吸管自動關掉;點到透明的地方提示「這裡沒有顏色」,吸管保持開著。
+   快捷鍵:PC 按 I 開關吸管;Esc 取消。吸管不是操作,不算步數。 */
+function eyeBtn(){ var b = $('dsg-eyed'), E = S.ed; if(b) b.className = 'dsg-eyed' + (E && E.eyed ? ' on' : ''); var st = $('dsg-stage'); if(st) st.style.cursor = E && E.eyed ? 'copy' : ''; }
+function eyeOff(){ var E = S.ed; if(!E) return; E.eyed = 0; E.eyeCv = null; eyeBtn(); }
+function eyeToggle(){ var E = S.ed; if(!E || locked()) return; if(E.eyed){ eyeOff(); return; }
+  E.eyed = 1; E.eyeCv = null; eyeBtn();
+  toast(T({ c: '🧪 吸管:點畫布上你想要的顏色', p: '🧪 吸管:點選畫布取色' }));
+  try{ renderComposite(false, null, function(cv){ if(S.ed === E && E.eyed) E.eyeCv = cv; }); }catch(x){ eyeOff(); } }
+function eyePick(p, cx, cy){ var E = S.ed, cv = E && E.eyeCv, sc, x, y, dt, i, n = 0, r = 0, gg = 0, b = 0, hx, old;
+  if(!cv){ toast('🧪 吸管準備中,再點一次'); return; }
+  sc = cv.width / E.d.W; x = Math.round(p.x * sc); y = Math.round(p.y * sc);
+  if(x < 0 || y < 0 || x >= cv.width || y >= cv.height){ toast('🧪 要點在畫布裡面喔'); return; }
+  try{ dt = cv.getContext('2d').getImageData(Math.max(0, x - 1), Math.max(0, y - 1), 3, 3).data; }catch(e){ toast('🧪 這裡吸不到顏色'); return; }
+  for(i = 0; i < dt.length; i += 4){ if(dt[i + 3] < 40) continue; r += dt[i]; gg += dt[i + 1]; b += dt[i + 2]; n++; }
+  if(!n){ toast(T({ c: '🧪 這裡沒有顏色,點有畫東西的地方', p: '🧪 此處透明,請點選有顏色的位置' })); return; }
+  function h2(v){ v = Math.round(v / n); return (v < 16 ? '0' : '') + v.toString(16); }
+  hx = '#' + h2(r) + h2(gg) + h2(b); old = E.brush.c;
+  colorSet(hx, false, true); eyeOff(); sfx('sfx-sel', 0.3);
+  try{ if(window.MGPK && window.MGPK.loupe) window.MGPK.loupe(cx, cy, hx, old); }catch(x2){}
+  toast('🧪 吸到 ' + hx); }
 function colorSet(hx, fromWheel, fin){
   var E = S.ed, c = $('dsg-cur'), x = $('dsg-curx'), it;
   E.brush.c = hx; if(E.brush.t === 'eraser') E.brush.t = E.lastBr || 'mround'; if(E.px.tool === 'er') E.px.tool = 'pen';
@@ -2065,7 +2191,7 @@ function qualityCheck(cb){
   var E = S.ed, q = qOf(E.r.kind);
   renderComposite(false, 360, function(cv){
     var st = qualityStats(cv), a = [], d = E.d, bald = false;
-    a.push({ ok: (d.ops | 0) >= q.ops, ic: '✋', n: '操作次數', have: (d.ops | 0) + ' 次', need: q.ops + ' 次以上', tip: '只有「增加」和「變色」的動作才算:放素材、放文字、畫形狀、用畫筆或像素筆加細節(每一筆都算)、複製一份、選人物部件、換顏色;而且改完要跟原本不一樣(選回同一個顏色、換回原本的樣子不算)。拖曳、縮放、旋轉、往前往後不算;按 ↶ 復原會把那一步算過的次數扣回來' });
+    a.push({ ok: (d.ops | 0) >= q.ops, ic: '✋', n: '操作次數', have: (d.ops | 0) + ' 次', need: q.ops + ' 次以上', tip: '只有「增加」和「變色」的動作才算:放素材、放文字、畫形狀、用畫筆或像素筆加細節(每一筆都算,但在同一條線或同一塊上用一樣的筆刷或顏色重複塗只算一步)、複製一份、選人物部件、換顏色;而且改完要跟原本不一樣(選回同一個顏色、換回原本的樣子不算)。拖曳、縮放、旋轉、往前往後不算;按 ↶ 復原會把那一步算過的次數扣回來' });
     a.push({ ok: st.bbox >= q.bbox, ic: '📐', n: '圖案範圍', have: Math.round(st.bbox * 100) + '%', need: Math.round(q.bbox * 100) + '% 以上', tip: d.kind === 'skin' ? '只有人物太窄了:讓角色拿武器、帶寵物站旁邊,或加上特效,讓作品撐滿畫面' : '把裝飾放大、多擺幾樣東西,讓作品撐滿畫面' });
     a.push({ ok: st.fill >= q.fill, ic: '🖍', n: '上色比例', have: Math.round(st.fill * 100) + '%', need: Math.round(q.fill * 100) + '% 以上', tip: '空白太多了:把東西放大一點,或用畫筆把空的地方補上圖案' });
     a.push({ ok: st.colors >= q.colors, ic: '🌈', n: '顏色數量', have: st.colors + ' 種', need: q.colors + ' 種以上', tip: '顏色太少了:換不同顏色的衣服、用 🎨 顏色滑桿改色,或用畫筆加顏色' });
@@ -2109,17 +2235,25 @@ function submitStart(){
 function titleForm(){
   var E = S.ed, r = E.r, h = '<h3>📝 作品資料</h3>', i, A = D.TITLE_A, Bs = D.TITLE_B[r.kind], pen = lsGet('dsg_pen_' + S.uid) || '';
   /* ★ v1.0.4 作品名改成可以自己打字(預設帶入回工作室時取的名字);下拉選字只是幫忙想名字;繳交前檢查不可和已上架商品同名 */
-  h += '<label>作品名(最多 ' + TITLE_MAX + ' 個字,不能和已上架的作品同名)</label><input type="text" id="dsg-tt" maxlength="' + TITLE_MAX + '" value="' + esc(r.title || '') + '" placeholder="例如:火焰魔法少年"><div id="dsg-ttm" style="color:#c0392b;min-height:2.6vmin"></div>';
-  h += '<div style="display:flex;gap:1vmin;align-items:center;font-size:2vmin">想不到?用詞組:<select id="dsg-ta">'; for(i = 0; i < A.length; i++) h += '<option>' + esc(A[i]) + '</option>'; h += '</select><select id="dsg-tb">'; for(i = 0; i < Bs.length; i++) h += '<option>' + esc(Bs[i]) + '</option>'; h += '</select><button type="button" class="dsg-b ghost" id="dsg-tuse" style="font-size:1.9vmin">⬆ 放進作品名</button></div>';
+  h += '<label>作品名(自己打字取名,最多 ' + TITLE_MAX + ' 個字,不能和已上架的作品同名)</label><input type="text" id="dsg-tt" maxlength="' + TITLE_MAX + '" value="' + esc(r.title || '') + '" placeholder="例如:火焰魔法少年"><div id="dsg-ttm" style="color:#c0392b;min-height:2.6vmin"></div>';
+  /* ★ v1.2.7 老師「繳交作品改成打字命名」:拿掉詞組下拉選單(A/Bs 保留不用) */
   h += '<label style="display:block;margin-top:1.4vmin">筆名(2~8 個字,上架時顯示;老師看得到你的真名)</label><input type="text" id="dsg-pen" maxlength="8" value="' + esc(pen) + '"><div id="dsg-penm" style="color:#c0392b;min-height:2.6vmin"></div>';
+  /* ★ v1.2.5 作品說明(20~100 字) */
+  h += '<label style="display:block;margin-top:1.4vmin">📝 作品說明(' + DESC_MIN + '~' + DESC_MAX + ' 個字:介紹你的設計、想法、用了什麼顏色或特色)</label>'
+    + '<textarea id="dsg-desc" rows="3" maxlength="' + (DESC_MAX + 20) + '" placeholder="例如:這是一位喜歡大海的勇者,藍色披風像海浪,腰上的貝殼是他在荒島撿到的護身符。" style="width:100%;box-sizing:border-box;font:inherit;font-size:clamp(13px,2.1vmin,22px);line-height:1.5;padding:.8vmin 1vmin;border:2px solid #d9cdf5;border-radius:1.2vmin;resize:vertical">' + esc(r.desc || '') + '</textarea>'
+    + '<div style="display:flex;justify-content:space-between;gap:1vmin"><span id="dsg-descm" style="color:#c0392b;min-height:2.6vmin"></span><span id="dsg-descn" style="font-size:1.9vmin;opacity:.75;white-space:nowrap"></span></div>';
   h += wishHtml(r);   /* ★ v1.1.4 希望獲得的獎勵 */
   modal(h, [{ t: '取消', cls: 'ghost' }, { t: '下一步 ▶', keep: true, cb: function(m){
     if(m._chk) return;
-    var p = String($('dsg-pen').value || '').trim(), tc = titleCheck($('dsg-tt').value), wv = wishRead();
-    $('dsg-ttm').textContent = ''; $('dsg-penm').textContent = ''; $('dsg-wm').textContent = '';
+    var p = String($('dsg-pen').value || '').trim(), tc = titleCheck($('dsg-tt').value), wv = wishRead(), ds = String($('dsg-desc').value || '').replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, ''), dn = descLen(ds);
+    $('dsg-ttm').textContent = ''; $('dsg-penm').textContent = ''; $('dsg-wm').textContent = ''; $('dsg-descm').textContent = '';
     if(tc.e){ $('dsg-ttm').textContent = tc.e; return; }
     if(p.length < 2){ $('dsg-penm').textContent = '筆名要 2~8 個字'; return; }
     if(wordHits(p).length){ $('dsg-penm').textContent = '筆名有不適合的字詞(也不能用同學的名字),請換一個'; return; }
+    if(dn < DESC_MIN){ $('dsg-descm').textContent = '作品說明至少要 ' + DESC_MIN + ' 個字(現在 ' + dn + ' 個字),再多介紹一點你的設計吧!'; $('dsg-desc').focus(); return; }
+    if(dn > DESC_MAX){ $('dsg-descm').textContent = '作品說明最多 ' + DESC_MAX + ' 個字(現在 ' + dn + ' 個字),請精簡一點'; $('dsg-desc').focus(); return; }
+    if(wordHits(ds).length){ $('dsg-descm').textContent = '作品說明有不適合的字詞(也不能寫同學的名字),請修改'; $('dsg-desc').focus(); return; }
+    r.desc = ds;
     if(wv.e){ $('dsg-wm').textContent = wv.e; return; }
     m._chk = 1;
     shopTitleTaken(tc.v, function(tk){
@@ -2128,7 +2262,10 @@ function titleForm(){
       r.title = tc.v; r.pen = p; r.wish = wv.a; r.wishTxt = wv.t; lsSet('dsg_pen_' + S.uid, p); modalClose();
       confirmBox('<b>確認繳交「' + esc(r.title) + '」?</b><br>繳交後作品就<b>鎖住不能修改</b>了;要等老師審核,老師退件(會附上修改建議)才能再改。', function(ok){ if(ok) moderate(); }, '📤 確認繳交');
     }, null, true);
-  } }], { onOpen: function(m){ var bu = $('dsg-tuse'); if(bu) bu.onclick = function(){ var ip = $('dsg-tt'); if(ip) ip.value = ($('dsg-ta').value + $('dsg-tb').value).slice(0, TITLE_MAX); }; wishBind(); } });
+  } }], { onOpen: function(m){ var bu = $('dsg-tuse'); if(bu) bu.onclick = function(){ var ip = $('dsg-tt'); if(ip) ip.value = ($('dsg-ta').value + $('dsg-tb').value).slice(0, TITLE_MAX); }; wishBind();
+    var dt = $('dsg-desc'), dc = $('dsg-descn');   /* ★ v1.2.5 作品說明即時字數 */
+    function dcnt(){ if(!dt || !dc) return; var n = descLen(String(dt.value || '').replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '')); dc.textContent = n + ' / ' + DESC_MAX + ' 字'; dc.style.color = (n < DESC_MIN || n > DESC_MAX) ? '#c0392b' : '#2e8b57'; var em = $('dsg-descm'); if(em && n >= DESC_MIN && n <= DESC_MAX) em.textContent = ''; }
+    if(dt){ dt.oninput = dcnt; dcnt(); } } });
 }
 /* ★ v1.1.4(2026-11-18・老師)希望獲得的獎勵:最多 D.WISH_MAX 種;勾「其他」要自己寫(查不雅字);重交時帶入上次勾的 */
 function wishHtml(r){
@@ -2188,7 +2325,7 @@ function textItemsBoxes(){ var E = S.ed, a = [], i, it, cx = document.createElem
     ex = (w * c + h * s) / 2 * 1.15; ey = (w * s + h * c) / 2 * 1.15; a.push({ x0: it.x - ex, x1: it.x + ex, y0: it.y - ey, y1: it.y + ey, t: it.txt }); }
   return a; }
 function moderate(){
-  var E = S.ed, r = E.r, f = fb(), d = E.d, txt = [r.title, r.pen], i, hits, hash;
+  var E = S.ed, r = E.r, f = fb(), d = E.d, txt = [r.title, r.pen, r.desc || '', r.wishTxt || ''], i, hits, hash;   /* ★ v1.2.7 作品說明、自己寫的希望獎勵也一起查不雅字詞 */
   for(i = 0; i < d.items.length; i++){ if(d.items[i].t === 'text') txt.push(d.items[i].txt); }
   hits = wordHits(txt.join(' '));
   hash = hashStr(JSON.stringify(d) + '|' + plsJoin());
@@ -2228,6 +2365,9 @@ function visionCheck(flat, cb){
       for(k in D.VCAT){ if(D.VCAT.hasOwnProperty(k)){ v = D.VLEVEL[s[k]] || 0; out.s[k] = v; if(v >= th[k]) out.bad.push(k); } }
       t = a.textAnnotations || [];
       if(t.length) out.w = wordHits(t[0].description || '');
+      /* ★ v1.2.7(老師「智慧金鑰審核增加不雅字詞判別」)圖上的字被拆成很多塊時(直寫、分散、中間夾圖案),每一塊單獨再查一次,也把所有塊連起來查一次 */
+      if(t.length > 1){ var jn = [], h2, q2; for(i = 1; i < t.length && i < 400; i++){ q2 = t[i].description || ''; jn.push(q2); h2 = wordHits(q2); for(v = 0; v < h2.length; v++){ if(out.w.indexOf(h2[v]) < 0) out.w.push(h2[v]); } }
+        h2 = wordHits(jn.join('')); for(v = 0; v < h2.length; v++){ if(out.w.indexOf(h2[v]) < 0) out.w.push(h2[v]); } }
       for(i = 1; i < t.length; i++){ tok = norm(t[i].description || '').c; if(!tok || (/^[0-9a-z]$/.test(tok))) continue;
         m = (t[i].boundingPoly && t[i].boundingPoly.vertices) || []; if(m.length < 4) continue;
         cx = (((m[0].x || 0) + (m[2].x || 0)) / 2) / sc; cy = (((m[0].y || 0) + (m[2].y || 0)) / 2) / sc; in_ = false;
@@ -2265,6 +2405,7 @@ function uploadWork(mod){
         if(x && !(x.did === r.id && x.st === 'back')) throw new Error('taken');
         if(mod && typeof mod === 'object'){ for(k in mod){ if(mod.hasOwnProperty(k)) md[k] = mod[k]; } }
         if(!top){ md.wish = wish; md.wishTxt = wtx; md.em = em; }
+        md.desc = String(r.desc || '').slice(0, DESC_MAX + 10);   /* ★ v1.2.5 作品說明一律放 mod(新舊規則都寫得進去) */
         o = { uid: uid, ym: x ? x.ym : ym, did: r.id, kind: r.kind, bt: r.kind === 'skin' ? E.d.bt : '', title: r.title, pen: r.pen, nm: String(uName(u)).slice(0, 60), cls: clsOf(), hash: E.hash, path: path + '.png', th: E.th,
           ops: E.d.ops | 0, mod: md, st: 'pend', n: (x ? (x.n | 0) : 0) + 1, at: F ? F.serverTimestamp() : now(), ver: VER };
         if(top){ o.wish = wish; o.wishTxt = wtx; o.em = em; }
@@ -2343,7 +2484,7 @@ function gmWh(ym){
     a.sort(function(p, q2){ var r = { pend: 0, back: 1, live: 2 }; return (r[p.st] - r[q2.st]) || (tsMs(q2.at) - tsMs(p.at)); });
     S.gmWl = a;
     for(i = 0; i < a.length; i++){ x = a[i]; st[x.st] = (st[x.st] | 0) + 1;
-      h2 += '<div class="dsg-gc"><div class="im"><img data-path="' + esc(x.path) + '" src="' + esc(x.th || '') + '"></div>' + subChip(x.st) + '<br><b>' + esc(x.nm || '') + '</b> ' + esc(x.cls || '') + '<br>' + D.KINDS[x.kind].e + ' ' + esc(x.title || '') + '(筆名 ' + esc(x.pen || '') + ')<br>🕒 ' + fmtT(x.at) + ' ・ 第 ' + (x.n | 0) + ' 次繳交 ・ 操作 ' + (x.ops | 0) + ' 次<br>審核:' + (x.mod && x.mod.v === 'teacher' ? '老師當面放行' : '智慧審核通過') + wishLine(x) +
+      h2 += '<div class="dsg-gc"><div class="im"><img data-path="' + esc(x.path) + '" src="' + esc(x.th || '') + '"></div>' + subChip(x.st) + '<br><b>' + esc(x.nm || '') + '</b> ' + esc(x.cls || '') + '<br>' + D.KINDS[x.kind].e + ' ' + esc(x.title || '') + '(筆名 ' + esc(x.pen || '') + ')<br>🕒 ' + fmtT(x.at) + ' ・ 第 ' + (x.n | 0) + ' 次繳交 ・ 操作 ' + (x.ops | 0) + ' 次<br>審核:' + (x.mod && x.mod.v === 'teacher' ? '老師當面放行' : '智慧審核通過') + (descOf(x) ? '<br>📝 作品說明:' + esc(descOf(x)) : '') + wishLine(x) +
         (x.st === 'back' && x.gm ? '<br>↩ 退件建議:' + esc(x.gm.tip || '') : '') + (x.st === 'live' && x.gm ? '<br>🛒 ' + esc(x.gm.hero ? '英雄皮膚:' + x.gm.hero : '') + ' ★' + (x.gm.star | 0) : '');
       if(x.st === 'pend') h2 += '<div class="row"><button class="dsg-b go" data-ok="' + i + '">✅ 通過上架</button><button class="dsg-b ghost" data-bk="' + i + '">↩ 退件並寫建議</button></div>';
       h2 += '</div>'; }
