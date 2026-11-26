@@ -1252,7 +1252,7 @@ window._advDmgCap = function(target, dmg){
     return window._ADV_DMG_CAP;
   }catch(_){ return dmg; }
 };
-// ★ 玩家對「高血量菁英/BOSS」的 HP% 傷害上限:目標【當前 HP 的 5%】(老師裁定·取代舊 Lv×20)
+// ★ 玩家對「高血量菁英/BOSS」的 HP% 傷害上限:目標【當前 HP 的 5%】(老師裁定·取代舊 Lv×50)
 //   呼叫慣例:把原本算好的 Lv×N 上限整個包起來 → _hpPctCap(target, _heroLv*20)
 //   非受保護目標(路邊小怪/鬥技場對手/NPC 打玩家)一律原樣回傳 lvCap = 舊行為零改動。
 //   ⚠ 取代而非取大/取小:對蚩尤 35,000 → 1,750(比舊 Lv50×20=1,000 放寬)
@@ -1260,21 +1260,21 @@ window._advDmgCap = function(target, dmg){
 window._hpPctCap = function(target, lvCap){
   try{
     // ★ v5.361.0(老師 2026-11-07 裁定)— 世界龍王(1000 萬血)例外:當前HP 5% = 50 萬 ⇒ HP% 技能 Lv1 就頂到龍王上限。
-    //   龍王一律改回各技能自己的「英雄等級×N」上限(多數招式 = Lv×20,與圖鑑「上限=Lv×20」一致;
-    //   炸彈客爆發原為 Lv×15,老師 2026-11-07 裁定統一成 Lv×20;天神宙斯爆發程式本就 Lv×20,圖鑑同步改寫)。冒險 BOSS/菁英維持當前HP 5%,零改動。
+    //   龍王一律改回各技能自己的「英雄等級×N」上限(多數招式 = Lv×50,與圖鑑「上限=Lv×50」一致;
+    //   炸彈客爆發原為 Lv×15,老師 2026-11-07 裁定統一成 Lv×50;天神宙斯爆發程式本就 Lv×50,圖鑑同步改寫)。冒險 BOSS/菁英維持當前HP 5%,零改動。
     if(typeof _isWorldBossTarget === 'function' && _isWorldBossTarget(target)) return Math.max(1, lvCap || 1);
     if(!window._isHpPctProtected(target)) return lvCap;
     return Math.max(1, Math.floor((target.curHp || 0) * 0.05));
   }catch(_){ return lvCap; }
 };
-// ★ v5.361.0 — 給「沒有走 _hpPctCap」的 HP% 傷害用(夢境時光/暗黑洞/雙子命星):目標是世界龍王 ⇒ 夾在施放者英雄等級×20。
+// ★ v5.361.0 — 給「沒有走 _hpPctCap」的 HP% 傷害用(夢境時光/暗黑洞/雙子命星):目標是世界龍王 ⇒ 夾在施放者英雄等級×50。
 //   非龍王目標原樣回傳 = 舊行為零改動。
 window._wbHpPctLvCap = function(target, dmg, actor){
   try{
     if(!(typeof _isWorldBossTarget === 'function' && _isWorldBossTarget(target))) return dmg;
     var _lv = 1;
     try{ _lv = (typeof _lxHeroLv === 'function' && actor) ? (_lxHeroLv(actor) || 1) : 1; }catch(_eLv){ _lv = 1; }
-    return Math.max(1, Math.min(dmg, _lv * 20));
+    return Math.max(1, Math.min(dmg, _lv * 50));
   }catch(_){ return dmg; }
 };
 // ★ DoT(中毒/出血)每回合傷害「百分比」單一真相(老師裁定的新上限)
@@ -6978,9 +6978,9 @@ const BURST_UPGRADE_DEF = {
   //   全體固定值 200+目標30%HP(上限 Lv×15),自損至 10% HP(不會倒下)
   //   固定值類爆發,跟「定時炸彈」走相同 cat:special_bomber_burst 自訂升級
   //   ⚠ 爆發上限是 Lv×15(S1/S2 仍維持 Lv×10,爆發享有 1.5 倍上限作為威力差異)
-  //   ★ v1.0.20260518.7000 — 平衡削弱:上限 Lv×20 → Lv×15 (Lv50 全體總:4000→3000)
+  //   ★ v1.0.20260518.7000 — 平衡削弱:上限 Lv×50 → Lv×15 (Lv50 全體總:4000→3000)
   '炸彈客':{ rows: [
-    [0,'固定 200+目標30%HP 全體傷害(上限=Lv×20),自損至 10%'],
+    [0,'固定 200+目標30%HP 全體傷害(上限=Lv×50),自損至 10%'],
     [1,'固定 250+目標32%HP 全體傷害'],
     [2,'固定 300+目標34%HP 全體傷害'],
     [3,'固定 350+目標36%HP 全體傷害'],
@@ -7030,11 +7030,11 @@ const BURST_UPGRADE_DEF = {
     [4,'蓄積壓力 3 回合+結束時反擊倍率 165% (MAX)'],
   ] },
   '天神宙斯':{ rows: [
-    [0,'特技 600% + HP 25%(上限 Lv×20);非BOSS剩1HP;全體強力麻痺1回合'],
-    [1,'特技 660% + HP 25%(上限 Lv×20);非BOSS剩1HP;全體強力麻痺1回合'],
-    [2,'特技 720% + HP 25%(上限 Lv×20);非BOSS剩1HP;全體強力麻痺1回合'],
-    [3,'特技 780% + HP 25%(上限 Lv×20);非BOSS剩1HP;全體強力麻痺1回合'],
-    [4,'特技 840% + HP 25%(上限 Lv×20);非BOSS剩1HP;全體強力麻痺1回合 (MAX)'],
+    [0,'特技 600% + HP 25%(上限 Lv×50);非BOSS剩1HP;全體強力麻痺1回合'],
+    [1,'特技 660% + HP 25%(上限 Lv×50);非BOSS剩1HP;全體強力麻痺1回合'],
+    [2,'特技 720% + HP 25%(上限 Lv×50);非BOSS剩1HP;全體強力麻痺1回合'],
+    [3,'特技 780% + HP 25%(上限 Lv×50);非BOSS剩1HP;全體強力麻痺1回合'],
+    [4,'特技 840% + HP 25%(上限 Lv×50);非BOSS剩1HP;全體強力麻痺1回合 (MAX)'],
   ] },
   // ★ v3.13.8(2026-05-31)— 朱玥爆發「百花盛開」升級表(5 年 5 班 16 號 陳廷羽設計,74 號英雄)
   //   v3.13.0 漏註冊 → 圖鑑升級資訊顯示通用 fallback(鐵律 1.139)
@@ -9507,12 +9507,12 @@ function tickStatus(h){
       // ★ v3.15.62 — 雙保險:除 BOSS_NAMES 外,_isWorldBossTarget() 也認龍王(防日後漏列 BOSS_NAMES 被秒殺)
       const _isBoss = (typeof BOSS_NAMES !== 'undefined' && BOSS_NAMES.includes && BOSS_NAMES.includes(h.name))
                    || (typeof _isWorldBossTarget === 'function' && _isWorldBossTarget(h));
-      // ★ v3.15.62 — PVP(鬥技場,非 BOSS)不再秒殺,改「當前 HP 20%、上限 來源英雄 Lv×20」傷害(死亡宣告除外)
+      // ★ v3.15.62 — PVP(鬥技場,非 BOSS)不再秒殺,改「當前 HP 20%、上限 來源英雄 Lv×50」傷害(死亡宣告除外)
       const _isArenaJE = (typeof _adventureMode !== 'undefined' && !_adventureMode);
       if(_isBoss || _isArenaJE){
         // BOSS / PVP:當前 HP 20% 必中傷害,上限 = 來源英雄 Lv × 20
         const _jSrcLvE = (_jEnd._source && typeof _heroLevels !== 'undefined' && _heroLevels[_jEnd._source.name]) ? _heroLevels[_jEnd._source.name] : 1;
-        const _jCapE = window._hpPctCap(h, _jSrcLvE * 20);   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)(舊:_jSrcLvE*20)
+        const _jCapE = window._hpPctCap(h, _jSrcLvE * 50);   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)(舊:_jSrcLvE*50)
         const _bossDmg = Math.min(Math.max(1, Math.floor(h.curHp * 0.20)), _jCapE);
         log(`⚖️ [${h.name}] 審判終結降臨!受 20% 當前 HP 必中傷害(${_bossDmg},上限 ${_jCapE})!`);
         try{ bannerFX(h, '⚖️ 審判終結!', '#aa0033', 1100); }catch(_){}
@@ -20423,7 +20423,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     });
     // 選1名目標再打spv*280%
     // ✨ 命星 暗法師 b2「終焉宣告星」:集中單體目標自動死亡宣告 2 回合(標 _cstNoXfer 不可轉移);
-    //   強敵判定比照技能「死亡宣告」(死神/菁英/BOSS 名單/冒險 BOSS 戰)⇒ 改為當前 HP 20%(上限 英雄等級×20)＋禁療 2 回合
+    //   強敵判定比照技能「死亡宣告」(死神/菁英/BOSS 名單/冒險 BOSS 戰)⇒ 改為當前 HP 20%(上限 英雄等級×50)＋禁療 2 回合
     const _cstDkB2 = function(tt){
       try{
         if(!tt || tt.curHp<=0 || !window._cstHasN(h,'b2','暗法師')) return;
@@ -20439,7 +20439,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
           if(_dm){ _dm._cstNoXfer = 1; log('✨ [' + h.name + '] 命星:終焉宣告!【' + tt.name + '】被施加死亡宣告(2 回合後剩 1 HP,無法轉移)!'); }
         } else {
           const _lv = (typeof _heroLevels !== 'undefined' && _lxHeroLv(h)) ? _lxHeroLv(h) : 1;
-          const _d = Math.min(Math.max(1, Math.floor(tt.curHp * 0.20)), _lv * 20);
+          const _d = Math.min(Math.max(1, Math.floor(tt.curHp * 0.20)), _lv * 50);
           log('✨ [' + h.name + '] 命星:終焉宣告(強敵)!【' + tt.name + '】受當前 HP 20% 傷害(' + _d + ')並禁療 2 回合!');
           doDmg(tt, _d, {isSkill:true, actor:h, piercing:true, _arenaScalingExempt:true, _pierceBossReduce:true});
           if(tt.curHp>0 && !hasStatus(tt, 'noheal_curse')) addStatus(tt, 'noheal_curse', 2);
@@ -21750,7 +21750,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     playSfx('sfx-burst',0.85); flashScreen('rgba(180,220,255,1)',500);
     _foes4.forEach(t=>{
       let _dmg=Math.max(1,Math.floor(t.hp*(0.10+_burstLv*0.05)));
-      try{ _dmg = window._wbHpPctLvCap(t, _dmg, h); }catch(_eWbHpD){}   // ★ v5.361.0 對世界龍王:上限 英雄等級×20
+      try{ _dmg = window._wbHpPctLvCap(t, _dmg, h); }catch(_eWbHpD){}   // ★ v5.361.0 對世界龍王:上限 英雄等級×50
       doDmg(t,_dmg,{actor:h,isSkill:true,ignoreBuffs:true,piercing:true,isAoe:true,_pierceBossReduce:true});
       if(t.curHp>0){
         // ★ v1.0.20260424.1420 — 加入元素免疫檢查(土屬性對能力降低類有 50% 抵抗)
@@ -23292,7 +23292,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   //   ⚠ fixedDmg:true 跳過屬性/buff/暴擊;ignoreBuffs:true 穿透有利狀態
   //   ⚠ 自損公式:a.curHp = max(1, floor(a.maxHp × 0.10)),不會倒下(保底 1 HP)
   //   ⚠ 爆發上限是 Lv×15(S1/S2 仍維持 Lv×10,爆發享有 1.5 倍上限作為威力差異)
-  //   ★ v1.0.20260518.7000 — 平衡削弱:上限 Lv×20 → Lv×15 (Lv50 上限 1000→750/敵)
+  //   ★ v1.0.20260518.7000 — 平衡削弱:上限 Lv×50 → Lv×15 (Lv50 上限 1000→750/敵)
   // ════════════════════════════════════════════════════════════════
   if(burstName==='超級大爆炸'){
     const _opp = side==='p1' ? 'p2' : 'p1';
@@ -23306,8 +23306,8 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     const _bombHeroLv = (typeof _heroLevels !== 'undefined' && _lxHeroLv(h)) ? _lxHeroLv(h) : 1;
     /* 🔧 v5.256.0 修 bug:原寫 window._hpPctCap(f, …) 但 f 在這裡尚未宣告 ⇒ ReferenceError,爆發中斷(beginBatchTotals 也沒結束)。
        改成:_lvCap 為 Lv×15 基準,每個目標在迴圈內各自套 _hpPctCap(與 S1/S2 炸彈投擲同一寫法)。 */
-    const _lvCap = _bombHeroLv * 20;   // ★ v5.361.0 老師「統一成等級乘以 20」(舊:Lv×15) ｜ ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)(舊:Lv×15)
-    log(`💥 [${h.name}] 超級大爆炸!整個工坊的炸彈一次點燃!固定 ${_fixedBase}+目標 ${Math.round(_hpPct*100)}%HP(上限 Lv×20=${_lvCap})`);
+    const _lvCap = _bombHeroLv * 50;   // ★ v5.361.0 老師「統一成等級乘以 20」(舊:Lv×15) ｜ ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)(舊:Lv×15)
+    log(`💥 [${h.name}] 超級大爆炸!整個工坊的炸彈一次點燃!固定 ${_fixedBase}+目標 ${Math.round(_hpPct*100)}%HP(上限 Lv×50=${_lvCap})`);
     bannerFX(h, '💥 超級大爆炸!', '#ff3322', 1400);
     beginBatchTotals();
     const _foes = G[_opp].filter(x => x.curHp > 0);
@@ -23322,7 +23322,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
         if(f.curHp <= 0) return;
         const _raw = _fixedBase + Math.floor(f.hp * _hpPct);
         const _finalDmg = Math.min(_raw, window._hpPctCap(f, _lvCap));   // 🔧 v5.256.0 每個目標各自套 HP% 上限
-        log(`💥 → [${f.name}] 受 ${_finalDmg} 固定傷害(${_fixedBase}+${Math.floor(f.hp * _hpPct)},上限 Lv×20=${_lvCap})`);
+        log(`💥 → [${f.name}] 受 ${_finalDmg} 固定傷害(${_fixedBase}+${Math.floor(f.hp * _hpPct)},上限 Lv×50=${_lvCap})`);
         try{ bannerFX(f, `💥 ${_finalDmg}!`, '#ff4422', 900); }catch(_){}
         doDmg(f, _finalDmg, { fixedDmg:true, actor:h, isSkill:true, ignoreBuffs:true });
         renderCard(f);
@@ -23704,8 +23704,8 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     //   注意:此上限「只套用在 HP × 25% 那一段」,特技段另外算不設上限
     const _zrHeroLv = (typeof _heroLevels !== 'undefined' && _lxHeroLv(h)) ? _lxHeroLv(h) : 1;
     /* 🔧 v5.256.0 修 bug:原寫 window._hpPctCap(_f, …) 但 _f 是下方迴圈變數、這裡尚未宣告 ⇒ ReferenceError,天降雷罰每次施放都中斷。
-       改成:基準 Lv×20,在迴圈內對主目標各自套 _hpPctCap。 */
-    const _zrMaxHpDmgBase = _zrHeroLv * 20;   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)
+       改成:基準 Lv×50,在迴圈內對主目標各自套 _hpPctCap。 */
+    const _zrMaxHpDmgBase = _zrHeroLv * 50;   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)
     // ★ v3.15.44 — 老師更正規格:三段傷害 + 全體麻痺(原為全體掃描清場 / 上版誤做純單體)
     //   傷害1:特技600%(隨等級)+當前HP25%(上限Lv×15) → 鎖定 1 名主要目標(BOSS 或 玩家)
     //   傷害2:菁英怪(_zrEliteNames,BOSS/主目標以外) → HP 變成「當前的 50%」
@@ -28777,7 +28777,7 @@ window._cstHcB2Judge = function(h, t){   // b2「即刻判決星」:刀山火海
     var isArena = (typeof _adventureMode !== 'undefined' && !_adventureMode);
     t.status = t.status.filter(function(s){ return s !== je; });
     if(isBoss || isArena){
-      var cap = window._hpPctCap(t, _cstS1Lv(h) * 20);
+      var cap = window._hpPctCap(t, _cstS1Lv(h) * 50);
       var d = Math.min(Math.max(1, Math.floor(t.curHp * 0.20)), cap);
       log('✨ [' + h.name + '] 命星:即刻判決![' + t.name + '] 的審判終結提前降臨,受 20% 當前 HP 必中傷害(' + d + ')!');
       doDmg(t, d, { actor:h, isSkill:true, ignoreBuffs:true, fixedDmg:true, noHidden:true, _cstReact:1 });
@@ -31281,8 +31281,8 @@ window._cstS4RoundStart = function(){
  * ═════════════════════════════════════════════════════════════════════════════ */
 function _cstS5Ctrl3(t){ return window._cstCap.HARD_CTRL.concat(['charm','berserk','confused','taunt','strongTaunt','deathmark']); }
 function _cstS5Push(t, p){ try{ if(t && t.curHp > 0) t._cstPush = Math.max(-0.9, Math.min(0.9, (t._cstPush || 0) + p)); }catch(_){} }
-function _cstS5DmBoss(src, t){   // 死亡宣告對 BOSS 的「定量傷害」:當前 HP 20%,上限 施加者等級×20(同到期保底口徑)
-  try{ var lv = _cstS1Lv(src); return Math.min(Math.max(1, Math.floor((t.curHp || 0) * 0.20)), lv * 20); }catch(_){ return 1; }
+function _cstS5DmBoss(src, t){   // 死亡宣告對 BOSS 的「定量傷害」:當前 HP 20%,上限 施加者等級×50(同到期保底口徑)
+  try{ var lv = _cstS1Lv(src); return Math.min(Math.max(1, Math.floor((t.curHp || 0) * 0.20)), lv * 50); }catch(_){ return 1; }
 }
 
 /* ── 牛魔王 ── */
@@ -31460,7 +31460,7 @@ window._cstGmS2Rev = function(a){   // s2「雙生逆轉輪」:自損最大 HP 1
     var self = Math.max(1, Math.floor((a.hp || 1) * 0.10)); a.curHp = Math.max(1, a.curHp - self);
     var t = L.slice().sort(function(x, y){ return y.curHp - x.curHp; })[0];
     var cut = Math.max(1, Math.floor(t.curHp * (_cstS1Boss(t) ? 0.05 : 0.10)));
-    try{ cut = window._wbHpPctLvCap(t, cut, a); }catch(_eWbHpGm){}   // ★ v5.361.0 對世界龍王:上限 英雄等級×20
+    try{ cut = window._wbHpPctLvCap(t, cut, a); }catch(_eWbHpGm){}   // ★ v5.361.0 對世界龍王:上限 英雄等級×50
     log('✨ [' + a.name + '] 命星:雙生逆轉輪!轉輪逆轉,用 ' + self + ' HP 換走 [' + t.name + '] 當前 HP 的 ' + (_cstS1Boss(t) ? 5 : 10) + '%(' + cut + ')!(本場 ' + a._cstGmS2.n + '/2)');
     doDmg(t, cut, { actor:a, isSkill:true, fixedDmg:true, mustHit:true, ignoreEvasion:true, noCrit:true, noCounter:true, _cstReact:1 });
     var g = window._cstCap.gainEnergy(a.side, 2, { gift:true });
@@ -36015,6 +36015,7 @@ function doDmg(target, rawDmg, opts={}){
     }catch(_eFxDeathImm){ console.warn('[🔧 fixedDmg 倒下免疫] 失敗', _eFxDeathImm); }
     const _yyOldHpF = target.curHp;   // 🔧 v5.258.0 舊 bug:記下扣血前 HP,供吞食判定「這一下打倒」
     try{ if(opts._cstOvf && rawDmg > target.curHp) opts._cstOvf.v = rawDmg - target.curHp; }catch(_eCstOvfF){}   // ✨ v5.272.0 命星 關羽 b2(fixedDmg 路徑)
+    try{ if(rawDmg > 0 && rawDmg >= target.curHp && !opts.noEquip){ const _scTeq = getEquip(target); if(_scTeq && (_scTeq.n === '聖䗴神蟲' || _scTeq.n === '喜鵲') && typeof _scTeq.onDmg === 'function') rawDmg = _scTeq.onDmg(target, rawDmg); } }catch(_eScarabFx){}   // ★ v5.457.0 寵物聖䗴神蟲致命傷重生:固定傷害路徑(燃燒等)原本不經寵物 onDmg
     target.curHp = Math.max(0, target.curHp - rawDmg);
     try{ if(_yyOldHpF > 0 && target.curHp === 0 && (target.name === '鳳凰' || target.name === '菇女')) window._lxpsKoTalentRescue(target, opts); }catch(_ePxFx0){}   // ★ v5.456.0 鳳凰浴火重生最高優先:固定傷害路徑(燃燒/輻射區等)原本完全漏掉
     try{ if(rawDmg > 0 && target._cstMgCage) window._cstMgB2Acc(target, Math.min(rawDmg, _yyOldHpF)); }catch(_eCstMgB2f){}   // ✨ v5.267.0 命星 魔術師 b2(fixedDmg 路徑)
@@ -42644,7 +42645,7 @@ window._lxpsGuniuRescue = function(target, opts){
   try{
     const _guniuTraitLv = (typeof _getTraitLv === 'function') ? (_getTraitLv('菇女') || 0) : 0;
     const _revivePct = 0.50 + _guniuTraitLv * 0.05;  // Lv0=50% / Lv5=75%
-    if(doRevive(target, _revivePct, true, { forceTalentRevive:true })){
+    if(doRevive(target, _revivePct, false, { forceTalentRevive:true })){   // ★ v5.457.0 照說明 50%~75%(原 full=true 實際滿血)
       target._guniuRevived = true;  // 整場限 1 次,確認復活成功才設(不再先標記)
       _ok = true;
       log(`🍄 [${target.name}] 天賦:覺醒菇!以 ${Math.round(_revivePct * 100)}% HP 自動復活!(整場限 1 次)`);
@@ -46859,9 +46860,9 @@ function execSkill(a, sk, cost, stype){
       // ★ v5.80.0(老師裁定③)— 舊「對 BOSS 另外減半」分支取消,統一由新的 HP% 上限(當前HP 5%)收束;不取消會變 2.5% 過弱。舊行備查於下。
           //   舊行:const _s1HpPct = (typeof _zeusIsTrueBoss === 'function' && _zeusIsTrueBoss(t)) ? 0.05 : 0.10;
           const _s1HpPct = 0.10;
-      // ★ v3.15.62 — HP% 部分上限 英雄 Lv×20(攻擊 300% 部分不受此限)
+      // ★ v3.15.62 — HP% 部分上限 英雄 Lv×50(攻擊 300% 部分不受此限)
       const _s1HpLv = (typeof _heroLevels !== 'undefined' && _lxHeroLv(a)) ? _lxHeroLv(a) : 1;
-      const _dmg = Math.max(1, Math.floor(atkv(a) * _s1Mult) + Math.min(Math.floor((t.hp||0) * _s1HpPct), window._hpPctCap(t, _s1HpLv * 20)));
+      const _dmg = Math.max(1, Math.floor(atkv(a) * _s1Mult) + Math.min(Math.floor((t.hp||0) * _s1HpPct), window._hpPctCap(t, _s1HpLv * 50)));
       log(`🔱 [${a.name}] 岡格尼爾的制裁 → [${t.name}]!`);
       try{ playSkillFX('岡格尼爾的制裁',a,[t]); }catch(_){}
       try{ bannerFX(a,'🔱 岡格尼爾的制裁','#ffe6a8',900); }catch(_){}
@@ -47087,7 +47088,7 @@ function execSkill(a, sk, cost, stype){
       var _dmgPct = 0.20;
       // ★ v3.15.62 — HP% 上限統一 英雄等級 ×20(原 ×10)
       var _heroLv = (typeof _heroLevels !== 'undefined' && _lxHeroLv(a)) ? _lxHeroLv(a) : 1;
-      var _maxDmg = window._hpPctCap(t, _heroLv * 20);   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)(舊:_heroLv*20)
+      var _maxDmg = window._hpPctCap(t, _heroLv * 50);   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)(舊:_heroLv*50)
       var _rawDmg = Math.max(1, Math.floor(t.hp * _dmgPct));
       var _finalDmg = Math.min(_rawDmg, _maxDmg);
       var _capped = _rawDmg > _maxDmg;
@@ -47544,7 +47545,7 @@ function execSkill(a, sk, cost, stype){
         // BOSS / 菁英小怪 / 死神:減少當前HP 20% + 禁止治療2回合
         // ★ v3.15.62 — HP% 上限統一 英雄等級 ×20(原 ×10;小怪/PVP 剩1HP 不變)
         const _heroLvDM = (typeof _heroLevels !== 'undefined' && _lxHeroLv(a)) ? _lxHeroLv(a) : 1;
-        const _maxDmgDM = _heroLvDM * 20;
+        const _maxDmgDM = _heroLvDM * 50;
         const _rawBossDmg = Math.max(1, Math.floor(t.curHp * 0.20));
         const _bossDmg = Math.min(_rawBossDmg, _maxDmgDM);
         const _capped = _rawBossDmg > _maxDmgDM;
@@ -47881,7 +47882,7 @@ function execSkill(a, sk, cost, stype){
       try{ window._cstGyBladeUse(a); }catch(_eCstGyB1u3){}   // ✨ 命星 關羽 b1:施放單刀赴會時用掉全部刀勢
       doDmg(t, Math.max(1, Math.floor(atkv(a) * 3.00)), {actor:a, isSkill:true, element:'wind', elem:'wind', critBoost:1.0, _skPierceBlock:100});
       if(t.curHp > 0 && (t.curHp / (t.hp||1)) < 0.25){
-        // ★ 鐵律 1.31 保護分支(v3.15.62 靈魂收割同款口徑):小怪才處決;BOSS/菁英/鬥技場改「當前HP 20%,上限 關羽Lv×20」
+        // ★ 鐵律 1.31 保護分支(v3.15.62 靈魂收割同款口徑):小怪才處決;BOSS/菁英/鬥技場改「當前HP 20%,上限 關羽Lv×50」
         const _dkMini = (typeof MINI_MONSTERS !== 'undefined') ? MINI_MONSTERS : [];
         const _dkIsPathMob = _dkMini.includes(t.name);
         const _dkProtected = (typeof BOSS_NAMES !== 'undefined' && BOSS_NAMES.includes && BOSS_NAMES.includes(t.name))
@@ -47890,9 +47891,9 @@ function execSkill(a, sk, cost, stype){
           || (typeof _adventureMode !== 'undefined' && _adventureMode && typeof _advMiniBattleActive !== 'undefined' && !_advMiniBattleActive && !_dkIsPathMob);
         if(_dkProtected){
           const _dkLv = (typeof _heroLevels !== 'undefined' && _lxHeroLv(a)) ? _lxHeroLv(a) : 1;
-          const _dkFinal = Math.min(Math.max(1, Math.floor(t.curHp * 0.20)), window._hpPctCap(t, _dkLv * 20));   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)
+          const _dkFinal = Math.min(Math.max(1, Math.floor(t.curHp * 0.20)), window._hpPctCap(t, _dkLv * 50));   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)
           doDmg(t, _dkFinal, {actor:a, isSkill:true, fixedDmg:true, mustHit:true, noCounter:true, _arenaScalingExempt:true});
-          log(`⚔️ [${t.name}] 氣勢仍存,不受斬殺 — 改受追加傷害 ${_dkFinal}(當前HP 20%,上限 Lv×20)!`);
+          log(`⚔️ [${t.name}] 氣勢仍存,不受斬殺 — 改受追加傷害 ${_dkFinal}(當前HP 20%,上限 Lv×50)!`);
         } else {
           doDmg(t, Math.max(1, t.curHp), {actor:a, isSkill:true, fixedDmg:true, mustHit:true, noCounter:true});
           if(t.curHp <= 0){   // 🔧 v5.258.0 舊 bug:斬殺被倒下免疫/保命擋下時不再印「一刀斬落」
@@ -48928,7 +48929,7 @@ function execSkill(a, sk, cost, stype){
   }
   // ════════════════════════════════════════════════════════════════
   // ★ v3.16.50 — 魔術師(SSR·4年6班 張簡映澤) 技能(玩家版,鐵律 1.128 雙路徑)
-  //   S1「魔術閃光」c4:對 1 對手當前 HP 20% 傷害(上限 英雄Lv×20,鐵律 1.62)+ 魔術師「隱身休息」
+  //   S1「魔術閃光」c4:對 1 對手當前 HP 20% 傷害(上限 英雄Lv×50,鐵律 1.62)+ 魔術師「隱身休息」
   //      (immune 無敵 1 回合免傷 + 恢復自身 20%HP[+5%/技能級]·回血走 doHeal 受禁療影響)。
   //   S2「表演魔術」c5:敵全體暈眩 1 回合(對 BOSS 成功率減半,走死亡審判同款判定,鐵律 1.31)+ 隨機加普通物品卡。
   // ════════════════════════════════════════════════════════════════
@@ -48936,7 +48937,7 @@ function execSkill(a, sk, cost, stype){
     setPending('enemy', t=>{
       if(!t || t.curHp<=0){ clearSel(); return; }
       const _mgLv = (_lxHeroLv(a) || 1);
-      const _mgDmg = Math.min(Math.max(1, Math.floor(t.curHp * 0.20)), window._hpPctCap(t, _mgLv*20));   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)  // 當前HP20%,上限Lv×20
+      const _mgDmg = Math.min(Math.max(1, Math.floor(t.curHp * 0.20)), window._hpPctCap(t, _mgLv*50));   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)  // 當前HP20%,上限Lv×50
       log(`🎩 [${a.name}] 魔術閃光!一道刺眼的閃光晃花 [${t.name}] 的雙眼!`);
       try{ bannerFX(a,'🎩 魔術閃光!','#cc66ff',1000); }catch(_){}
       try{ if(typeof playSkillFX==='function') playSkillFX('魔術閃光',a,[t]); }catch(_){}
@@ -49743,7 +49744,7 @@ function execSkill(a, sk, cost, stype){
       //   舊行:const _dmgPct = _isBossCry ? _cryPct * 0.5 : _cryPct;
       const _dmgPct = _cryPct;
       const _cryHeroLv=(typeof _heroLevels!=='undefined'&&_lxHeroLv(a))?_lxHeroLv(a):1;
-      const _dmg=Math.min(Math.max(1,Math.floor(h.curHp*_dmgPct)), window._hpPctCap(h, _cryHeroLv*20));   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)
+      const _dmg=Math.min(Math.max(1,Math.floor(h.curHp*_dmgPct)), window._hpPctCap(h, _cryHeroLv*50));   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)
       doDmg(h,_dmg,{actor:a,isSkill:true,ignoreBuffs:false,_pierceBossReduce:true});
       // ★ debuff機率每升 1 級+2%(基礎 75%)、降低效果 10%+2%/級(基礎 10%, Lv10 達 28%- 修正:原本只有 +1% Lv10=20%);不可堆疊(已有則只刷新回合)
       const _cryDebuffRate = (window._cstR && window._cstR.has(a,'s1','幼兒園小孩')) ? 1.0 : Math.min(1.0, 0.75 + _activeSkLv * 0.02);   // ✨ v5.314.0 命星 幼兒園小孩 s1 哭不停星(必定弱化)
@@ -50453,8 +50454,8 @@ function execSkill(a, sk, cost, stype){
         let _cstDhOn = false, _cstDhBoss = false, _cstDhStunned = false;
         try{ _cstDhOn = window._cstHasN(a,'s1','超鬼神王'); if(_cstDhOn){ _cstDhBoss = !!((typeof _zeusIsTrueBoss==='function' && _zeusIsTrueBoss(t)) || (typeof _isWorldBossTarget==='function' && _isWorldBossTarget(t))); _cstDhStunned = hasStatus(t,'stun'); } }catch(_eCstDh1){ _cstDhOn = false; }
         let _hpDmg = Math.max(1, Math.floor((t.hp || 1) * 0.10));
-        try{ if(_cstDhOn){ if(_cstDhBoss){ const _cstDhLv = (typeof _heroLevels !== 'undefined' && _heroLevels && _lxHeroLv(a)) ? _lxHeroLv(a) : 1; _hpDmg = Math.max(1, Math.min(_hpDmg, window._hpPctCap(t, _cstDhLv * 20))); } else if(_cstDhStunned){ _hpDmg = Math.max(1, Math.floor((t.hp || 1) * 0.15)); log('✨ ['+a.name+'] 命星:['+t.name+'] 已在暈眩中,改損失最大 HP 15%!'); } } }catch(_eCstDh2){}
-        try{ _hpDmg = window._wbHpPctLvCap(t, _hpDmg, a); }catch(_eWbHpDh){}   // ★ v5.361.0 對世界龍王:上限 英雄等級×20
+        try{ if(_cstDhOn){ if(_cstDhBoss){ const _cstDhLv = (typeof _heroLevels !== 'undefined' && _heroLevels && _lxHeroLv(a)) ? _lxHeroLv(a) : 1; _hpDmg = Math.max(1, Math.min(_hpDmg, window._hpPctCap(t, _cstDhLv * 50))); } else if(_cstDhStunned){ _hpDmg = Math.max(1, Math.floor((t.hp || 1) * 0.15)); log('✨ ['+a.name+'] 命星:['+t.name+'] 已在暈眩中,改損失最大 HP 15%!'); } } }catch(_eCstDh2){}
+        try{ _hpDmg = window._wbHpPctLvCap(t, _hpDmg, a); }catch(_eWbHpDh){}   // ★ v5.361.0 對世界龍王:上限 英雄等級×50
         doDmg(t, _hpDmg, {actor:a, isSkill:true, isAoe:true, ignoreBuffs:true, piercing:true, _pierceBossReduce:true});
         // 60% 機率(可升級)暈眩 1 回合
         let _cstDhChance = _stunChance, _cstDhBlock = false;
@@ -51000,7 +51001,7 @@ function execSkill(a, sk, cost, stype){
     // ★ v1.0.20260514.6700 — 修正:用 _lxHeroLv(a) 取代不存在的 a.lv 屬性
     //   原 bug:戰鬥英雄物件沒有 lv 屬性,(a.lv||1)*10 恆為 10,「怎麼丟都只打 10」
     const _bomberHeroLv = (typeof _heroLevels !== 'undefined' && _lxHeroLv(a)) ? _lxHeroLv(a) : 1;
-    const _lvCap = _bomberHeroLv * 20;
+    const _lvCap = _bomberHeroLv * 50;
     const opp = a.side==='p1' ? 'p2' : 'p1';
     const _liveFoes = G[opp].filter(h => h.curHp > 0);
     if(!_liveFoes.length){ endAction(a, cost); return; }
@@ -51009,7 +51010,7 @@ function execSkill(a, sk, cost, stype){
       if(!t || t.curHp <= 0){ endAction(a, cost); return; }
       const _raw = _fixedBase + Math.floor(t.hp * _hpPct);
       const _finalDmg = Math.min(_raw, window._hpPctCap(t, _lvCap));   // ★ v5.80.0 HP% 上限改制(高血菁英/BOSS 改吃「目標當前HP 5%」)
-      log(`💣 [${a.name}] 炸彈投擲 → [${t.name}]!固定 ${_fixedBase}+HP ${Math.round(_hpPct*100)}% = ${_raw}(上限 Lv×20=${_lvCap},實際 ${_finalDmg})`);
+      log(`💣 [${a.name}] 炸彈投擲 → [${t.name}]!固定 ${_fixedBase}+HP ${Math.round(_hpPct*100)}% = ${_raw}(上限 Lv×50=${_lvCap},實際 ${_finalDmg})`);
       try{ playSkillFX('炸彈投擲', a, [t]); }catch(_){}
       try{ bannerFX(t, '💣 BOOM!', '#ff6622', 900); }catch(_){}
       try{ playSfx('sfx-explode', 0.85); }catch(_){}
@@ -51031,10 +51032,10 @@ function execSkill(a, sk, cost, stype){
     // ★ v1.0.20260514.6700 — 修正:用 _lxHeroLv(a) 取代不存在的 a.lv 屬性
     //   原 bug:戰鬥英雄物件沒有 lv 屬性,(a.lv||1)*10 恆為 10,「怎麼丟都只打 10」
     const _bomberHeroLv = (typeof _heroLevels !== 'undefined' && _lxHeroLv(a)) ? _lxHeroLv(a) : 1;
-    const _lvCap = _bomberHeroLv * 20;
+    const _lvCap = _bomberHeroLv * 50;
     const opp = a.side==='p1' ? 'p2' : 'p1';
     if(!G[opp].filter(h => h.curHp > 0).length){ endAction(a, cost); return; }
-    log(`💣 [${a.name}] 炸彈連續投擲!固定 ${_fixedBase}+HP ${Math.round(_hpPct*100)}% × ${_hits} 次(上限 Lv×20=${_lvCap})`);
+    log(`💣 [${a.name}] 炸彈連續投擲!固定 ${_fixedBase}+HP ${Math.round(_hpPct*100)}% × ${_hits} 次(上限 Lv×50=${_lvCap})`);
     beginBatchTotals();
     const _cstBmL = [];   // ✨ v5.271.0 命星 炸彈客 s2:本次連投命中的前 2 個不同目標
     let _bombI = 0;
@@ -51158,11 +51159,11 @@ function execSkill(a, sk, cost, stype){
       const _hpPct = 0.30 + _skLv * 0.02;
       // ★ v3.15.62 — 上限改「英雄 Lv × 20」(原特技×(20+技能級),統一 HP% 上限)
       const _hcHeroLv = (typeof _heroLevels !== 'undefined' && _lxHeroLv(a)) ? _lxHeroLv(a) : 1;
-      let _cap = _hcHeroLv * 20;
-      try{ if(window._cstHasN(a,'s1','地府酋長')) _cap = _hcHeroLv * 25; }catch(_eCstHcS1){}   // ✨ 命星 地府酋長 s1:上限 Lv×20→Lv×25
+      let _cap = _hcHeroLv * 50;
+      try{ if(window._cstHasN(a,'s1','地府酋長')) _cap = _hcHeroLv * 62.5; }catch(_eCstHcS1){}   // ✨ 命星 地府酋長 s1:上限 Lv×50→Lv×25
       const _raw = Math.floor(t.curHp * _hpPct);
       const _dmg = Math.max(1, Math.min(_raw, window._hpPctCap(t, _cap)));   // ★ v5.80.0 HP% 上限改制(高血菁英/BOSS 改吃「目標當前HP 5%」)
-      log(`⚖️ [${a.name}] 支配鎖鍊 → [${t.name}]!當前 HP ${Math.round(_hpPct*100)}% 必中(${_dmg}; 上限 Lv×20=${_cap})!`);
+      log(`⚖️ [${a.name}] 支配鎖鍊 → [${t.name}]!當前 HP ${Math.round(_hpPct*100)}% 必中(${_dmg}; 上限 Lv×50=${_cap})!`);
       try{ bannerFX(a, '⚖️ 支配鎖鍊!', '#aa2244', 1000); }catch(_){}
       try{ playSfx('sfx-fantasy', 0.85); }catch(_){}
       try{ playSkillFX('支配鎖鍊', a, [t]); }catch(_){}
@@ -51683,7 +51684,7 @@ function execSkill(a, sk, cost, stype){
         const _aliveHit = Array.from(_hitInZm).filter(_t => _t && _t.curHp > 0);
         if(_aliveHit.length){
           const _zmHeroLv = (typeof _heroLevels !== 'undefined' && _lxHeroLv(a)) ? _lxHeroLv(a) : 1;
-          const _zmMaxDmg = _zmHeroLv * 20;
+          const _zmMaxDmg = _zmHeroLv * 50;
           log(`⚡ [${a.name}] 三道雷鳴餘威!追加當前 HP 20% 固定傷害(上限 ${_zmMaxDmg})!`);
           _aliveHit.forEach((_t, _i) => {
             _pSetTimeout(() => {
@@ -52607,7 +52608,7 @@ function execSkill(a, sk, cost, stype){
       let _cstBombAll = false;   // ✨ 命星 機械師 s1:波及範圍 鄰近2個 → 全體(老師裁定;比例維持 50%)
       try{ if(a.name==='機械師' && window._cstHasN(a,'s1','機械師')){ _bombFixedBase = Math.floor(_bombFixedBase * 45 / 30); _cstBombAll = true; } }catch(_eCstBm1){ _cstBombSplash = 0.5; _cstBombAll = false; }   // ✨ 命星 機械師 s1:固定傷害 30→45(有等級成長 ⇒ ×1.5);波及 50% 由「鄰近2個」擴大為「目標以外全體」
       const _bombHpLv = (typeof _heroLevels !== 'undefined' && _lxHeroLv(a)) ? _lxHeroLv(a) : 1;
-      const _bombDmg = _bombFixedBase + Math.min(Math.floor(t.hp * 0.05), _bombHpLv * 20);
+      const _bombDmg = _bombFixedBase + Math.min(Math.floor(t.hp * 0.05), _bombHpLv * 50);
       log(`💣 [${a.name}] 定時炸彈 → [${t.name}]!下回合爆炸 ${_bombDmg} 固定傷害!(Lv${_activeSkLv+1})`);
       playSkillFX('死亡宣告',a,[t]);
       t.status=t.status.filter(s=>s.type!=='deathmark');
@@ -52998,7 +52999,7 @@ function execSkill(a, sk, cost, stype){
       if(_isBossOrEliteR){
         // BOSS / 菁英 / 死神:不秒殺,改為「當前 HP 20% 必中傷害(上限英雄等級×10)」+ 吸血同量
         const _rHeroLv = (typeof _heroLevels !== 'undefined' && _lxHeroLv(a)) ? _lxHeroLv(a) : 1;
-        const _rMaxDmg = window._hpPctCap(t, _rHeroLv * 20);   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)
+        const _rMaxDmg = window._hpPctCap(t, _rHeroLv * 50);   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)
         const _rRaw = Math.max(1, Math.floor(t.curHp * 0.20));
         const _rFinal = Math.min(_rRaw, _rMaxDmg);
         const _rCapped = _rRaw > _rMaxDmg;
@@ -53015,11 +53016,11 @@ function execSkill(a, sk, cost, stype){
         bannerFX(a, '靈魂收割!', '#cc44ff', 1000);
         endAction(a, cost);
       } else if(typeof _adventureMode !== 'undefined' && !_adventureMode){
-        // ★ v3.15.62 — 鬥技場 PVP 改:不秒殺,當前 HP 20%(上限 Lv×20)+ 吸血同量
+        // ★ v3.15.62 — 鬥技場 PVP 改:不秒殺,當前 HP 20%(上限 Lv×50)+ 吸血同量
         const _rHeroLvP = (typeof _heroLevels !== 'undefined' && _lxHeroLv(a)) ? _lxHeroLv(a) : 1;
         const _rRawP = Math.max(1, Math.floor(t.curHp * 0.20));
-        const _rFinalP = Math.min(_rRawP, window._hpPctCap(t, _rHeroLvP * 20));   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)
-        log(`[${a.name}] 靈魂收割 → [${t.name}](PVP):當前 HP 20% 必中 = ${_rFinalP}(上限 Lv×20)!`);
+        const _rFinalP = Math.min(_rRawP, window._hpPctCap(t, _rHeroLvP * 50));   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)
+        log(`[${a.name}] 靈魂收割 → [${t.name}](PVP):當前 HP 20% 必中 = ${_rFinalP}(上限 Lv×50)!`);
         playSkillFX('死亡宣告',a,[t]);
         doDmg(t, _rFinalP, { fixedDmg:true, isSkill:true, ignoreBuffs:true, actor:a, _arenaScalingExempt:true });
         doHeal(a, _rFinalP, {actor:a, noDice:true, isHeal:true});
@@ -53560,7 +53561,7 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
     const _azHpMult = 0.20 + _azS1Lv * 0.01;
     const _azEnergyDrain = (_azS1Lv >= 4) ? 5 : 4;
     const _azHeroLv = (typeof _heroLevels !== 'undefined' && _lxHeroLv(a)) ? _lxHeroLv(a) : 1;
-    const _azDmgCap = _azHeroLv * 20;
+    const _azDmgCap = _azHeroLv * 50;
     const _selfLoss = Math.max(1, Math.floor((a.curHp || 1) * _azSelfPct));
     const _curHpForCalc = a.curHp || 1;
     const _rawDmg = Math.max(1, Math.floor(spv(a) * _azSpMult + _curHpForCalc * _azHpMult));
@@ -53569,7 +53570,7 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
     const _foes = G[_opp].filter(x => x.curHp > 0);
     if(!_foes.length){ endAction(a, cost); return; }
 
-    log(`🐲 [${a.name}] 青炎爆破!自損 ${_selfLoss} HP,對全敵 ${_finalDmg} 火傷害(上限 Lv×20=${_azDmgCap})!扣對手 ${_azEnergyDrain} 能量!`);
+    log(`🐲 [${a.name}] 青炎爆破!自損 ${_selfLoss} HP,對全敵 ${_finalDmg} 火傷害(上限 Lv×50=${_azDmgCap})!扣對手 ${_azEnergyDrain} 能量!`);
     try{ bannerFX(a, '🐲 青炎爆破!', '#3399ff', 1200); }catch(_){}
     try{ playSkillFX('青炎爆破', a, _foes); }catch(_){}
 
@@ -54611,17 +54612,17 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
       try{ playSkillFX('惡鬼撲食', a, [t]); }catch(_){}
       beginBatchTotals();
       if(_isBossOrElite && !_isArena){
-        // BOSS / 菁英:特技 300%(+5%/級),★ v3.15.62 上限 英雄 Lv×20
+        // BOSS / 菁英:特技 300%(+5%/級),★ v3.15.62 上限 英雄 Lv×50
         const _bossMult = 3.00 + _yyS1Lv * 0.05;
         const _yyHeroLv = (typeof _heroLevels !== 'undefined' && _lxHeroLv(a)) ? _lxHeroLv(a) : 1;
         const _bossDmg = Math.min(Math.max(1, Math.floor(spv(a) * _bossMult)), _yyHeroLv * 20);
         log(`🦷 [${t.name}] BOSS 模式!特技 ${Math.round(_bossMult*100)}% = ${_bossDmg}(上限 Lv×20)`);
         doDmg(t, _bossDmg, { actor:a, isSkill:true, element:'dark', elem:'dark' });
       } else if(_isArena){
-        // ★ v3.15.62 — PVP 改:當前 HP 20%(上限 Lv×20),不再剩 50%、不秒殺
+        // ★ v3.15.62 — PVP 改:當前 HP 20%(上限 Lv×50),不再剩 50%、不秒殺
         const _yyHeroLv = (typeof _heroLevels !== 'undefined' && _lxHeroLv(a)) ? _lxHeroLv(a) : 1;
-        const _yyPvp = Math.min(Math.max(1, Math.floor(t.curHp * 0.20)), _yyHeroLv * 20);
-        log(`🦷 [${t.name}] 被撲食!當前 HP 20%(${_yyPvp}; 上限 Lv×20)`);
+        const _yyPvp = Math.min(Math.max(1, Math.floor(t.curHp * 0.20)), _yyHeroLv * 50);
+        log(`🦷 [${t.name}] 被撲食!當前 HP 20%(${_yyPvp}; 上限 Lv×50)`);
         doDmg(t, _yyPvp, { actor:a, isSkill:true, fixedDmg:true, ignoreBuffs:true, mustHit:true, element:'dark', elem:'dark', skillLabel:'惡鬼撲食' });
       } else {
         // 小怪:HP 剩 50%(不變)
@@ -57657,7 +57658,7 @@ window._cstPkT2Block = function(p, opts, a){   // ★ v5.262.0 審查:(review8_2
     window._cstCap.noteReact(opts);
     p._cstPkT2N = 0; p._cstPkT2U = (p._cstPkT2U || 0) + 1;
     const lv = (typeof _heroLevels !== 'undefined' && _lxHeroLv(p)) ? _lxHeroLv(p) : 1;
-    const d = Math.min(Math.max(1, Math.floor((atk.hp || 1) * 0.20)), window._hpPctCap(atk, lv * 20));
+    const d = Math.min(Math.max(1, Math.floor((atk.hp || 1) * 0.20)), window._hpPctCap(atk, lv * 50));
     log('✨ [' + p.name + '] 命星:神聖報復!聖光滿 3 層,自動對 [' + atk.name + '] 施放神聖鎚擊(不耗能量,' + d + ';本場 ' + p._cstPkT2U + '/3)');
     const _sv = G.activeChar; G.activeChar = p;
     try{ doDmg(atk, d, { actor:p, _pierceBossReduce:true, isRebound:true, noCounter:true, noGuard:true, _cstReact:1 }); } finally { G.activeChar = _sv; }
@@ -60727,7 +60728,7 @@ function nextRound(){
           } else if(typeof _heroLevels !== 'undefined' && _lxHeroLv(h)){
             _dmLv = _lxHeroLv(h);
           }
-          const _dmMaxDmg = _dmLv * 20;   // 🔧 v5.262.0 舊 bug:到期保底上限原為英雄等級×10,技能本體(v3.15.62)與 fd 為 ×20 ⇒ 統一 ×20
+          const _dmMaxDmg = _dmLv * 50;   // 🔧 v5.262.0 舊 bug:到期保底上限原為英雄等級×10,技能本體(v3.15.62)與 fd 為 ×20 ⇒ 統一 ×20
           const _dmRaw = Math.max(1, Math.floor(h.curHp * 0.20));
           const _dmFinal = Math.min(_dmRaw, _dmMaxDmg);
           const _dmCapped = _dmRaw > _dmMaxDmg;
@@ -65398,9 +65399,9 @@ function aiUseSkill(a,sk,cost,pref){
           || (typeof _adventureMode !== 'undefined' && _adventureMode && typeof _advMiniBattleActive !== 'undefined' && !_advMiniBattleActive && !_dkIsPathMobA);
         if(_dkProtectedA){
           const _dkHeroLvA = (typeof _heroLevels !== 'undefined' && _lxHeroLv(a)) ? _lxHeroLv(a) : 1;
-          const _dkFinalA = Math.min(Math.max(1, Math.floor(t.curHp * 0.20)), window._hpPctCap(t, _dkHeroLvA * 20));   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)
+          const _dkFinalA = Math.min(Math.max(1, Math.floor(t.curHp * 0.20)), window._hpPctCap(t, _dkHeroLvA * 50));   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)
           doDmg(t, _dkFinalA, {actor:a, isSkill:true, fixedDmg:true, mustHit:true, noCounter:true, _arenaScalingExempt:true});
-          log(`⚔️ [${t.name}] 氣勢仍存,不受斬殺 — 改受追加傷害 ${_dkFinalA}(當前HP 20%,上限 Lv×20)!`);
+          log(`⚔️ [${t.name}] 氣勢仍存,不受斬殺 — 改受追加傷害 ${_dkFinalA}(當前HP 20%,上限 Lv×50)!`);
         } else {
           doDmg(t, Math.max(1, t.curHp), {actor:a, isSkill:true, fixedDmg:true, mustHit:true, noCounter:true});
           if(t.curHp <= 0){   // 🔧 v5.258.0 舊 bug:斬殺被倒下免疫/保命擋下時不再印「一刀斬落」(AI 路徑)
@@ -65515,14 +65516,14 @@ function aiUseSkill(a,sk,cost,pref){
     }
   } else if(n==='神聖鎚擊'){if(t){
     // 🔧 v5.261.0 舊 bug:AI 版與手動版不同步(上限仍 Lv×10、BOSS 仍 5%、沒吃技能等級/命中加成/_pierceBossReduce、治療挑 HP 絕對值最低)⇒ 對齊手動版:
-    //   傷害 = 目標最大HP 20%,上限 _hpPctCap(t, 英雄等級×20)(BOSS/高血菁英改吃當前HP 5%,v5.80.0 老師裁定③);isSkill+_pierceBossReduce;命中 +技能等級×5%;
+    //   傷害 = 目標最大HP 20%,上限 _hpPctCap(t, 英雄等級×50)(BOSS/高血菁英改吃當前HP 5%,v5.80.0 老師裁定③);isSkill+_pierceBossReduce;命中 +技能等級×5%;
     //   治療 = HP 比例最低(_heroHealNeed)的存活友方 20%。AI 路徑 _activeSkLvMult 恆 1 ⇒ 讀 a._skLv 暫時套入,
     //   讓 doDmg(isSkill)/doHeal(isHeal) 與手動版一樣各乘一次技能等級,結算完立刻還原。
     //   (舊行備查:var _maxDmg2 = _heroLv2 * 10; var _rawDmg2 = Math.max(1, Math.floor(t.hp*(_bossHit?0.05:0.2))); doDmg(t, Math.min(_rawDmg2, _maxDmg2), {actor:a}); 治療對象 al)
     var _phSlotA = (a.s2 && a.s2.n==='神聖鎚擊') ? 's2' : 's1';
     var _phLvA = (a._skLv && typeof a._skLv[_phSlotA]==='number') ? a._skLv[_phSlotA] : 0;
     var _heroLv2 = (typeof _heroLevels !== 'undefined' && _lxHeroLv(a)) ? _lxHeroLv(a) : 1;
-    var _maxDmg2 = window._hpPctCap(t, _heroLv2 * 20);
+    var _maxDmg2 = window._hpPctCap(t, _heroLv2 * 50);
     var _rawDmg2 = Math.max(1, Math.floor(t.hp*0.2));
     var _phOptsA = {actor:a,isSkill:true,ignoreBuffs:false,_pierceBossReduce:true};
     if(_phLvA > 0) _phOptsA.hitBonus = _phLvA * 0.05;
@@ -65660,7 +65661,7 @@ function aiUseSkill(a,sk,cost,pref){
         const _s1HpPctO = 0.10;
       const _s1HpLvO = (typeof _heroLevels !== 'undefined' && _lxHeroLv(a)) ? _lxHeroLv(a) : 1;
       let _cstOdnMA = 1; try{ if(window._cstHasN(a,'s1','主神奧汀')){ _cstOdnMA = 4 / 3; log('✨ [' + a.name + '] 命星:永恆神槍!攻擊倍率 300%→400%!');   /* ★ v5.389.0 */ } }catch(_eCstOdnS1mA){ _cstOdnMA = 1; }   // ✨ 命星 奧汀 s1(AI)
-      const _dmgO = Math.max(1, Math.floor(atkv(a) * 3.0 * (1 + _lvO1 * 0.05) * _cstOdnMA) + Math.min(Math.floor((_t.hp||0) * _s1HpPctO), window._hpPctCap(_t, _s1HpLvO * 20)));
+      const _dmgO = Math.max(1, Math.floor(atkv(a) * 3.0 * (1 + _lvO1 * 0.05) * _cstOdnMA) + Math.min(Math.floor((_t.hp||0) * _s1HpPctO), window._hpPctCap(_t, _s1HpLvO * 50)));
       log(`🔱 [${a.name}] 岡格尼爾的制裁 → [${_t.name}]!`);
       try{ if(typeof playSkillFX==='function') playSkillFX('岡格尼爾的制裁',a,[_t]); }catch(_){}
       const _cstOdSnA = a._cstOdRn ? window._cstHitSnap(_t) : null;   // ✨ v5.269.0 命星 奧汀 t2(唯讀)
@@ -65859,7 +65860,7 @@ function aiUseSkill(a,sk,cost,pref){
   else if(n==='大聲啼哭'){
     enemies.forEach(h=>{
       const _cryHeroLvA=(typeof _heroLevels!=='undefined'&&_lxHeroLv(a))?_lxHeroLv(a):1;
-      const _dmg=Math.min(Math.max(1,Math.floor(h.curHp*0.1)), window._hpPctCap(h, _cryHeroLvA*20)); doDmg(h,_dmg,{actor:a,isSkill:true,_pierceBossReduce:true});   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)
+      const _dmg=Math.min(Math.max(1,Math.floor(h.curHp*0.1)), window._hpPctCap(h, _cryHeroLvA*50)); doDmg(h,_dmg,{actor:a,isSkill:true,_pierceBossReduce:true});   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)
       // ★ v1.0.20260424.1420 — 加入元素免疫檢查(土屬性對能力降低類有 50% 抵抗)
       if(h.curHp>0 && ((window._cstR && window._cstR.has(a,'s1','幼兒園小孩')) || Math.random()<0.75)){   // ✨ v5.314.0 命星 幼兒園小孩 s1(AI:必定弱化)
         if(typeof checkElemImmune === 'function' && checkElemImmune(h, '_cryDebuff')) return;
@@ -66088,7 +66089,7 @@ function aiUseSkill(a,sk,cost,pref){
   else if(n==='魔術閃光'){ if(t){
     var _mgLvA = (a.lv||a._lv||1);
     var _mgSkA = (a._skLv && typeof a._skLv['s1']==='number') ? a._skLv['s1'] : 0;
-    doDmg(t, Math.min(Math.max(1,Math.floor(t.curHp*0.20)), window._hpPctCap(t, _mgLvA*20)), {actor:a,isSkill:true,_pierceBossReduce:true});   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)
+    doDmg(t, Math.min(Math.max(1,Math.floor(t.curHp*0.20)), window._hpPctCap(t, _mgLvA*50)), {actor:a,isSkill:true,_pierceBossReduce:true});   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)
     if(a.curHp>0){ addBuff(a,'immune',1);
       var _cstMgS1A = false; try{ _cstMgS1A = !!window._cstHasN(a,'s1','魔術師'); if(_cstMgS1A){ var _cstMgIbA = (a.buffs||[]).find(function(b){ return b && b.type==='immune'; }); if(_cstMgIbA) _cstMgIbA._cstMgHaste = true; log('✨ ['+a.name+'] 命星:煙幕謝幕!隱身休息恢復量提升(20%→35%),隱身結束時獲得加速!'); } }catch(_eCstMgS1b){ _cstMgS1A = false; }   // ✨ 命星 魔術師 s1
       doHeal(a, Math.max(1,Math.floor(a.hp*(0.20+_mgSkA*0.05)*(_cstMgS1A ? 1.75 : 1))), {actor:a,_healSrc:a,isPctHeal:true}); }
@@ -66585,8 +66586,8 @@ function aiUseSkill(a,sk,cost,pref){
       let _cstDhOn2 = false, _cstDhBoss2 = false, _cstDhStunned2 = false;
       try{ _cstDhOn2 = window._cstHasN(a,'s1','超鬼神王'); if(_cstDhOn2){ _cstDhBoss2 = !!((typeof _zeusIsTrueBoss==='function' && _zeusIsTrueBoss(t2)) || (typeof _isWorldBossTarget==='function' && _isWorldBossTarget(t2))); _cstDhStunned2 = hasStatus(t2,'stun'); } }catch(_eCstDh5){ _cstDhOn2 = false; }
       let _hpDmg = Math.max(1, Math.floor((t2.hp || 1) * 0.10));
-      try{ if(_cstDhOn2){ if(_cstDhBoss2){ const _cstDhLv2 = (typeof _heroLevels !== 'undefined' && _heroLevels && _lxHeroLv(a)) ? _lxHeroLv(a) : 1; _hpDmg = Math.max(1, Math.min(_hpDmg, window._hpPctCap(t2, _cstDhLv2 * 20))); } else if(_cstDhStunned2){ _hpDmg = Math.max(1, Math.floor((t2.hp || 1) * 0.15)); log('✨ ['+a.name+'] 命星:['+t2.name+'] 已在暈眩中,改損失最大 HP 15%!'); } } }catch(_eCstDh6){}
-      try{ _hpDmg = window._wbHpPctLvCap(t2, _hpDmg, a); }catch(_eWbHpDh2){}   // ★ v5.361.0 對世界龍王:上限 英雄等級×20
+      try{ if(_cstDhOn2){ if(_cstDhBoss2){ const _cstDhLv2 = (typeof _heroLevels !== 'undefined' && _heroLevels && _lxHeroLv(a)) ? _lxHeroLv(a) : 1; _hpDmg = Math.max(1, Math.min(_hpDmg, window._hpPctCap(t2, _cstDhLv2 * 50))); } else if(_cstDhStunned2){ _hpDmg = Math.max(1, Math.floor((t2.hp || 1) * 0.15)); log('✨ ['+a.name+'] 命星:['+t2.name+'] 已在暈眩中,改損失最大 HP 15%!'); } } }catch(_eCstDh6){}
+      try{ _hpDmg = window._wbHpPctLvCap(t2, _hpDmg, a); }catch(_eWbHpDh2){}   // ★ v5.361.0 對世界龍王:上限 英雄等級×50
       doDmg(t2, _hpDmg, {actor:a, isSkill:true, isAoe:true, ignoreBuffs:true, piercing:true, _pierceBossReduce:true});
       let _cstDhChance2 = _stunChance, _cstDhBlock2 = false;
       try{ if(_cstDhOn2){ if(_cstDhBoss2){ if(typeof t2._cstDhStunR === 'number' && G.round <= t2._cstDhStunR + 2){ _cstDhBlock2 = true; } } else { _cstDhChance2 = Math.min(1, _stunChance + 0.15); } } }catch(_eCstDh7){}
@@ -66819,11 +66820,11 @@ function aiUseSkill(a,sk,cost,pref){
       const _hpPct = 0.30 + _skLv * 0.02;
       // ★ v3.15.62 — 上限改「英雄 Lv × 20」(原特技×(20+技能級),統一 HP% 上限)
       const _hcHeroLv = (typeof _heroLevels !== 'undefined' && _lxHeroLv(a)) ? _lxHeroLv(a) : 1;
-      let _cap = _hcHeroLv * 20;
-      try{ if(window._cstHasN(a,'s1','地府酋長')) _cap = _hcHeroLv * 25; }catch(_eCstHcS1){}   // ✨ 命星 地府酋長 s1:上限 Lv×20→Lv×25
+      let _cap = _hcHeroLv * 50;
+      try{ if(window._cstHasN(a,'s1','地府酋長')) _cap = _hcHeroLv * 62.5; }catch(_eCstHcS1){}   // ✨ 命星 地府酋長 s1:上限 Lv×50→Lv×25
       const _raw = Math.floor(_target.curHp * _hpPct);
       const _dmg = Math.max(1, Math.min(_raw, window._hpPctCap(_target, _cap)));   // ★ v5.80.0 HP% 上限改制(高血菁英/BOSS 改吃「目標當前HP 5%」)
-      log(`⚖️ [${a.name}] 支配鎖鍊 → [${_target.name}]!當前 HP ${Math.round(_hpPct*100)}% 必中(${_dmg}; 上限 Lv×20=${_cap})!`);
+      log(`⚖️ [${a.name}] 支配鎖鍊 → [${_target.name}]!當前 HP ${Math.round(_hpPct*100)}% 必中(${_dmg}; 上限 Lv×50=${_cap})!`);
       try{ bannerFX(a, '⚖️ 支配鎖鍊!', '#aa2244', 1000); }catch(_){}
       try{ playSfx('sfx-fantasy', 0.85); }catch(_){}
       try{ playSkillFX('支配鎖鍊', a, [_target]); }catch(_){}
@@ -67242,7 +67243,7 @@ function aiUseSkill(a,sk,cost,pref){
     const _pctSr = (window._cstHasN(a,'s1','吸血鬼')) ? (0.10 + _lvSr*0.01) * 1.5 : 0.10 + _lvSr*0.01;   // ★ 命星 吸血鬼 技·壹:門檻 ×1.5
     const _tgtSr = enemies.filter(h=>h.curHp>0 && (h.curHp/(h.hp||1)) < _pctSr)[0];
     if(_tgtSr){
-      // ★ v3.15.62 — BOSS/菁英/PVP 不秒殺,改當前 HP 20%(上限 Lv×20);小怪維持處決
+      // ★ v3.15.62 — BOSS/菁英/PVP 不秒殺,改當前 HP 20%(上限 Lv×50);小怪維持處決
       const _miniMobsSr = (typeof MINI_MONSTERS !== 'undefined') ? MINI_MONSTERS : [];
       const _eliteNamesSr = ['九尾空貓怪','綠竹筍小妖','茶葉精靈'];
       const _isPathMobSr = _miniMobsSr.includes(_tgtSr.name);
@@ -67266,10 +67267,10 @@ function aiUseSkill(a,sk,cost,pref){
       if(_isBossEliteSr || _isArenaSr){
         const _srHeroLv = (typeof _heroLevels !== 'undefined' && _lxHeroLv(a)) ? _lxHeroLv(a) : 1;
         const _srRaw = Math.max(1, Math.floor(_tgtSr.curHp * 0.20));
-        const _srFinal = Math.min(_srRaw, window._hpPctCap(_tgtSr, _srHeroLv * 20));   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)
+        const _srFinal = Math.min(_srRaw, window._hpPctCap(_tgtSr, _srHeroLv * 50));   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)
         doDmg(_tgtSr, _srFinal, {actor:a, isSkill:true, fixedDmg:true, ignoreBuffs:true, mustHit:true, _arenaScalingExempt:true});
         doHeal(a, _srFinal, {actor:a, noDice:true, isHeal:true});
-        log('['+a.name+'] 靈魂收割 → ['+_tgtSr.name+']:當前 HP 20%(上限 Lv×20)= '+_srFinal+'！');
+        log('['+a.name+'] 靈魂收割 → ['+_tgtSr.name+']:當前 HP 20%(上限 Lv×50)= '+_srFinal+'！');
       } else {
         const stolen = _tgtSr.curHp;
         doDmg(_tgtSr, _tgtSr.curHp, {actor:a, isSkill:true, piercing:true});
@@ -67626,7 +67627,7 @@ function aiUseSkill(a,sk,cost,pref){
         let _aiBmBase = 30 + _aiBmLv * 5;
         if(_cstBombAi === 45) _aiBmBase = Math.floor(_aiBmBase * 45 / 30);   // ✨ 命星 機械師 s1(AI):與 execSkill 同口徑 ×1.5
         const _aiBmHpLv = (typeof _heroLevels !== 'undefined' && _lxHeroLv(a)) ? _lxHeroLv(a) : 1;
-        const _aiBmDmg = _aiBmBase + Math.min(Math.floor(t.hp * 0.05), _aiBmHpLv * 20);
+        const _aiBmDmg = _aiBmBase + Math.min(Math.floor(t.hp * 0.05), _aiBmHpLv * 50);
         t.status = t.status.filter(s => s.type !== 'deathmark' && s.type !== '_timebomb');
         t.status.push({type:'deathmark',dur:1,_bomb:true,_bombOwner:a,_bombDmg:_aiBmDmg,_bombSplash:0.5,_bombFixed:true,_bombAll:(_cstBombAi === 45)});
         _aiBombPushed = true;
@@ -67960,7 +67961,7 @@ function aiUseSkill(a,sk,cost,pref){
     const _azHpMult = 0.20 + _azS1Lv * 0.01;
     const _azEnergyDrain = (_azS1Lv >= 4) ? 5 : 4;
     const _azHeroLv = (typeof _heroLevels !== 'undefined' && _lxHeroLv(a)) ? _lxHeroLv(a) : 1;
-    const _azDmgCap = _azHeroLv * 20;
+    const _azDmgCap = _azHeroLv * 50;
     const _selfLoss = Math.max(1, Math.floor((a.curHp || 1) * _azSelfPct));
     const _curHpForCalc = a.curHp || 1;
     const _rawDmg = Math.max(1, Math.floor(spv(a) * _azSpMult + _curHpForCalc * _azHpMult));
@@ -67968,7 +67969,7 @@ function aiUseSkill(a,sk,cost,pref){
     const _opp = a.side==='p1' ? 'p2' : 'p1';
     const _foes = G[_opp].filter(x => x.curHp > 0);
     if(_foes.length){
-      log(`🐲 [${a.name}] 青炎爆破!自損 ${_selfLoss} HP,對全敵 ${_finalDmg} 火傷害(上限 Lv×20=${_azDmgCap})!扣對手 ${_azEnergyDrain} 能量!`);
+      log(`🐲 [${a.name}] 青炎爆破!自損 ${_selfLoss} HP,對全敵 ${_finalDmg} 火傷害(上限 Lv×50=${_azDmgCap})!扣對手 ${_azEnergyDrain} 能量!`);
       try{ bannerFX(a, '🐲 青炎爆破!', '#3399ff', 1200); }catch(_){}
       try{ playSkillFX('青炎爆破', a, _foes); }catch(_){}
       // 自損(不會倒下,至少留 1)
@@ -68255,7 +68256,7 @@ function aiUseSkill(a,sk,cost,pref){
         doDmg(t, _bossDmg, { actor:a, isSkill:true, element:'dark', elem:'dark' });
       } else if(_isArena){
         const _yyHeroLv = (typeof _heroLevels !== 'undefined' && _lxHeroLv(a)) ? _lxHeroLv(a) : 1;
-        const _yyPvp = Math.min(Math.max(1, Math.floor(t.curHp * 0.20)), _yyHeroLv * 20);
+        const _yyPvp = Math.min(Math.max(1, Math.floor(t.curHp * 0.20)), _yyHeroLv * 50);
         doDmg(t, _yyPvp, { actor:a, isSkill:true, fixedDmg:true, ignoreBuffs:true, mustHit:true, element:'dark', elem:'dark', skillLabel:'惡鬼撲食' });
       } else {
         const _half = Math.max(1, Math.floor(t.curHp * 0.50));
@@ -68757,14 +68758,14 @@ function aiUseSkill(a,sk,cost,pref){
     const _fixedBase = 20 + _s1Lv*5;
     const _hpPct = (15 + _s1Lv) / 100;
     const _bomberHeroLv = (typeof _heroLevels !== 'undefined' && _lxHeroLv(a)) ? _lxHeroLv(a) : 1;
-    const _lvCap = _bomberHeroLv * 20;
+    const _lvCap = _bomberHeroLv * 50;
     // AI 挑 HP 最高敵方,放大 HP% 段威力
     const _bbAlive = G[_opp].filter(h => h.curHp > 0);
     if(_bbAlive.length){
       const _bbT = _bbAlive.slice().sort((x,y)=>y.curHp-x.curHp)[0];
       const _raw = _fixedBase + Math.floor(_bbT.hp * _hpPct);
       const _finalDmg = Math.min(_raw, window._hpPctCap(_bbT, _lvCap));   // ★ v5.80.0 HP% 上限改制(高血菁英/BOSS 改吃「目標當前HP 5%」)
-      log(`💣 [${a.name}] 炸彈投擲 → [${_bbT.name}]!固定 ${_fixedBase}+HP ${Math.round(_hpPct*100)}% = ${_raw}(上限 Lv×20=${_lvCap},實際 ${_finalDmg})`);
+      log(`💣 [${a.name}] 炸彈投擲 → [${_bbT.name}]!固定 ${_fixedBase}+HP ${Math.round(_hpPct*100)}% = ${_raw}(上限 Lv×50=${_lvCap},實際 ${_finalDmg})`);
       try{ playSkillFX('炸彈投擲', a, [_bbT]); }catch(_){}
       try{ bannerFX(_bbT, '💣 BOOM!', '#ff6622', 900); }catch(_){}
       try{ playSfx('sfx-explode', 0.85); }catch(_){}
@@ -68783,9 +68784,9 @@ function aiUseSkill(a,sk,cost,pref){
     const _hpPct = (15 + _s2Lv) / 100;
     const _hits = (_s2Lv >= 4) ? 4 : 3;
     const _bomberHeroLv = (typeof _heroLevels !== 'undefined' && _lxHeroLv(a)) ? _lxHeroLv(a) : 1;
-    const _lvCap = _bomberHeroLv * 20;
+    const _lvCap = _bomberHeroLv * 50;
     if(G[_opp].filter(h => h.curHp > 0).length){
-      log(`💣 [${a.name}] 炸彈連續投擲!固定 ${_fixedBase}+HP ${Math.round(_hpPct*100)}% × ${_hits} 次(上限 Lv×20=${_lvCap})`);
+      log(`💣 [${a.name}] 炸彈連續投擲!固定 ${_fixedBase}+HP ${Math.round(_hpPct*100)}% × ${_hits} 次(上限 Lv×50=${_lvCap})`);
       try{ playSkillFX('炸彈連續投擲', a, G[_opp].filter(h => h.curHp > 0)); }catch(_){}
       try{ if(typeof beginBatchTotals === 'function') beginBatchTotals(); }catch(_){}
       const _cstBmLAi = [];   // ✨ v5.271.0 命星 炸彈客 s2:本次連投命中的前 2 個不同目標
@@ -69062,7 +69063,7 @@ function aiUseSkill(a,sk,cost,pref){
       }
       // 追加 HP 20% 固定傷害
       const _zmHeroLv = (typeof _heroLevels !== 'undefined' && _lxHeroLv(a)) ? _lxHeroLv(a) : 1;
-      const _zmMaxDmg = _zmHeroLv * 20;
+      const _zmMaxDmg = _zmHeroLv * 50;
       const _aliveHit = Array.from(_hitInZm).filter(_zt => _zt && _zt.curHp > 0);
       if(_aliveHit.length){
         log(`⚡ [${a.name}] 三道雷鳴餘威!追加當前 HP 20% 固定傷害(上限 ${_zmMaxDmg})!`);
