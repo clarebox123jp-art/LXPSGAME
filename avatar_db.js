@@ -1869,6 +1869,10 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
      *   圖還沒抓到(第一次/離線)→ 先畫原本造型,抓到後 _avDskRefreshAll 自動重畫(名片/預覽/戰鬥立繪)。 */
     var _dskSrc = null;
     try{ if(cfg.dsk && typeof window._avatarDskSrc === 'function') _dskSrc = window._avatarDskSrc(cfg.dsk); }catch(_eDsk){ _dskSrc = null; }
+    /* ★ v5.458.0 職業立繪 / SR 職人立繪(cfg.jpi):設計師作品優先;沒有才看 jpi。同樣整張取代人物圖層,一律用少年人物框(不隨體型縮小)。 */
+    if(!_dskSrc){
+      try{ if(cfg.jpi && typeof window._avatarJobSrc === 'function'){ _dskSrc = window._avatarJobSrc(cfg.jpi); if(_dskSrc) tf = AVATAR_IMG_TF[0]; } }catch(_eJpi){}
+    }
     if(_dskSrc){
       var _dskImg = '<image href="' + _dskSrc + '" xlink:href="' + _dskSrc + '" x="' + tf.x.toFixed(1) + '" y="' + tf.y.toFixed(1)
         + '" width="' + tf.w.toFixed(1) + '" height="' + tf.h.toFixed(1) + '" preserveAspectRatio="xMidYMid meet"/>';
@@ -2761,6 +2765,7 @@ var _AV_TABS = [
   { k:'randomAct', p:'隨機變裝', c:'隨機變裝', act:'random' },
   { k:'setTab',    p:'整套裝扮+配色', c:'套裝+顏色', cats:[['outfit','整套裝扮','整套裝扮'],['clothC','服裝配色','衣服顏色']],
     adj:[['ofh','套裝頭部位置','套裝頭位置'],['ofb','套裝身體位置','套裝身位置']] },
+  { k:'jobTab',    p:'⚔️ 職業立繪', c:'⚔️ 職業造型', job:1 },   /* ★ v5.458.0 八職業帶動作立繪 + SR 職人立繪(擁有才可設),整張取代主角全身 */
   { k:'dsgTab',    p:'🎨 設計師作品', c:'🎨 設計師作品', dsg:1 },   /* ★ v5.364.0 同學在遊戲美術設計師畫、老師審核上架的角色皮膚(整張取代主角全身) */
   { k:'hairTab',   p:'髮型', c:'髮型', cats:[['hairhead','髮型(整頭更換)','換頭髮']],
     adj:[['hh','髮型頭部位置','頭髮位置']] },
@@ -3110,6 +3115,7 @@ window._avatarRandomize = function(){
   var PAL = window.AVATAR_PALETTES;
   _avSfx('select');
   cfg.dsk = '';   /* ★ v5.364.0 隨機變裝 = 脫下設計師作品 */
+  cfg.jpi = '';   /* ★ v5.458.0 隨機變裝 = 脫下職業立繪/SR職人立繪 */
   cfg.full = 0; cfg.headf = 0; cfg.bodyf = 0;
   var ofs = _avAvailIds('outfit').filter(function(x){ return x !== 0; });
   var hhs = _avAvailIds('hairhead').filter(function(x){ return x !== 0; });
@@ -3305,6 +3311,7 @@ window._avDskWear = function(id){
     if(!window._avatarDskSrc(id)){ try{ alert(_avT('這件作品的圖還沒準備好(請老師在設計師老師台「🛒 上架商品」補全身圖)', '這件的圖還沒準備好,請老師幫忙喔!')); }catch(_){} return; }
   }
   cfg.dsk = id || '';
+  if(id) cfg.jpi = '';   /* ★ v5.458.0 穿設計師作品 = 脫下職業立繪 */
   _avSfx(id ? 'select' : 'cancel');
   try{ _avRefreshPreview(); }catch(_e){}
   try{ _avRenderOpts(); }catch(_e2){}
@@ -3391,11 +3398,112 @@ function _avDsgOpts(box){
   h += '</div>';
   box.innerHTML = h;
 }
+/* ════════════════════════════════════════
+ * ★ v5.458.0(2026-11-26・老師(陳祈宏)「故事冒險模式的主角造型工坊優化:新增八種不同髮型、體型、性別(四男四女)、武器的帶動作立繪圖片,
+ *   每張有不同動作可以選,去除背景,美術風格同其他ssr英雄…SR職人系列英雄也新增成可以直接設成主角圖片的功能」;
+ *   問答裁定:每人 4 個動作(共 32 張)、每職業一套專屬新服裝、SR 職人要擁有該英雄才能設定)
+ *   ⚔️ 職業立繪頁:cfg.jpi = 'job_<職業id>_<動作1~4>' 或 'sr_<id>';圖 = avatar_parts/<jpi>.webp(504×720 透明,GPT 生成去背)。
+ *   全體玩家免費;SR 職人每次渲染都再檢查一次擁有(沒擁有就畫原本造型,不會因換帳號/共用平板外流)。設計師作品(cfg.dsk)優先。
+ * ════════════════════════════════════════ */
+var AV_JOBS = [
+  { id:'sword',  n:'大劍戰士',     c:'大劍戰士',   sx:'♂', w:'大劍' },
+  { id:'knight', n:'大盾重裝騎士', c:'大盾騎士',   sx:'♀', w:'大盾' },
+  { id:'archer', n:'弓箭手',       c:'弓箭手',     sx:'♀', w:'長弓' },
+  { id:'mage',   n:'魔書法師',     c:'魔法師',     sx:'♂', w:'魔導書' },
+  { id:'priest', n:'聖杖祭司',     c:'祭司',       sx:'♀', w:'長杖' },
+  { id:'rogue',  n:'匕首刺客',     c:'刺客',       sx:'♂', w:'雙匕首' },
+  { id:'summon', n:'寵物召喚師',   c:'召喚師',     sx:'♂', w:'召喚哨+小龍' },
+  { id:'potion', n:'藥劑師',       c:'藥劑師',     sx:'♀', w:'燒瓶藥水' }
+];
+var AV_JOB_POSES = [['亮相','亮相'], ['攻擊','攻擊'], ['施展技能','放技能'], ['勝利','勝利']];
+var AV_SR_PROTAG = [
+  { id:'magicgirl', n:'魔法少女' }, { id:'idol', n:'偶像歌手' }, { id:'pastry', n:'點心師傅' }, { id:'manga', n:'漫畫家' },
+  { id:'beauty', n:'美容師' }, { id:'chef', n:'主廚' }, { id:'astro', n:'太空人' }
+];
+var _avJobPose = {};   /* 職業卡目前顯示的動作(只是預覽,不存檔) */
+function _avSrOwned(name){
+  try{ return (typeof advGetUnlockedHeroes === 'function') && advGetUnlockedHeroes().indexOf(name) >= 0; }catch(_e){ return false; }
+}
+function _avJobUrl(key){ return AVATAR_IMG_BASE + key + '.webp?v=v5.458.0'; }
+window._avatarJobSrc = function(key){
+  key = String(key || '');
+  var m = /^job_([a-z]+)_([1-4])$/.exec(key), i;
+  if(m){ for(i = 0; i < AV_JOBS.length; i++){ if(AV_JOBS[i].id === m[1]) return _avJobUrl(key); } return null; }
+  m = /^sr_([a-z]+)$/.exec(key);
+  if(m){ for(i = 0; i < AV_SR_PROTAG.length; i++){ if(AV_SR_PROTAG[i].id === m[1]) return _avSrOwned(AV_SR_PROTAG[i].n) ? _avJobUrl(key) : null; } }
+  return null;
+};
+window._avJobWear = function(key){
+  var cfg = window._avatarLocalCard && window._avatarLocalCard.cfg; if(!cfg) return;
+  if(key){
+    var sm = /^sr_([a-z]+)$/.exec(key), i;
+    if(sm){
+      for(i = 0; i < AV_SR_PROTAG.length; i++){
+        if(AV_SR_PROTAG[i].id === sm[1] && !_avSrOwned(AV_SR_PROTAG[i].n)){
+          try{ alert(_avT('要先擁有「' + AV_SR_PROTAG[i].n + '」這位英雄,才能把他設成主角圖片喔!', '要先得到「' + AV_SR_PROTAG[i].n + '」才能用喔!')); }catch(_){} return;
+        }
+      }
+    }
+    if(!window._avatarJobSrc(key)) return;
+    cfg.dsk = '';
+  }
+  cfg.jpi = key || '';
+  _avSfx(key ? 'select' : 'cancel');
+  try{ _avRefreshPreview(); }catch(_e){}
+  try{ _avRenderOpts(); }catch(_e2){}
+};
+window._avJobPick = function(id, p){ _avJobPose[id] = p; window._avJobWear('job_' + id + '_' + p); };
+function _avJobOpts(box){
+  var cfg = window._avatarLocalCard.cfg, h = '', i, j, jb, cur = String(cfg.jpi || ''), btnCss;
+  h += '<div style="padding:12px 14px;margin:2px 2px 12px;background:rgba(255,190,90,0.12);border:1.5px solid rgba(255,200,120,0.5);border-radius:12px;color:#ffe9c8;font-size:15px;line-height:1.7;">⚔️ '
+    + _avT('八種職業主角,每位有 4 個動作可以選。穿上後整個主角會換成這張立繪(名片、隊伍、戰鬥都一樣),隨時可以換回原本造型。下面還有 SR 職人英雄,擁有那位英雄就能設成主角圖片。',
+           '選一個職業和動作,主角就會變成那個樣子!下面的 SR 職人,有抽到的英雄也可以變成主角喔。隨時都能換回來。') + '</div>';
+  if(cur){
+    h += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 2px 12px;color:#ffe2b0;font-size:15.5px;">⚔️ ' + _avT('目前使用職業立繪', '現在是職業造型')
+      + '<button onclick="window._avJobWear(\'\')" style="padding:7px 14px;font-size:15px;font-weight:800;border-radius:10px;border:2px solid rgba(255,210,140,0.8);background:rgba(255,180,80,0.22);color:#fff0d8;cursor:pointer;font-family:inherit;">↩ ' + _avT('換回原本造型', '換回原本的樣子') + '</button></div>';
+  }
+  if(cfg.dsk) h += '<div style="color:#ffc6ea;font-size:14.5px;margin:0 2px 10px;">🎨 ' + _avT('目前穿著設計師作品;選職業立繪會自動脫下設計師作品。', '你現在穿著同學設計的造型,選了職業就會換掉喔。') + '</div>';
+  h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;">';
+  for(i = 0; i < AV_JOBS.length; i++){
+    jb = AV_JOBS[i];
+    var on = cur.indexOf('job_' + jb.id + '_') === 0;
+    var p = _avJobPose[jb.id] || (on ? parseInt(cur.slice(-1), 10) : 1) || 1;
+    h += '<div style="background:rgba(30,25,60,0.55);border:2px solid ' + (on ? '#ffd27a' : 'rgba(150,140,220,0.45)') + ';border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px;">'
+      + '<div style="aspect-ratio:7/10;background:radial-gradient(circle at 50% 40%,rgba(255,240,210,0.95),rgba(200,190,240,0.85));border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;">'
+      + '<img src="' + _avJobUrl('job_' + jb.id + '_' + p) + '" alt="" loading="lazy" style="max-width:100%;max-height:100%;" onerror="this.style.visibility=\'hidden\'"></div>'
+      + '<div style="font-weight:900;color:#fff;font-size:15.5px;line-height:1.3;">' + jb.sx + ' ' + _avT(jb.n, jb.c) + '</div>'
+      + '<div style="color:#bcb6e6;font-size:13px;">🗡 ' + jb.w + '</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">';
+    for(j = 1; j <= 4; j++){
+      var sel = (cur === 'job_' + jb.id + '_' + j);
+      btnCss = 'padding:7px 2px;font-size:14px;font-weight:800;border-radius:8px;cursor:pointer;font-family:inherit;border:2px solid '
+        + (sel ? '#9effc0;background:rgba(80,200,120,0.3);color:#d8ffe6;' : (p === j ? 'rgba(255,210,140,0.9);background:rgba(255,180,80,0.18);color:#ffe9c8;' : 'rgba(150,140,220,0.5);background:rgba(80,70,140,0.25);color:#d6d0ff;'));
+      h += '<button onclick="window._avJobPick(\'' + jb.id + '\',' + j + ')" style="' + btnCss + '">' + (sel ? '✅ ' : '') + _avT(AV_JOB_POSES[j - 1][0], AV_JOB_POSES[j - 1][1]) + '</button>';
+    }
+    h += '</div></div>';
+  }
+  h += '</div>';
+  h += '<div style="margin:16px 2px 8px;font-weight:900;color:#ffd97a;font-size:16px;">🌟 ' + _avT('SR 職人英雄(擁有才能設定)', 'SR 職人(有抽到才能用)') + '</div>';
+  h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;">';
+  for(i = 0; i < AV_SR_PROTAG.length; i++){
+    var sr = AV_SR_PROTAG[i], key = 'sr_' + sr.id, own = _avSrOwned(sr.n), son = (cur === key), b;
+    if(son) b = '<div style="padding:7px;text-align:center;font-weight:900;color:#9effc0;">✅ ' + _avT('使用中', '使用中') + '</div>';
+    else if(own) b = '<button onclick="window._avJobWear(\'' + key + '\')" style="width:100%;padding:8px;font-size:15px;font-weight:800;border-radius:9px;border:2px solid rgba(100,230,150,0.8);background:rgba(80,200,120,0.22);color:#c8ffd9;cursor:pointer;font-family:inherit;">👤 ' + _avT('設成主角', '變成他') + '</button>';
+    else b = '<div style="padding:7px;text-align:center;color:#9a94c0;font-size:14px;">🔒 ' + _avT('尚未擁有', '還沒抽到') + '</div>';
+    h += '<div style="background:rgba(30,25,60,0.55);border:2px solid ' + (son ? '#9effc0' : 'rgba(150,140,220,0.45)') + ';border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px;' + (own ? '' : 'opacity:0.6;') + '">'
+      + '<div style="aspect-ratio:7/10;background:radial-gradient(circle at 50% 40%,rgba(255,240,210,0.95),rgba(200,190,240,0.85));border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;">'
+      + '<img src="' + _avJobUrl(key) + '" alt="" loading="lazy" style="max-width:100%;max-height:100%;' + (own ? '' : 'filter:grayscale(1) brightness(0.7);') + '" onerror="this.style.visibility=\'hidden\'"></div>'
+      + '<div style="font-weight:900;color:#fff;font-size:15.5px;">' + sr.n + '</div>' + b + '</div>';
+  }
+  h += '</div>';
+  box.innerHTML = h;
+}
 function _avEscH(t){ return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 function _avRenderOpts(){
   var box = document.getElementById('_av-opts'); if(!box) return;
   var tab = _AV_TABS[_avCurTab];
   if(tab && tab.dsg){ _avDsgOpts(box); return; }   /* ★ v5.364.0 🎨 設計師作品頁 */
+  if(tab && tab.job){ _avJobOpts(box); return; }   /* ★ v5.458.0 ⚔️ 職業立繪頁 */
   /* ★ v4.61.0 wip 頁(手持·日後開放)與 act/無 cats 防呆 */
   if(tab && (tab.wip || !tab.cats)){
     box.innerHTML = '<div style="padding:18px 16px;background:rgba(60,70,110,0.2);border:1.5px dashed rgba(150,170,220,0.5);border-radius:12px;color:#9aa8cc;font-size:16.5px;">🔒 '
@@ -3412,6 +3520,11 @@ function _avRenderOpts(){
     h += '<div style="padding:12px 14px;margin:2px 2px 10px;background:rgba(255,120,200,0.14);border:2px dashed rgba(255,170,220,0.7);border-radius:12px;color:#ffd6f0;font-size:15.5px;line-height:1.6;">🎨 '
       + _avT('目前穿著設計師作品,這裡的部件要換回原本造型才看得到。', '你現在穿著同學設計的造型,要換回原本的樣子才看得到這些喔!')
       + ' <button onclick="window._avDskWear(\'\')" style="margin-left:6px;padding:6px 12px;font-size:14.5px;font-weight:800;border-radius:9px;border:2px solid rgba(255,190,230,0.8);background:rgba(255,140,210,0.22);color:#ffe0f4;cursor:pointer;font-family:inherit;">↩ ' + _avT('換回原本造型', '換回原本的樣子') + '</button></div>';
+  }
+  if(!cfg.dsk && cfg.jpi){   /* ★ v5.458.0 正使用職業立繪時同樣提示 */
+    h += '<div style="padding:12px 14px;margin:2px 2px 10px;background:rgba(255,180,80,0.14);border:2px dashed rgba(255,210,140,0.7);border-radius:12px;color:#ffe9c8;font-size:15.5px;line-height:1.6;">⚔️ '
+      + _avT('目前使用職業立繪,這裡的部件要換回原本造型才看得到。', '你現在是職業造型,要換回原本的樣子才看得到這些喔!')
+      + ' <button onclick="window._avJobWear(\'\')" style="margin-left:6px;padding:6px 12px;font-size:14.5px;font-weight:800;border-radius:9px;border:2px solid rgba(255,210,140,0.8);background:rgba(255,180,80,0.22);color:#fff0d8;cursor:pointer;font-family:inherit;">↩ ' + _avT('換回原本造型', '換回原本的樣子') + '</button></div>';
   }
   /* ★★ v4.79.0 甲案提示條:目前身上有「還沒解鎖、只是預覽」的部件時,常駐提醒儲存會被脫下。
    *   用 _avatarStripLocked 同一組槽位定義逐槽重判(單一真相·不靠旗標)。 */
