@@ -1871,7 +1871,7 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
     try{ if(cfg.dsk && typeof window._avatarDskSrc === 'function') _dskSrc = window._avatarDskSrc(cfg.dsk); }catch(_eDsk){ _dskSrc = null; }
     /* ★ v5.458.0 職業立繪 / SR 職人立繪(cfg.jpi):設計師作品優先;沒有才看 jpi。同樣整張取代人物圖層,一律用少年人物框(不隨體型縮小)。 */
     if(!_dskSrc){
-      try{ if(cfg.jpi && typeof window._avatarJobSrc === 'function'){ _dskSrc = window._avatarJobSrc(cfg.jpi); if(_dskSrc) tf = AVATAR_IMG_TF[0]; } }catch(_eJpi){}
+      try{ if(cfg.jpi && typeof window._avatarJobSrc === 'function'){ _dskSrc = window._avatarJobSrc(cfg.jpi); if(_dskSrc) tf = (typeof window._avatarJobTf === 'function' ? window._avatarJobTf(cfg.jpi, portrait) : null) || AVATAR_IMG_TF[0]; } }catch(_eJpi){}
     }
     if(_dskSrc){
       var _dskImg = '<image href="' + _dskSrc + '" xlink:href="' + _dskSrc + '" x="' + tf.x.toFixed(1) + '" y="' + tf.y.toFixed(1)
@@ -3425,6 +3425,31 @@ function _avSrOwned(name){
   try{ return (typeof advGetUnlockedHeroes === 'function') && advGetUnlockedHeroes().indexOf(name) >= 0; }catch(_e){ return false; }
 }
 function _avJobUrl(key){ return AVATAR_IMG_BASE + key + '.webp?v=v5.458.0'; }
+/* ★ v5.459.0 職業/SR 立繪臉部對齊:每張圖「眼睛線 y」實測值(504×720 圖座標)。
+ *   標準人物眼睛線 = AVATAR_HEAD_GEO[0].eyeY(74);依各圖眼睛高度算出平移+放大,
+ *   讓所有立繪的臉都落在其它角色頭部的位置;名片/放大特寫共用同一個人物框,所以一起對齊。
+ *   放大倍率上限 AV_JOB_SMAX;腳底最多放到名片底線內(AV_JOB_FEET)。 */
+var AV_JOB_EYE = {
+  job_sword_1:62, job_sword_2:228, job_sword_3:190, job_sword_4:78,
+  job_knight_1:106, job_knight_2:215, job_knight_3:230, job_knight_4:118,
+  job_archer_1:93, job_archer_2:195, job_archer_3:232, job_archer_4:125,
+  job_mage_1:105, job_mage_2:110, job_mage_3:213, job_mage_4:110,
+  job_priest_1:113, job_priest_2:116, job_priest_3:230, job_priest_4:162,
+  job_rogue_1:85, job_rogue_2:218, job_rogue_3:126, job_rogue_4:95,
+  job_summon_1:118, job_summon_2:158, job_summon_3:270, job_summon_4:152,
+  job_potion_1:135, job_potion_2:197, job_potion_3:135, job_potion_4:140,
+  sr_astro:100, sr_beauty:100, sr_chef:98, sr_idol:98, sr_magicgirl:138, sr_manga:170, sr_pastry:113
+};
+var AV_JOB_PZ = 0.72, AV_JOB_PEYE = 112, AV_JOB_SMAX = 1.2, AV_JOB_FEET = 790, AV_JOB_FOOT_Y = 706;
+window._avatarJobTf = function(key, portrait){
+  var e = AV_JOB_EYE[String(key || '')]; if(!e) return null;
+  var b = AVATAR_IMG_TF[0], k = b.h / 720, eye0 = AVATAR_HEAD_GEO[0].eyeY;
+  var sc = Math.min(AV_JOB_SMAX, (AV_JOB_FEET - eye0) / (AV_JOB_FOOT_Y - e));
+  /* 特寫/名片:頭比標準角色大,縮小到 AV_JOB_PZ 倍,眼睛線往下放到 AV_JOB_PEYE,頭頂與帽子才不會被切 */
+  if(portrait){ sc = AV_JOB_SMAX * AV_JOB_PZ; eye0 = AV_JOB_PEYE; }
+  var w = b.w * sc, h = b.h * sc;
+  return { x: b.x + b.w / 2 - w / 2, y: b.y + (eye0 - e * sc) * k, w: w, h: h };
+};
 window._avatarJobSrc = function(key){
   key = String(key || '');
   var m = /^job_([a-z]+)_([1-4])$/.exec(key), i;
