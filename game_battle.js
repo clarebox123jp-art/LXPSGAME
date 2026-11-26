@@ -15662,6 +15662,7 @@ function _lxpsBattleOpenFx(){
     //   ★ v5.119.0 — 限用次數改由「技能等級」決定(顯示 Lv1~4=2 次 / Lv5~9=3 次 / Lv10=4 次),
     //     見 window._guniuS2MaxOf();舊版綁天賦且門檻 >=5 恆不成立(死分支)。
     // ════════════════════════════════════════════════════════════════
+    try{ [...G.p1, ...G.p2].forEach(h => { if(h && h.name === '菇女'){ h._guniuRevived = false; h._guniuSeen = false; h._guniuSealLogged = false; } }); }catch(_eGnRst){}   // ★ v5.456.0 菇女旗標無條件重置(不再要求 curHp>0,與鳳凰 v3.13.10 同款修補)
     [...G.p1, ...G.p2].forEach(h => {
       if(h.name === '菇女' && h.curHp > 0){
         try{
@@ -36015,6 +36016,7 @@ function doDmg(target, rawDmg, opts={}){
     const _yyOldHpF = target.curHp;   // 🔧 v5.258.0 舊 bug:記下扣血前 HP,供吞食判定「這一下打倒」
     try{ if(opts._cstOvf && rawDmg > target.curHp) opts._cstOvf.v = rawDmg - target.curHp; }catch(_eCstOvfF){}   // ✨ v5.272.0 命星 關羽 b2(fixedDmg 路徑)
     target.curHp = Math.max(0, target.curHp - rawDmg);
+    try{ if(_yyOldHpF > 0 && target.curHp === 0 && (target.name === '鳳凰' || target.name === '菇女')) window._lxpsKoTalentRescue(target, opts); }catch(_ePxFx0){}   // ★ v5.456.0 鳳凰浴火重生最高優先:固定傷害路徑(燃燒/輻射區等)原本完全漏掉
     try{ if(rawDmg > 0 && target._cstMgCage) window._cstMgB2Acc(target, Math.min(rawDmg, _yyOldHpF)); }catch(_eCstMgB2f){}   // ✨ v5.267.0 命星 魔術師 b2(fixedDmg 路徑)
     try{ if(rawDmg > 0 && window._ZS12) window._ZS12.post(target, _yyOldHpF, opts, opts.actor); }catch(_eZs12F){}   // ★ v5.422.0 摩羯 海形態(fixedDmg 路徑)
     try{ if(rawDmg > 0 && target.curHp > 0 && (target.name === '呂布' || target.name === '摩羯星神' || target.name === '牛魔王')) window._cstS5Dmg(target, _yyOldHpF, opts, opts.actor); }catch(_eCstS5DmF){}   // ✨ v5.268.0 命星 呂布 t2/摩羯 t2/牛魔王 t2(fixedDmg 路徑)
@@ -39196,6 +39198,7 @@ function doDmg(target, rawDmg, opts={}){
   try{ if(dmg > 0 && G && Array.isArray(G._cstFcD) && G._cstFcD.length && target.curHp > 0 && (target.curHp - dmg) <= 0 && window._cstWsB2Eye(target, opts, a)) return 0; }catch(_eCstWsB2e){}   // ✨ v5.266.0 命星 風術士 b2 風眼(只在有命星戰場卡時檢查)
   try{ if(opts._cstOvf && dmg > target.curHp) opts._cstOvf.v = dmg - target.curHp; }catch(_eCstOvf){}   // ✨ v5.272.0 命星 關羽 b2:溢出量(_cstOvf 只由點亮的命星帶入)
   target.curHp=Math.max(0,target.curHp-dmg);
+  try{ if(old > 0 && target.curHp === 0 && (target.name === '鳳凰' || target.name === '菇女')) window._lxpsKoTalentRescue(target, opts); }catch(_ePxMain0){}   // ★ v5.456.0 鳳凰浴火重生最高優先:扣血後第一件事(一般路徑)
   try{ if(opts && opts._fmRefPend){ const _fmRp = opts._fmRefPend; opts._fmRefPend = null; if(dmg > 0 && window._fmReflectFire) window._fmReflectFire(target, dmg, _fmRp, opts); } }catch(_eFmRf){}   // ★ v5.282.0 英魂陣型 金剛長城(審查 M1/M2):真的扣到血才反彈,以實際扣血量計
   // ★ v5.305.0 下面這行在 v5.282.0 被插到上一行的註解尾巴(整行變成註解 ⇒ 一般傷害路徑的呂布/摩羯/牛魔王命星 t2 從此沒生效,只剩固定傷害路徑),拆回獨立一行
   try{ if(dmg > 0 && window._ZS12) window._ZS12.post(target, target.curHp + dmg, opts, a); }catch(_eZs12M){}   // ★ v5.422.0 摩羯 海形態(主路徑)
@@ -40818,6 +40821,7 @@ function doDmg(target, rawDmg, opts={}){
     if(target.s1.n==='同歸於盡'||target.s2.n==='同歸於盡'){
       sfxPassive(target,0.75); log(`[${target.name}] 同歸於盡！[${a.name}] 也一同倒下！`);
       a.curHp=0; renderCard(a); log(`💀 [${a.name}] 倒下！`);
+      try{ if(a.name === '鳳凰' || a.name === '菇女') window._lxpsKoTalentRescue(a, {}); }catch(_ePxSuic){}   // ★ v5.456.0 鳳凰被同歸於盡反殺也要浴火重生
       // checkWin 由 startTurn 統一呼叫，不在此重複呼叫避免提前結束
     }
   }
@@ -41469,40 +41473,8 @@ if(a && a.side!==target.side && old>0 && target.curHp<old && target.curHp>0 && !
   //     等阻擋),flag 已 true 但實際沒復活 → 整場再也無法觸發。
   //     新版:**先呼叫 doRevive,只有真的成功復活才設 flag**,失敗則保留下次再試。
   // ════════════════════════════════════════════════════════════════
-  if(target.curHp === 0 && old > 0 && target.name === '鳳凰' && !target._phoenixSelfRevived){
-    try{
-      // ★ 先 doRevive,只有成功才設 flag(避免阻擋路徑下永久卡死)
-      try{ if(window._cstHasN(target,'t2','鳳凰')) target._cstPhT2Now = 1; }catch(_eCstPhT2a){}   // ✨ v5.265.0 命星 鳳凰 t2:這次復活的加值算 2 次(doRevive 內讀)
-      let _phxRevived = false;
-      try{ _phxRevived = doRevive(target, 1.0, true); } finally { try{ if(target._cstPhT2Now) delete target._cstPhT2Now; }catch(_eCstPhT2b){} }   // ★ 審查:doRevive 出錯也一定清掉旗標
-      if(_phxRevived){
-        target._phoenixSelfRevived = true;  // 整場限 1 次,確認復活成功才設
-        try{ window._cstPhT2Shield(target); }catch(_eCstPhT2c){}   // ✨ v5.265.0 命星 鳳凰 t2「雙生涅槃星」:特技 100% 護盾 2 回合
-        log(`🔥 [${target.name}] 浴火重生!以滿血自動復活!(整場限 1 次)`);
-        // ✨ 命星 鳳凰 t1「涅槃焰環星」:浴火重生復活時,對全體對手造成特技 100% 火屬性傷害
-        try{ if(window._cstHasN(target,'t1','鳳凰')){
-          const _cstPhFoes = (G[target.side === 'p1' ? 'p2' : 'p1'] || []).filter(function(f){ return f && f.curHp > 0; });
-          const _cstPhD = Math.max(1, Math.floor(window._lxpsSpv(target) * 1.0));
-          if(_cstPhFoes.length){
-            log('✨ [' + target.name + '] 命星:涅槃焰環!重生烈焰化為火圈,對全體對手造成 ' + _cstPhD + ' 火屬性傷害!');
-            const _cstPhSvAc = G.activeChar; G.activeChar = target;   /* 審查:doDmg 以 G.activeChar 為出手者,暫換成鳳凰,結束還原 */
-            try{ _cstPhFoes.forEach(function(f){ try{ if(f.curHp > 0) doDmg(f, _cstPhD, { actor:target, isAoe:true, element:'fire', elem:'fire', noCounter:true }); }catch(_eCstPhT1a){} }); } finally { G.activeChar = _cstPhSvAc; }
-          }
-        } }catch(_eCstPhT1){ console.warn('[命星 鳳凰 t1] 失敗', _eCstPhT1); }
-        try{ bannerFX(target, '🔥 浴火重生!', '#ff4422', 1400); }catch(_){}
-        try{ playSfx('sfx-burn', 0.8); }catch(_){}
-        try{ flashCard(target, 'rgba(255,80,40,0.5)', 800); }catch(_){}
-        try{
-          const _rc = cardRect(target);
-          if(_rc) spawnParticles(_rc.x, _rc.y, {count:24, color:'#ff5522', size:8, spread:60, duration:900});
-        }catch(_){}
-        try{ renderCard(target); }catch(_){}
-        try{ updateUI(); }catch(_){}
-      } else {
-        console.warn('[鳳凰浴火重生 v3.13.10] doRevive 回傳 false,本次未復活,flag 維持 false 下次可再試');
-      }
-    }catch(_e){ console.warn('[鳳凰浴火重生] 失敗', _e); }
-  }
+  //   ★ v5.456.0 本體已搬到 window._lxpsPhoenixRescue(最高優先:一般路徑扣血後第一件事就會呼叫,這裡是補刀保險;旗標已用過或已復活則什麼都不做)
+  if(target.curHp === 0 && old > 0 && target.name === '鳳凰' && !target._phoenixSelfRevived){ try{ window._lxpsPhoenixRescue(target, opts); }catch(_ePxMain){} }
   // ════════════════════════════════════════════════════════════════
   // ★ v3.5.68 — 菇女天賦「覺醒菇」倒下自動復活(5 年 3 班 14 號張同學設計)
   //   倒下時自動以最大 HP 的 50% 復活(整場限 1 次)
@@ -41512,24 +41484,8 @@ if(a && a.side!==target.side && old>0 && target.curHp<old && target.curHp>0 && !
   //   ★ 不會引發攻擊者的反擊類天賦(此處只復活菇女本人)
   //   ★ 與鳳凰滿血復活不同 — 菇女只復活到 50%~75%(看天賦等級),是相對溫和的復活
   // ════════════════════════════════════════════════════════════════
-  if(target.curHp === 0 && old > 0 && target.name === '菇女' && !target._guniuRevived){
-    try{
-      target._guniuRevived = true;  // 整場限 1 次,先標記避免無限觸發
-      const _guniuTraitLv = (typeof _getTraitLv === 'function') ? (_getTraitLv('菇女') || 0) : 0;
-      const _revivePct = 0.50 + _guniuTraitLv * 0.05;  // Lv0=50% / Lv5=75%
-      doRevive(target, _revivePct, true);
-      log(`🍄 [${target.name}] 天賦:覺醒菇!以 ${Math.round(_revivePct * 100)}% HP 自動復活!(整場限 1 次)`);
-      try{ bannerFX(target, '🍄 覺醒菇 復活!', '#ff99cc', 1400); }catch(_){}
-      try{ playSfx('sfx-heal', 0.8); }catch(_){}
-      try{ flashCard(target, 'rgba(255,153,204,0.5)', 800); }catch(_){}
-      try{
-        const _rc = cardRect(target);
-        if(_rc) spawnParticles(_rc.x, _rc.y, {count:24, color:'#ff99cc', size:8, spread:60, duration:900});
-      }catch(_){}
-      try{ renderCard(target); }catch(_){}
-      try{ updateUI(); }catch(_){}
-    }catch(_e){ console.warn('[菇女覺醒菇 倒下復活] 失敗', _e); }
-  }
+  //   ★ v5.456.0 本體已搬到 window._lxpsGuniuRescue(最高優先:扣血後第一件事就呼叫,這裡是補刀保險)
+  if(target.curHp === 0 && old > 0 && target.name === '菇女' && !target._guniuRevived){ try{ window._lxpsGuniuRescue(target, opts); }catch(_eGnMain){} }
   // ── 以牙還牙（被動）: 受到傷害時觸發，詢問是否反彈等量傷害 ──
   if(old>0 && target.curHp<old && dmg>0 && a && a.side!==target.side && !opts.isRebound && !opts.isKanWang && !opts.isPunishReflect){
     const _fanSkCheck = (target.s1.n==='以牙還牙'||target.s2.n==='以牙還牙');
@@ -42595,7 +42551,128 @@ function _lxpsFailFX(target, kind, why){
   }catch(_){}
 }
 try{ window._lxpsFailFX = _lxpsFailFX; }catch(_){}
+// ════════════════════════════════════════════════════════════════
+// ★ v5.456.0(老師 2026-11-26:「鳳凰的復活提升至最高優先度,保證一定能夠復活一次,除非被封印天賦」)
+//   鳳凰天賦「浴火重生」共用入口 window._lxpsPhoenixRescue(target)。
+//   根因:舊版只寫在 doDmg 一般傷害路徑,fixedDmg(燃燒/輻射區/各種固定傷害)、同歸於盡反殺、沙漠毒蠍即死等
+//         不經一般路徑的倒下都漏掉 → 鬥技場被燃燒打死不會復活。
+//   現在:一般路徑/fixedDmg 路徑「扣血後第一件事」就呼叫;同歸於盡、毒蠍補呼叫;checkWin 再掃一次當保險網。
+//   規則:整場 1 次(成功才設旗標)、只有天賦被封印(_traitSeal/imprison)才失效;
+//         復活不再被 時間壓縮/冥界審判/命星禁復活 擋下,也不吃禁療/減療(固定滿血,對齊 hero_db「鳳凰自己天賦是滿血復活,不互衝」)。
+// ════════════════════════════════════════════════════════════════
+window._lxpsPhoenixSealed = function(h){
+  try{ return (h && h.status || []).some(function(s){ return s && (s.type === '_traitSeal' || s.type === 'imprison'); }); }catch(_){ return false; }
+};
+window._lxpsPhoenixRescue = function(target, opts){
+  if(!target || target.name !== '鳳凰' || target._phoenixSelfRevived || target._phoenixRescuing) return false;
+  if(!(target.curHp <= 0)) return false;
+  if(window._lxpsPhoenixSealed(target)){
+    if(!target._phxSealLogged){ target._phxSealLogged = true; try{ log(`🔍 [${target.name}] 天賦被封印,浴火重生無法發動!`); }catch(_){} }
+    return false;
+  }
+  target._phoenixRescuing = true;
+  let _ok = false;
+  try{
+    // ★ 先 doRevive,只有成功才設 flag(沿用 v3.13.10 鐵律 1.146)
+    try{ if(window._cstHasN(target,'t2','鳳凰')) target._cstPhT2Now = 1; }catch(_eCstPhT2a){}   // ✨ v5.265.0 命星 鳳凰 t2:這次復活的加值算 2 次(doRevive 內讀)
+    let _phxRevived = false;
+    try{ _phxRevived = doRevive(target, 1.0, true, { forceTalentRevive:true }); } finally { try{ if(target._cstPhT2Now) delete target._cstPhT2Now; }catch(_eCstPhT2b){} }   // ★ 審查:doRevive 出錯也一定清掉旗標
+    if(_phxRevived){
+      target._phoenixSelfRevived = true;  // 整場限 1 次,確認復活成功才設
+      _ok = true;
+      try{ window._cstPhT2Shield(target); }catch(_eCstPhT2c){}   // ✨ v5.265.0 命星 鳳凰 t2「雙生涅槃星」:特技 100% 護盾 2 回合
+      log(`🔥 [${target.name}] 浴火重生!以滿血自動復活!(整場限 1 次)`);
+      // ✨ 命星 鳳凰 t1「涅槃焰環星」:浴火重生復活時,對全體對手造成特技 100% 火屬性傷害
+      try{ if(window._cstHasN(target,'t1','鳳凰')){
+        const _cstPhFoes = (G[target.side === 'p1' ? 'p2' : 'p1'] || []).filter(function(f){ return f && f.curHp > 0; });
+        const _cstPhD = Math.max(1, Math.floor(window._lxpsSpv(target) * 1.0));
+        if(_cstPhFoes.length){
+          log('✨ [' + target.name + '] 命星:涅槃焰環!重生烈焰化為火圈,對全體對手造成 ' + _cstPhD + ' 火屬性傷害!');
+          const _cstPhSvAc = G.activeChar; G.activeChar = target;   /* 審查:doDmg 以 G.activeChar 為出手者,暫換成鳳凰,結束還原 */
+          try{ _cstPhFoes.forEach(function(f){ try{ if(f.curHp > 0) doDmg(f, _cstPhD, { actor:target, isAoe:true, element:'fire', elem:'fire', noCounter:true }); }catch(_eCstPhT1a){} }); } finally { G.activeChar = _cstPhSvAc; }
+        }
+      } }catch(_eCstPhT1){ console.warn('[命星 鳳凰 t1] 失敗', _eCstPhT1); }
+      try{ bannerFX(target, '🔥 浴火重生!', '#ff4422', 1400); }catch(_){}
+      try{ playSfx('sfx-burn', 0.8); }catch(_){}
+      try{ flashCard(target, 'rgba(255,80,40,0.5)', 800); }catch(_){}
+      try{
+        const _rc = cardRect(target);
+        if(_rc) spawnParticles(_rc.x, _rc.y, {count:24, color:'#ff5522', size:8, spread:60, duration:900});
+      }catch(_){}
+      try{ renderCard(target); }catch(_){}
+      try{ updateUI(); }catch(_){}
+    } else {
+      console.warn('[鳳凰浴火重生 v5.456.0] doRevive 回傳 false,本次未復活,flag 維持 false 下次可再試');
+    }
+  }catch(_e){ console.warn('[鳳凰浴火重生] 失敗', _e); }
+  finally { target._phoenixRescuing = false; }
+  return _ok;
+};
+//   保險網:checkWin 開頭掃一次,抓「不經 doDmg 的倒下」(各種直接 curHp=0)。
+//   只救「本場曾經活著」的鳳凰:每場開打都會重建 _phoenixBuff 物件(game_battle 初始化/戰開 hook、game_adv 三處重置),
+//   用「見到活著時記下當時的 _phoenixBuff 參照」判斷同一場,避免救到「開場就倒下」的鳳凰。
+window._lxpsPhoenixScan = function(){
+  try{
+    if(typeof G === 'undefined' || !G) return;
+    ['p1','p2'].forEach(function(sd){
+      (G[sd] || []).forEach(function(h){
+        if(h && h.name === '菇女'){   // 菇女:戰開重置 _guniuSeen/_guniuRevived(game_battle 戰開 hook + game_adv 三處),見過活著才救
+          if(h.curHp > 0){ h._guniuSeen = true; h._guniuSealLogged = false; }
+          else if(h._guniuSeen && !h._guniuRevived) window._lxpsGuniuRescue(h, {});
+          return;
+        }
+        if(!h || h.name !== '鳳凰' || !h._phoenixBuff) return;
+        if(h.curHp > 0){ h._phxSeenBuff = h._phoenixBuff; h._phxSealLogged = false; return; }
+        if(h._phxSeenBuff === h._phoenixBuff && !h._phoenixSelfRevived) window._lxpsPhoenixRescue(h, {});
+      });
+    });
+  }catch(_ePxScan){ console.warn('[鳳凰保險網] 失敗', _ePxScan); }
+};
+// ★ v5.456.0 菇女「覺醒菇」同樣提升為最高優先、保證復活 1 次(除非天賦被封印)——規則與鳳凰一致。
+//   舊版問題:①只寫在 doDmg 一般路徑,fixedDmg(燃燒等)倒下不復活;②旗標「先標記再復活」,doRevive 被擋就白白用掉;
+//             ③冒險模式每場開打沒重置 _guniuRevived(game_adv 從沒碰),第一場復活過後之後的關卡都不會再復活。
+//   ⚠ 復活血量維持舊行為(doRevive 第三參數 full=true ⇒ 實際滿血,與說明「50%~75%」不符,留給老師裁定,本版不動)。
+window._lxpsGuniuRescue = function(target, opts){
+  if(!target || target.name !== '菇女' || target._guniuRevived || target._guniuRescuing) return false;
+  if(!(target.curHp <= 0)) return false;
+  if(window._lxpsPhoenixSealed(target)){
+    if(!target._guniuSealLogged){ target._guniuSealLogged = true; try{ log(`🔍 [${target.name}] 天賦被封印,覺醒菇無法發動!`); }catch(_){} }
+    return false;
+  }
+  target._guniuRescuing = true;
+  let _ok = false;
+  try{
+    const _guniuTraitLv = (typeof _getTraitLv === 'function') ? (_getTraitLv('菇女') || 0) : 0;
+    const _revivePct = 0.50 + _guniuTraitLv * 0.05;  // Lv0=50% / Lv5=75%
+    if(doRevive(target, _revivePct, true, { forceTalentRevive:true })){
+      target._guniuRevived = true;  // 整場限 1 次,確認復活成功才設(不再先標記)
+      _ok = true;
+      log(`🍄 [${target.name}] 天賦:覺醒菇!以 ${Math.round(_revivePct * 100)}% HP 自動復活!(整場限 1 次)`);
+      try{ bannerFX(target, '🍄 覺醒菇 復活!', '#ff99cc', 1400); }catch(_){}
+      try{ playSfx('sfx-heal', 0.8); }catch(_){}
+      try{ flashCard(target, 'rgba(255,153,204,0.5)', 800); }catch(_){}
+      try{
+        const _rc = cardRect(target);
+        if(_rc) spawnParticles(_rc.x, _rc.y, {count:24, color:'#ff99cc', size:8, spread:60, duration:900});
+      }catch(_){}
+      try{ renderCard(target); }catch(_){}
+      try{ updateUI(); }catch(_){}
+    }
+  }catch(_e){ console.warn('[菇女覺醒菇 倒下復活] 失敗', _e); }
+  finally { target._guniuRescuing = false; }
+  return _ok;
+};
+//   倒下天賦統一入口(各倒下路徑只呼叫這個):鳳凰 / 菇女
+window._lxpsKoTalentRescue = function(target, opts){
+  try{
+    if(!target) return false;
+    if(target.name === '鳳凰') return window._lxpsPhoenixRescue(target, opts);
+    if(target.name === '菇女') return window._lxpsGuniuRescue(target, opts);
+  }catch(_eKoT){ console.warn('[倒下天賦統一入口] 失敗', _eKoT); }
+  return false;
+};
 function doRevive(target, pct=0.5, full=false, opts={}){
+  const _fTR = !!(opts && opts.forceTalentRevive);   // ★ v5.456.0 鳳凰浴火重生:天賦強制復活(不被禁復活類效果擋、不吃禁療/減療)
   try{ if(target && target._cstGrit && target.curHp <= 0) target._cstGrit = 0; }catch(_eCstFanT2r){}   // ✨ 命星 ✦ 凡人 t2:倒下(含不經 doDmg 的即死)後被復活 ⇒ 韌性歸零
   // ★ v3.34.0 — 大刀勇士 天賦「愈戰愈勇」:累積加成「直到倒下」,復活時歸零重練
   //   (天賦 hook 直接加在 next.atk/next.spd 上 → 倒下復活必須把 _bvAcc 扣回,否則越死越強)
@@ -42654,14 +42731,14 @@ function doRevive(target, pct=0.5, full=false, opts={}){
   // ★ v5.359.0(老師「所有的復活、回復手段都要有同樣的提示」)— 三種「無法復活」一律在目標頭上顯示「💔 復活失敗:原因」(_lxpsFailFX)
   if(target._inuRetired){ log(`🐕 [${target.name}] 在休息中，無法被復活！`); try{ _lxpsFailFX(target, 'revive', '正在休息'); }catch(_){} return false; }
   // 時空法師爆發：無法被復活
-  if(target._burstNoRevive>0){ log(`⏳ [${target.name}] 時間壓縮：無法被復活！`); try{ _lxpsFailFX(target, 'revive', '時間壓縮中'); }catch(_){} return false; }
+  if(target._burstNoRevive>0 && !_fTR){ log(`⏳ [${target.name}] 時間壓縮：無法被復活！`); try{ _lxpsFailFX(target, 'revive', '時間壓縮中'); }catch(_){} return false; }
   // ★ v4.5.0 Phase C — 阿努比斯胡狼「冥界審判」:目標禁止復活 2 回合(獨立旗標,與禁療分開)
-  if(target._petNoRevive>0){ try{ log(`⚰️ [${target.name}] 冥界審判:無法被復活!`); }catch(_){} try{ _lxpsFailFX(target, 'revive', '冥界審判中'); }catch(_){} return false; }
-  try{ if(typeof G !== 'undefined' && G && G._cstMyHalf && window._cstMyB2NoRev(target)) return false; }catch(_eCstMyB2r){}   // ✨ v5.272.0 命星 沐雲雪 b2:雙虹喚發的爆發不附帶復活
+  if(target._petNoRevive>0 && !_fTR){ try{ log(`⚰️ [${target.name}] 冥界審判:無法被復活!`); }catch(_){} try{ _lxpsFailFX(target, 'revive', '冥界審判中'); }catch(_){} return false; }
+  try{ if(!_fTR && typeof G !== 'undefined' && G && G._cstMyHalf && window._cstMyB2NoRev(target)) return false; }catch(_eCstMyB2r){}   // ✨ v5.272.0 命星 沐雲雪 b2:雙虹喚發的爆發不附帶復活
   // 不治詛咒：復活時HP只有1
-  let reviveHp = (hasStatus(target,'noheal_curse')||hasStatus(target,'imprison')) ? 1 : (full ? target.hp : Math.max(1,Math.floor(target.hp*pct)));
+  let reviveHp = (!_fTR && (hasStatus(target,'noheal_curse')||hasStatus(target,'imprison'))) ? 1 : (full ? target.hp : Math.max(1,Math.floor(target.hp*pct)));
   // ★ v3.16.49 — 減療(healReduced)對「復活」也生效:復活 HP 減半(普通)/減為 1/4(強力),最低保 1
-  if(reviveHp > 1 && hasStatus(target,'healReduced')){
+  if(!_fTR && reviveHp > 1 && hasStatus(target,'healReduced')){
     const _hrRev = target.status.find(s=>s.type==='healReduced');
     reviveHp = Math.max(1, Math.ceil(reviveHp * ((_hrRev && _hrRev._strong) ? 0.25 : 0.50)));
   }
@@ -64389,8 +64466,9 @@ function aiUseSkill(a,sk,cost,pref){
         try{ flashCard(t,'rgba(120,200,60,0.6)',600); }catch(_){}
         try{ playSfx('sfx-burst',0.8); }catch(_){}
         t.curHp=0;
+        try{ if(t.name === '鳳凰' || t.name === '菇女') window._lxpsKoTalentRescue(t, {}); }catch(_ePxScorp){}   // ★ v5.456.0 鳳凰被毒蠍即死也要浴火重生
         // ★ v3.15.61 — 高階獎章:我方英雄被沙漠毒蠍即死秒殺(此路徑繞過 doDmg,須在此單獨補)
-        try{ if(t.side === 'p1' && typeof _unlockMedal === 'function') _unlockMedal('egypt_scorpion_ko'); }catch(_eScorpMedal){}
+        try{ if(t.curHp <= 0 && t.side === 'p1' && typeof _unlockMedal === 'function') _unlockMedal('egypt_scorpion_ko'); }catch(_eScorpMedal){}
         try{ renderCard(t); }catch(_){}
       }
     }
@@ -70118,6 +70196,7 @@ function _lxpsEgyptPairRevivePlayer(){
   }catch(_eEPR){ console.warn('[🔧 雙王互救 玩家版] 失敗', _eEPR); }
 }
 function checkWin(){
+  try{ if(typeof window._lxpsPhoenixScan === 'function') window._lxpsPhoenixScan(); }catch(_ePxScan0){}   // ★ v5.456.0 鳳凰浴火重生保險網(最先跑:任何不經 doDmg 的倒下,在判勝負/接關前先復活)
   try{ if(typeof window._cn2TsKoScan === 'function') window._cn2TsKoScan(); }catch(_eTsKs){}   // ★ v5.421.0 唐三藏 師徒自動復活:不經 doDmg 的倒下
   try{ if(window._URMZ && typeof G !== 'undefined' && G && G._urmz) window._URMZ.koScan(); }catch(_eMzKs){}   // ★ v5.391.0 海燈歸航:即死/死亡宣告等不經 doDmg 的倒下
   // ★ v3.17.0(2026-06-30)— 記錄「本場曾出現過敵人」(逃走小怪卡死根治的判定依據)。

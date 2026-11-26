@@ -15396,6 +15396,8 @@ function advStartBattle(){
       });
     }
   }catch(_ePhxResetB){ console.warn('[鳳凰旗標重置 BOSS 戰 v3.13.10] 失敗', _ePhxResetB); }
+  // ★ v5.456.0 菇女「覺醒菇」旗標重置(每場 BOSS 戰開始):舊版冒險模式從沒重置 _guniuRevived ⇒ 第一場復活過後,之後每一關都不會再復活
+  try{ [].concat((G && G.p1) || [], (G && G.p2) || []).forEach(_gnh => { if(_gnh && _gnh.name === '菇女'){ _gnh._guniuRevived = false; _gnh._guniuSeen = false; _gnh._guniuSealLogged = false; } }); }catch(_eGnResetB){ console.warn('[菇女旗標重置 BOSS 戰 v5.456.0] 失敗', _eGnResetB); }
   // ★ v1.0.20260424.1260 — 確保 row2(對手卡片區)可見(advFinishMiniBattle 可能殘留 hidden)
   try{
     const _row2 = document.getElementById('row2');
@@ -70549,6 +70551,8 @@ function advStartMiniBattle(nextSceneIdx) {
         });
       }
     }catch(_ePhxResetM){ console.warn('[鳳凰旗標重置 mini 戰 v3.13.10] 失敗', _ePhxResetM); }
+    // ★ v5.456.0 菇女「覺醒菇」旗標重置(每場小怪戰開始),理由同 BOSS 戰那處
+    try{ ((G && G.p1) || []).forEach(_gnh => { if(_gnh && _gnh.name === '菇女'){ _gnh._guniuRevived = false; _gnh._guniuSeen = false; _gnh._guniuSealLogged = false; } }); }catch(_eGnResetM){ console.warn('[菇女旗標重置 mini 戰 v5.456.0] 失敗', _eGnResetM); }
     G.p2 = mobs.map((name, i) => {
       const h = newHero(name, 'p2', i);
       h.element = MINI_MONSTER_ELEM[name] || 'wind';
