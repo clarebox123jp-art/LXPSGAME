@@ -19560,7 +19560,14 @@ window._BURST_VIDEO_DB = window._BURST_VIDEO_DB || {
   '火柴人':   { url: _BV_RAW('火柴人動畫.mp4') },
   '青炎龍王': { url: _BV_RAW('青炎龍王動畫.mp4') },
   '風術士':   { url: _BV_RAW('風術士動畫.mp4') },
-  '鳳凰':     { url: _BV_RAW('鳳凰動畫.mp4') }
+  '鳳凰':     { url: _BV_RAW('鳳凰動畫.mp4') },
+  // ★ v5.463.0(2026-11-28)— SSR 爆發動畫補完計畫第 2 批(神話):天神宙斯/雅典娜/死神/地府酋長/地獄將軍。
+  //   皆招募英雄、無 BOSS 版 ⇒ 不帶 bossSide;新檔名不需 bump _BV_ASSET_VER。
+  '天神宙斯': { url: _BV_RAW('天神宙斯動畫.mp4') },
+  '雅典娜':   { url: _BV_RAW('雅典娜動畫.mp4') },
+  '死神':     { url: _BV_RAW('死神動畫.mp4') },
+  '地府酋長': { url: _BV_RAW('地府酋長動畫.mp4') },
+  '地獄將軍': { url: _BV_RAW('地獄將軍動畫.mp4') }
 };
 window._SKILL_VIDEO_DB = window._SKILL_VIDEO_DB || {
   // 英雄名 → 特定技能+條件才播(魔劍姬僅在爆發「魔尊覺醒」再行動狀態下的 0 消耗 S1)
