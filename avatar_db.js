@@ -3439,10 +3439,11 @@ var AV_SR_PROTAG = [
   { id:'beauty', n:'美容師', sx:'♀' }, { id:'chef', n:'主廚', sx:'♂' }, { id:'astro', n:'太空人', sx:'♂' }
 ];
 var _avJobPose = {};   /* 職業卡目前顯示的動作(只是預覽,不存檔) */
+var _avJobAlt = {};    /* ★ v5.461.0 職業卡目前顯示的性別版本:0=原版、1=異性版(只是預覽,不存檔) */
 function _avSrOwned(name){
   try{ return (typeof advGetUnlockedHeroes === 'function') && advGetUnlockedHeroes().indexOf(name) >= 0; }catch(_e){ return false; }
 }
-function _avJobUrl(key){ return AVATAR_IMG_BASE + key + '.webp?v=v5.458.0'; }
+function _avJobUrl(key){ return AVATAR_IMG_BASE + key + '.webp?v=' + (key === 'job_mage_1' ? 'v5.461.0' : 'v5.458.0'); }   /* ★ v5.461.0 job_mage_1 重畫(同檔名覆蓋)⇒ 單張換版號破快取;其餘不動 */
 /* ★ v5.459.0 職業/SR 立繪臉部對齊:每張圖「眼睛線 y」實測值(504×720 圖座標)。
  *   標準人物眼睛線 = AVATAR_HEAD_GEO[0].eyeY(74);依各圖眼睛高度算出平移+放大,
  *   讓所有立繪的臉都落在其它角色頭部的位置;名片/放大特寫共用同一個人物框,所以一起對齊。
@@ -3458,7 +3459,16 @@ var AV_JOB_EYE = {
   job_potion_1:135, job_potion_2:197, job_potion_3:135, job_potion_4:140,
   sr_astro:100, sr_beauty:100, sr_chef:98, sr_idol:98, sr_magicgirl:138, sr_manga:170, sr_pastry:113,
   /* ★ v5.459.0 異性版(sr_<id>_alt):原圖是英雄的另一個性別版本,去背後同規格 */
-  sr_magicgirl_alt:69, sr_idol_alt:83, sr_pastry_alt:148, sr_manga_alt:92, sr_beauty_alt:92, sr_chef_alt:133, sr_astro_alt:165
+  sr_magicgirl_alt:69, sr_idol_alt:83, sr_pastry_alt:148, sr_manga_alt:92, sr_beauty_alt:92, sr_chef_alt:133, sr_astro_alt:165,
+  /* ★ v5.461.0 八職業異性版 job_<id>_alt_<1~4>(目測眼睛線,±8px;單張偏了只改這裡)。job_mage_1 已重畫(原本多一隻手),眼睛線不變 */
+  job_sword_alt_1:118, job_sword_alt_2:148, job_sword_alt_3:158, job_sword_alt_4:118,
+  job_knight_alt_1:103, job_knight_alt_2:175, job_knight_alt_3:172, job_knight_alt_4:105,
+  job_archer_alt_1:75, job_archer_alt_2:148, job_archer_alt_3:140, job_archer_alt_4:105,
+  job_mage_alt_1:150, job_mage_alt_2:155, job_mage_alt_3:152, job_mage_alt_4:156,
+  job_priest_alt_1:102, job_priest_alt_2:152, job_priest_alt_3:150, job_priest_alt_4:148,
+  job_rogue_alt_1:105, job_rogue_alt_2:148, job_rogue_alt_3:143, job_rogue_alt_4:118,
+  job_summon_alt_1:160, job_summon_alt_2:160, job_summon_alt_3:160, job_summon_alt_4:150,
+  job_potion_alt_1:100, job_potion_alt_2:150, job_potion_alt_3:95, job_potion_alt_4:90
 };
 var AV_JOB_PZ = 0.72, AV_JOB_PEYE = 112, AV_JOB_SMAX = 1.2, AV_JOB_FEET = 790, AV_JOB_FOOT_Y = 706;
 window._avatarJobTf = function(key, portrait){
@@ -3472,7 +3482,7 @@ window._avatarJobTf = function(key, portrait){
 };
 window._avatarJobSrc = function(key){
   key = String(key || '');
-  var m = /^job_([a-z]+)_([1-4])$/.exec(key), i;
+  var m = /^job_([a-z]+?)(_alt)?_([1-4])$/.exec(key), i;   /* ★ v5.461.0 異性版 job_<id>_alt_<n> */
   if(m){ for(i = 0; i < AV_JOBS.length; i++){ if(AV_JOBS[i].id === m[1]) return _avJobUrl(key); } return null; }
   m = /^sr_([a-z]+)(_alt)?$/.exec(key);
   if(m){ for(i = 0; i < AV_SR_PROTAG.length; i++){ if(AV_SR_PROTAG[i].id === m[1]) return _avSrOwned(AV_SR_PROTAG[i].n) ? _avJobUrl(key) : null; } }
@@ -3497,12 +3507,14 @@ window._avJobWear = function(key){
   try{ _avRefreshPreview(); }catch(_e){}
   try{ _avRenderOpts(); }catch(_e2){}
 };
-window._avJobPick = function(id, p){ _avJobPose[id] = p; window._avJobWear('job_' + id + '_' + p); };
+window._avJobPick = function(id, p){ _avJobPose[id] = p; window._avJobWear('job_' + id + (_avJobAlt[id] ? '_alt' : '') + '_' + p); };
+/* ★ v5.461.0 切換職業卡的性別版本(只換預覽;按動作鈕才真的穿上) */
+window._avJobSex = function(id, alt){ _avJobAlt[id] = alt ? 1 : 0; try{ _avRenderOpts(); }catch(_e){} };
 function _avJobOpts(box){
   var cfg = window._avatarLocalCard.cfg, h = '', i, j, jb, cur = String(cfg.jpi || ''), btnCss;
   h += '<div style="padding:12px 14px;margin:2px 2px 12px;background:rgba(255,190,90,0.12);border:1.5px solid rgba(255,200,120,0.5);border-radius:12px;color:#ffe9c8;font-size:15px;line-height:1.7;">⚔️ '
-    + _avT('八種職業主角,每位有 4 個動作可以選。穿上後整個主角會換成這張立繪(名片、隊伍、戰鬥都一樣),隨時可以換回原本造型。下面還有 SR 職人英雄,擁有那位英雄就能設成主角圖片。',
-           '選一個職業和動作,主角就會變成那個樣子!下面的 SR 職人,有抽到的英雄也可以變成主角喔。隨時都能換回來。') + '</div>';
+    + _avT('八種職業主角,每個職業有男生、女生兩個版本,每個版本有 4 個動作可以選。穿上後整個主角會換成這張立繪(名片、隊伍、戰鬥都一樣),隨時可以換回原本造型。下面還有 SR 職人英雄,擁有那位英雄就能設成主角圖片。',
+           '選一個職業、男生或女生版和動作,主角就會變成那個樣子!下面的 SR 職人,有抽到的英雄也可以變成主角喔。隨時都能換回來。') + '</div>';
   if(cur){
     h += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 2px 12px;color:#ffe2b0;font-size:15.5px;">⚔️ ' + _avT('目前使用職業立繪', '現在是職業造型')
       + '<button onclick="window._avJobWear(\'\')" style="padding:7px 14px;font-size:15px;font-weight:800;border-radius:10px;border:2px solid rgba(255,210,140,0.8);background:rgba(255,180,80,0.22);color:#fff0d8;cursor:pointer;font-family:inherit;">↩ ' + _avT('換回原本造型', '換回原本的樣子') + '</button></div>';
@@ -3513,14 +3525,24 @@ function _avJobOpts(box){
     jb = AV_JOBS[i];
     var on = cur.indexOf('job_' + jb.id + '_') === 0;
     var p = _avJobPose[jb.id] || (on ? parseInt(cur.slice(-1), 10) : 1) || 1;
+    /* ★ v5.461.0 性別版本:預設看原版;正在穿異性版就顯示異性版;玩家按 ♂/♀ 鈕可切換預覽 */
+    var alt = (_avJobAlt[jb.id] != null) ? _avJobAlt[jb.id] : ((on && cur.indexOf('_alt_') > 0) ? 1 : 0);
+    var altK = alt ? '_alt' : '';
+    var sxNow = alt ? (jb.sx === '♂' ? '♀' : '♂') : jb.sx, sxOth = (jb.sx === '♂' ? '♀' : '♂');
+    var sexBtn = function(isAlt, sx){
+      var act = (alt ? 1 : 0) === isAlt;
+      return '<button onclick="window._avJobSex(\'' + jb.id + '\',' + isAlt + ')" style="padding:6px 2px;font-size:14px;font-weight:900;border-radius:8px;cursor:pointer;font-family:inherit;border:2px solid '
+        + (act ? 'rgba(255,210,140,0.95);background:rgba(255,180,80,0.28);color:#fff0d8;' : 'rgba(150,140,220,0.5);background:rgba(80,70,140,0.25);color:#d6d0ff;') + '">' + sx + ' ' + (sx === '♂' ? _avT('男生版', '男生') : _avT('女生版', '女生')) + '</button>';
+    };
     h += '<div style="background:rgba(30,25,60,0.55);border:2px solid ' + (on ? '#ffd27a' : 'rgba(150,140,220,0.45)') + ';border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px;">'
       + '<div style="aspect-ratio:7/10;background:radial-gradient(circle at 50% 40%,rgba(255,240,210,0.95),rgba(200,190,240,0.85));border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;">'
-      + '<img src="' + _avJobUrl('job_' + jb.id + '_' + p) + '" alt="" loading="lazy" style="max-width:100%;max-height:100%;" onerror="this.style.visibility=\'hidden\'"></div>'
-      + '<div style="font-weight:900;color:#fff;font-size:15.5px;line-height:1.3;">' + jb.sx + ' ' + _avT(jb.n, jb.c) + '</div>'
+      + '<img src="' + _avJobUrl('job_' + jb.id + altK + '_' + p) + '" alt="" loading="lazy" style="max-width:100%;max-height:100%;" onerror="this.style.visibility=\'hidden\'"></div>'
+      + '<div style="font-weight:900;color:#fff;font-size:15.5px;line-height:1.3;">' + sxNow + ' ' + _avT(jb.n, jb.c) + '</div>'
       + '<div style="color:#bcb6e6;font-size:13px;">🗡 ' + jb.w + '</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">' + sexBtn(0, jb.sx) + sexBtn(1, sxOth) + '</div>'
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">';
     for(j = 1; j <= 4; j++){
-      var sel = (cur === 'job_' + jb.id + '_' + j);
+      var sel = (cur === 'job_' + jb.id + altK + '_' + j);
       btnCss = 'padding:7px 2px;font-size:14px;font-weight:800;border-radius:8px;cursor:pointer;font-family:inherit;border:2px solid '
         + (sel ? '#9effc0;background:rgba(80,200,120,0.3);color:#d8ffe6;' : (p === j ? 'rgba(255,210,140,0.9);background:rgba(255,180,80,0.18);color:#ffe9c8;' : 'rgba(150,140,220,0.5);background:rgba(80,70,140,0.25);color:#d6d0ff;'));
       h += '<button onclick="window._avJobPick(\'' + jb.id + '\',' + j + ')" style="' + btnCss + '">' + (sel ? '✅ ' : '') + _avT(AV_JOB_POSES[j - 1][0], AV_JOB_POSES[j - 1][1]) + '</button>';
