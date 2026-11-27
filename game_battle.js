@@ -19552,7 +19552,15 @@ window._BURST_VIDEO_DB = window._BURST_VIDEO_DB || {
   '趙雲':   { url: _BV_RAW('趙雲動畫.mp4') },
   '唐三藏': { url: _BV_RAW('唐三藏動畫.mp4') },
   '豬八戒': { url: _BV_RAW('豬八戒動畫.mp4') },
-  '沙悟淨': { url: _BV_RAW('沙悟淨動畫.mp4') }
+  '沙悟淨': { url: _BV_RAW('沙悟淨動畫.mp4') },
+  // ★ v5.462.0(2026-11-28)— SSR 爆發動畫補完計畫第 1 批:布奶鳥獸/火柴人/青炎龍王/風術士/鳳凰(老師 Gemini 生成、Claude 剪成約 6 秒 540×960 輕量版;只有音效)。
+  //   標準流程一筆=戰鬥爆發+圖鑑欣賞雙處生效;五位皆招募英雄、無 BOSS 版 ⇒ 不帶 bossSide;新檔名無舊快取 ⇒ 不需 bump _BV_ASSET_VER。
+  //   影片未上傳前 _playBurstVideo 的 onerror/5s 兜底自動退回 BURST_GIF_DB 既有 GIF。
+  '布奶鳥獸': { url: _BV_RAW('布奶鳥獸動畫.mp4') },
+  '火柴人':   { url: _BV_RAW('火柴人動畫.mp4') },
+  '青炎龍王': { url: _BV_RAW('青炎龍王動畫.mp4') },
+  '風術士':   { url: _BV_RAW('風術士動畫.mp4') },
+  '鳳凰':     { url: _BV_RAW('鳳凰動畫.mp4') }
 };
 window._SKILL_VIDEO_DB = window._SKILL_VIDEO_DB || {
   // 英雄名 → 特定技能+條件才播(魔劍姬僅在爆發「魔尊覺醒」再行動狀態下的 0 消耗 S1)
