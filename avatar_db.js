@@ -3417,8 +3417,8 @@ var AV_JOBS = [
 ];
 var AV_JOB_POSES = [['亮相','亮相'], ['攻擊','攻擊'], ['施展技能','放技能'], ['勝利','勝利']];
 var AV_SR_PROTAG = [
-  { id:'magicgirl', n:'魔法少女' }, { id:'idol', n:'偶像歌手' }, { id:'pastry', n:'點心師傅' }, { id:'manga', n:'漫畫家' },
-  { id:'beauty', n:'美容師' }, { id:'chef', n:'主廚' }, { id:'astro', n:'太空人' }
+  { id:'magicgirl', n:'魔法少女', sx:'♀' }, { id:'idol', n:'偶像歌手', sx:'♀' }, { id:'pastry', n:'點心師傅', sx:'♂' }, { id:'manga', n:'漫畫家', sx:'♀' },
+  { id:'beauty', n:'美容師', sx:'♀' }, { id:'chef', n:'主廚', sx:'♂' }, { id:'astro', n:'太空人', sx:'♂' }
 ];
 var _avJobPose = {};   /* 職業卡目前顯示的動作(只是預覽,不存檔) */
 function _avSrOwned(name){
@@ -3438,7 +3438,9 @@ var AV_JOB_EYE = {
   job_rogue_1:85, job_rogue_2:218, job_rogue_3:126, job_rogue_4:95,
   job_summon_1:118, job_summon_2:158, job_summon_3:270, job_summon_4:152,
   job_potion_1:135, job_potion_2:197, job_potion_3:135, job_potion_4:140,
-  sr_astro:100, sr_beauty:100, sr_chef:98, sr_idol:98, sr_magicgirl:138, sr_manga:170, sr_pastry:113
+  sr_astro:100, sr_beauty:100, sr_chef:98, sr_idol:98, sr_magicgirl:138, sr_manga:170, sr_pastry:113,
+  /* ★ v5.459.0 異性版(sr_<id>_alt):原圖是英雄的另一個性別版本,去背後同規格 */
+  sr_magicgirl_alt:69, sr_idol_alt:83, sr_pastry_alt:148, sr_manga_alt:92, sr_beauty_alt:92, sr_chef_alt:133, sr_astro_alt:165
 };
 var AV_JOB_PZ = 0.72, AV_JOB_PEYE = 112, AV_JOB_SMAX = 1.2, AV_JOB_FEET = 790, AV_JOB_FOOT_Y = 706;
 window._avatarJobTf = function(key, portrait){
@@ -3454,14 +3456,14 @@ window._avatarJobSrc = function(key){
   key = String(key || '');
   var m = /^job_([a-z]+)_([1-4])$/.exec(key), i;
   if(m){ for(i = 0; i < AV_JOBS.length; i++){ if(AV_JOBS[i].id === m[1]) return _avJobUrl(key); } return null; }
-  m = /^sr_([a-z]+)$/.exec(key);
+  m = /^sr_([a-z]+)(_alt)?$/.exec(key);
   if(m){ for(i = 0; i < AV_SR_PROTAG.length; i++){ if(AV_SR_PROTAG[i].id === m[1]) return _avSrOwned(AV_SR_PROTAG[i].n) ? _avJobUrl(key) : null; } }
   return null;
 };
 window._avJobWear = function(key){
   var cfg = window._avatarLocalCard && window._avatarLocalCard.cfg; if(!cfg) return;
   if(key){
-    var sm = /^sr_([a-z]+)$/.exec(key), i;
+    var sm = /^sr_([a-z]+)(_alt)?$/.exec(key), i;
     if(sm){
       for(i = 0; i < AV_SR_PROTAG.length; i++){
         if(AV_SR_PROTAG[i].id === sm[1] && !_avSrOwned(AV_SR_PROTAG[i].n)){
@@ -3508,17 +3510,18 @@ function _avJobOpts(box){
     h += '</div></div>';
   }
   h += '</div>';
-  h += '<div style="margin:16px 2px 8px;font-weight:900;color:#ffd97a;font-size:16px;">🌟 ' + _avT('SR 職人英雄(擁有才能設定)', 'SR 職人(有抽到才能用)') + '</div>';
+  h += '<div style="margin:16px 2px 8px;font-weight:900;color:#ffd97a;font-size:16px;">🌟 ' + _avT('SR 職人英雄(擁有才能設定・每位有兩種性別)', 'SR 職人(有抽到才能用・男女都有)') + '</div>';
   h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;">';
-  for(i = 0; i < AV_SR_PROTAG.length; i++){
-    var sr = AV_SR_PROTAG[i], key = 'sr_' + sr.id, own = _avSrOwned(sr.n), son = (cur === key), b;
+  for(i = 0; i < AV_SR_PROTAG.length * 2; i++){
+    var sr = AV_SR_PROTAG[i >> 1], alt = (i & 1) === 1, key = 'sr_' + sr.id + (alt ? '_alt' : ''), own = _avSrOwned(sr.n), son = (cur === key), b;
+    var sx = alt ? (sr.sx === '♂' ? '♀' : '♂') : sr.sx;   /* ★ v5.459.0 每位職人兩個性別版本 */
     if(son) b = '<div style="padding:7px;text-align:center;font-weight:900;color:#9effc0;">✅ ' + _avT('使用中', '使用中') + '</div>';
     else if(own) b = '<button onclick="window._avJobWear(\'' + key + '\')" style="width:100%;padding:8px;font-size:15px;font-weight:800;border-radius:9px;border:2px solid rgba(100,230,150,0.8);background:rgba(80,200,120,0.22);color:#c8ffd9;cursor:pointer;font-family:inherit;">👤 ' + _avT('設成主角', '變成他') + '</button>';
     else b = '<div style="padding:7px;text-align:center;color:#9a94c0;font-size:14px;">🔒 ' + _avT('尚未擁有', '還沒抽到') + '</div>';
     h += '<div style="background:rgba(30,25,60,0.55);border:2px solid ' + (son ? '#9effc0' : 'rgba(150,140,220,0.45)') + ';border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px;' + (own ? '' : 'opacity:0.6;') + '">'
       + '<div style="aspect-ratio:7/10;background:radial-gradient(circle at 50% 40%,rgba(255,240,210,0.95),rgba(200,190,240,0.85));border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;">'
       + '<img src="' + _avJobUrl(key) + '" alt="" loading="lazy" style="max-width:100%;max-height:100%;' + (own ? '' : 'filter:grayscale(1) brightness(0.7);') + '" onerror="this.style.visibility=\'hidden\'"></div>'
-      + '<div style="font-weight:900;color:#fff;font-size:15.5px;">' + sr.n + '</div>' + b + '</div>';
+      + '<div style="font-weight:900;color:#fff;font-size:15.5px;">' + sx + ' ' + sr.n + (alt ? _avT('(異性版)', '(異性版)') : '') + '</div>' + b + '</div>';
   }
   h += '</div>';
   box.innerHTML = h;
