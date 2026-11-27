@@ -7362,6 +7362,14 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 @keyframes islTrBob{0%,100%{translate:0 0;}50%{translate:0 6px;}}
 .isl-tr-mound{position:absolute;width:96px;height:96px;margin-left:-48px;margin-top:-70px;pointer-events:none;z-index:4;font-size:40px;text-align:center;animation:islTrFade 2.6s ease-in forwards;}
 .isl-tr-mound img{width:96px;height:96px;}
+/* ★ v1.471.0 沒帶食物 ⇒ 留在原地等你的夥伴(營地同款角色圖 + 泡泡) */
+.isl-petwait{position:absolute;pointer-events:none;z-index:4;text-align:center;}
+.isl-petwait .shadow{position:absolute;left:15%;right:15%;bottom:-4px;height:12px;border-radius:50%;background:rgba(0,0,0,.28);}
+.isl-petwait .pp{position:absolute;left:0;right:0;bottom:0;display:block;animation:islPetWaitBob 1.6s ease-in-out infinite;}
+.isl-petwait .pp img{display:block;margin:0 auto;}
+.isl-petwait .bb{position:absolute;left:50%;bottom:100%;transform:translateX(-50%);margin-bottom:6px;white-space:nowrap;font-size:15px;font-weight:900;line-height:1.3;padding:3px 10px;border-radius:12px;background:rgba(255,250,235,.95);color:#5a3a10;border:2px solid #f0c060;box-shadow:0 2px 6px rgba(0,0,0,.3);animation:islPetWaitBb 2s ease-in-out infinite;}
+@keyframes islPetWaitBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
+@keyframes islPetWaitBb{0%,100%{opacity:.85;}50%{opacity:1;}}
 @keyframes islTrFade{0%,70%{opacity:1;}100%{opacity:0;}}
 .isl-tr-old{position:absolute;border-radius:50%;border:5px dashed rgba(200,140,255,.9);background:rgba(160,90,255,.12);pointer-events:none;z-index:3;display:flex;align-items:flex-start;justify-content:center;box-sizing:border-box;}
 .isl-tr-old span{margin-top:-18px;padding:3px 12px;border-radius:999px;background:rgba(60,20,90,.85);color:#f0dcff;font-size:18px;font-weight:800;white-space:nowrap;}
@@ -7546,6 +7554,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 .isl-pethp-row{ text-align:center; font-size:18px; margin:4px 0; }
 #isl-camp-char.isl-actrock .rjw{ transform-origin:50% 92%; animation:islActRock 2.2s ease-in-out infinite; }
 #isl-camp-char.isl-actswing .rjw{ transform-origin:50% -30%; animation:islActSwingC 2.4s ease-in-out infinite; }
+#isl-camp-char.isl-actrot .sp{ rotate:var(--actrot, 0deg); transform-origin:50% 82%; }   /* ★ v1.474.0 躺下角度(玩家 ↺↻ 30 度一格;rotate 屬性與 .flip 的 transform 各自獨立、與 .rjw 的搖擺動畫也不衝突) */
 @keyframes islActSquash{ 0%{ scale:1 1; } 35%{ scale:1.05 .9; } 70%{ scale:.98 1.03; } 100%{ scale:1 1; } }
 @keyframes islActRock{ 0%,100%{ rotate:-5deg; } 50%{ rotate:5deg; } }
 @keyframes islActSway{ 0%,100%{ rotate:-6deg; } 50%{ rotate:6deg; } }
@@ -7679,6 +7688,19 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 #island-root.ipad .isl-pjoin .pj-cell{ font-size:13px; padding:4px 3px; }
 #island-root.ipad .isl-pjoin .pj-cell b, #island-root.ipad .isl-pjoin .pj-cell i{ font-size:11px; }
 #island-root.ipad .isl-pjoin .pj-r{ gap:5px; }
+/* ★ v1.470.0 iPad:遭遇/三選一/放生/經驗傳承 不吃全域 .box p 42px、h3 56px(否則字超大、框被 islFitBox 縮小) */
+#island-root.ipad #isl-modal .box .isl-pdup h3, #island-root.ipad #isl-modal .box .isl-prel h3, #island-root.ipad #isl-modal .isl-bagbox.isl-pchoose h3, #island-root.ipad #isl-modal .isl-bagbox.isl-prelxp h3{ font-size:28px; }
+#island-root.ipad #isl-modal .box .isl-pdup p, #island-root.ipad #isl-modal .box .isl-prel p, #island-root.ipad #isl-modal .isl-bagbox.isl-pchoose p, #island-root.ipad #isl-modal .isl-bagbox.isl-prelxp p{ font-size:18px; line-height:1.45; }
+#island-root.ipad #isl-modal .box .isl-pdup p.sm{ font-size:15px; }
+#island-root.ipad #isl-modal .box .isl-prel .pr-say{ font-size:19px; }
+#island-root.ipad #isl-modal .box .isl-prel .pr-pic{ height:72px; }
+#island-root.ipad .isl-pdup-tip{ font-size:16px; }
+#island-root.ipad .isl-pmini .pic{ height:80px; }
+#island-root.ipad .isl-pdup .isl-pmini .pic{ height:56px; } #island-root.ipad .isl-pdup .isl-pmini{ gap:1px; padding:6px 8px 8px; }
+#island-root.ipad .isl-pmini .nm{ font-size:18px; }
+#island-root.ipad .isl-pmini .ln{ font-size:13px; } #island-root.ipad .isl-pmini .ln.sm{ font-size:11px; }
+#island-root.ipad #isl-modal .isl-pmini .isl-btn{ font-size:16px; padding:6px 8px; }
+#island-root.ipad .isl-prel .pr-gift span, #island-root.ipad .isl-prel .pr-gift b{ font-size:14px; }
 #island-root.ipad .isl-pjoin .pj-sec{ font-size:14px; padding:5px 10px; line-height:1.3; }
 #island-root.ipad .isl-pjoin .pj-sec .hd{ font-size:15px; }
 #island-root.ipad .isl-pjoin .pj-sec.s-sci{ font-size:13px; }
@@ -7714,6 +7736,48 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 #isl-modal .isl-pfruit .mf-prev{ text-align:center; font-size:15px; margin:8px 0 2px; color:#ffe6a8; }
 #isl-modal .isl-pfruit .mf-foot{ display:flex; justify-content:center; gap:10px; margin-top:8px; }
 #isl-modal .isl-pfruit .mf-foot .isl-btn{ padding:8px 18px; font-size:17px; }
+/* ★ v1.470.0 寵物個體化第 2 輪:夥伴小卡(遭遇/三選一/放生)、營地空間提示、三選一、放生、頭目升階 */
+.isl-pmini{ position:relative; display:flex; flex-direction:column; gap:3px; padding:8px 10px 10px; border-radius:16px; border:3px solid #5fb3ff; background:rgba(10,20,40,.55); text-align:center; min-width:0; }
+.isl-pmini.g-N{ border-color:#b8c2cc; } .isl-pmini.g-SR{ border-color:#c58fff; } .isl-pmini.g-SSR{ border-color:#ffd166; box-shadow:0 0 14px rgba(255,209,102,.55); }
+.isl-pmini .tag{ font-size:13px; font-weight:900; color:#ffe6a8; }
+.isl-pmini .pic{ height:96px; display:flex; align-items:center; justify-content:center; font-size:56px; }
+.isl-pmini .pic img{ max-width:100%; max-height:100%; object-fit:contain; display:block; }
+.isl-pmini .nm{ font-size:18px; font-weight:900; } .isl-pmini .nm small{ font-size:13px; opacity:.75; font-weight:700; }
+.isl-pmini .ln{ font-size:14px; line-height:1.35; } .isl-pmini .ln.st{ font-weight:900; color:#ffe6a8; } .isl-pmini .ln.sm{ font-size:12px; opacity:.85; }
+.isl-pmini .isl-btn{ margin-top:6px; padding:7px 10px; font-size:16px; min-height:0; }
+.isl-pmini .ln.px{ color:#bfe8ff; }   /* ★ v1.472.0 小卡:天生 2 天賦 + 2 招 */
+.isl-pxsk{ margin-top:6px; padding:6px 8px; border-radius:10px; background:rgba(95,179,255,.14); font-size:.92em; line-height:1.45; }   /* ★ v1.472.0 夥伴卡:天生的技能 */
+.isl-pxbk{ display:flex; flex-direction:column; gap:8px; margin:8px 0; text-align:left; }   /* ★ v1.472.0 📘 訓練書選招 */
+.isl-pxbk-c{ display:block; padding:8px 12px; border-radius:12px; border:2px solid #5fb3ff; background:rgba(10,20,40,.55); font-size:17px; line-height:1.4; }
+.isl-pxbk-c b{ font-size:19px; color:#ffe6a8; } .isl-pxbk-c i{ font-style:normal; margin-left:8px; font-size:13px; padding:1px 8px; border-radius:8px; background:#2a4a7a; color:#cfe6ff; } .isl-pxbk-c span{ display:block; font-size:15px; opacity:.92; }
+.isl-pmini .isl-btn.rel{ background:rgba(123,237,159,.18); border-color:#7bed9f; color:#d6ffe4; }
+.isl-pdup-tip{ margin:0 0 8px; padding:7px 12px; border-radius:12px; font-size:16px; font-weight:900; text-align:center; }
+.isl-pdup-tip.ok{ background:rgba(95,208,200,.16); border:1.5px solid rgba(95,208,200,.6); color:#c8f2ee; }
+.isl-pdup-tip.full{ background:rgba(255,140,90,.16); border:1.5px solid rgba(255,140,90,.65); color:#ffd2b8; }
+.isl-pdup{ width:min(760px,90vw); max-width:100%; text-align:left; }
+.isl-pdup h3{ text-align:center; }
+.isl-pdup .pd-row{ display:grid; grid-template-columns:minmax(0,40fr) minmax(0,60fr); gap:12px; align-items:start; }
+.isl-pdup .pd-txt p{ margin:0 0 8px; font-size:16px; line-height:1.5; } .isl-pdup .pd-txt p.sm{ font-size:14px; opacity:.88; }
+#isl-modal .isl-pchoose button, #isl-modal .isl-prelxp button{ min-height:0; }
+.isl-pchoose .pc-lead{ font-size:16px; margin:0 0 10px; }
+.isl-pchoose .pc-row{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.isl-pchoose .pc-row > .isl-pmini:last-child{ background:rgba(60,40,10,.5); }
+.isl-pchoose .pc-foot{ font-size:13px; opacity:.8; text-align:center; margin:8px 0 0; }
+.isl-prel p{ font-size:16px; line-height:1.5; }
+.isl-prel .pr-gift{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:6px 0 2px; padding:8px 10px; border-radius:12px; background:rgba(123,237,159,.1); border:1.5px solid rgba(123,237,159,.45); }
+.isl-prel .pr-gift b{ width:100%; font-size:15px; color:#b5f5c8; }
+.isl-prel .pr-gift span{ font-size:15px; padding:2px 9px; border-radius:10px; background:rgba(0,0,0,.28); }
+.isl-prel.done{ text-align:center; } .isl-prel .pr-pic{ height:100px; display:flex; justify-content:center; align-items:center; opacity:.85; }
+.isl-prel .pr-say{ font-size:17px; color:#c8f2ee; font-style:italic; }
+.isl-prelxp .px-list{ display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:6px; }
+#isl-modal .isl-phcard .acts .isl-btn.rel{ color:#bff5cf; }
+.isl-pgrup{ display:inline-block; padding:2px 10px; border-radius:10px; font-weight:900; color:#ffe08a; background:linear-gradient(90deg,rgba(255,200,80,.25),rgba(197,143,255,.25)); animation:islPjGlow 1.6s ease-in-out infinite; }
+.isl-petcard .pic .isl-dexn2{ position:absolute; right:6px; bottom:4px; font-size:15px; font-weight:900; padding:0 7px; border-radius:9px; background:rgba(0,0,0,.6); color:#ffe6a8; }
+@media (orientation:landscape) and (max-height:520px){
+  .isl-pmini .pic{ height:62px; font-size:40px; } .isl-pmini .nm{ font-size:15px; } .isl-pmini .ln{ font-size:12px; } .isl-pmini .ln.sm{ display:none; }
+  .isl-pdup .pd-txt p{ font-size:14px; } .isl-pdup-tip{ font-size:14px; padding:4px 8px; }
+  .isl-pchoose .pc-lead{ font-size:14px; }
+}
 /* ★ v1.469.0 📢 夥伴大更新說明頁(仿大對抗近期活動公告:深色漸層卡+發光標題+彩色說明卡) */
 #isl-modal .isl-pnews button{ min-height:0; }
 #isl-modal .isl-phouse .ph-news{ padding:6px 14px; font-size:15px; margin-right:8px; }
@@ -7740,6 +7804,12 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 .isl-pnews .c-nm{ border-color:#ffd166; background:rgba(255,209,102,.08); } .isl-pnews .c-nm .pn-ttl{ color:#ffe08a; }
 .isl-pnews .c-ph{ border-color:#5fd0c8; background:rgba(95,208,200,.08); } .isl-pnews .c-ph .pn-ttl{ color:#c8f2ee; }
 .isl-pnews .c-mf{ border-color:#c58fff; background:linear-gradient(135deg,rgba(120,60,200,.22),rgba(180,80,150,.18)); } .isl-pnews .c-mf .pn-ttl{ color:#e9d2ff; }
+.isl-pnews .c-dup{ border-color:#ff9f5a; background:rgba(255,159,90,.09); } .isl-pnews .c-dup .pn-ttl{ color:#ffd2b0; }   /* ★ v1.470.0 */
+.isl-pnews .c-rel{ border-color:#7bed9f; background:rgba(60,160,90,.12); } .isl-pnews .c-rel .pn-ttl{ color:#c8ffd8; }
+.isl-pnews .c-up{ border-color:#ffd166; background:linear-gradient(135deg,rgba(255,200,80,.14),rgba(197,143,255,.12)); } .isl-pnews .c-up .pn-ttl{ color:#ffe08a; }
+.isl-pnews .c-sk{ border-color:#ff6a8a; background:linear-gradient(135deg,rgba(255,106,138,.13),rgba(95,179,255,.10)); } .isl-pnews .c-sk .pn-ttl{ color:#ffc2cf; }   /* ★ v1.472.0 */
+.isl-pnews .c-bk{ border-color:#5fb3ff; background:rgba(95,179,255,.11); } .isl-pnews .c-bk .pn-ttl{ color:#cfe6ff; }
+.isl-pnews .c-st{ border-color:#c58fff; background:rgba(197,143,255,.11); } .isl-pnews .c-st .pn-ttl{ color:#e6d0ff; }
 .isl-pnews .c-soon{ border-color:#9aa7b5; border-left-style:dashed; background:rgba(255,255,255,.04); opacity:.92; } .isl-pnews .c-soon .pn-ttl{ color:#d6dde6; }
 .isl-pnews .pn-foot{ display:flex; justify-content:center; gap:12px; margin:12px 0 4px; }
 #isl-modal .isl-pnews .pn-foot .isl-btn{ padding:10px 22px; font-size:18px; }
@@ -7998,7 +8068,11 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 (function(){
 'use strict';
 
-var MG_VER = 'v1.469.0';   /* ★ v1.469.0(2026-11-27 19:35~19:38・老師「尋寶系統新增寶物:可以提升一隻寵物指定能力成長率1個階段的神秘果實,每天最多產出1顆」(裁定:成長率拆四項、稀有寶藏 30%)+「阿獺商店有極低機率賣神秘果實,一顆1000貝幣」+「放生時根據親密度和等級也有機率送神秘果實」)— 成長率拆 rec.gws {hp,atk,def,spd}(舊/新夥伴四項 = 原字母,rec.gw 改四項平均總評 islPiGwSync);islPetStats 四項各吃自己的倍率(速度仍一半);ISL.mfruit 持有數;islTrGot 稀有寶藏 30%、T.mfDay 每島上日 1 顆;window.islPetFruitOpen 選能力→試算→吃(夥伴卡與夥伴小屋都有入口);阿獺 islShopMfToday(uid|day 種子 5%)上架 1000 貝幣、ISL.shop.mfDay 限購 1;放生離別禮公式 islPetReleaseFruitP(第 2 輪放生上線時接);19:43「做一個說明頁教導玩家(參考大對抗近期活動公告)」⇒ window.islPetNewsOpen 📢 夥伴大更新(回營地沒看過自動跳一次 ISL.flags.newsPet1、營地選單與夥伴小屋 ❓ 說明可重看)。 */ void 'v1.468.0';   /* ★ v1.468.0(2026-11-27・老師「荒島寵物個體化 第 1 輪」,設計書 claude/荒島寵物個體化_設計書.md v2 第 14 節)— 存檔個體化:ISL.pets 每隻有 id(p+petSeq)、gr 品級 N/R/SR/SSR、gw 成長率 A~E、ps 個性(急躁/冷漠/膽小/溫柔/勇敢)、nm 名字、out 出來逛、tl/sk(第 3 輪);舊存檔 islNormalize 一次性轉 R/C、個性用帳號+種類固定種子(petIdV=1);編組格 {t:'pet',id,k}、夥伴裝備 petGear.eq 鍵改 id、戰鬥單位帶 pid/ps/gr、名字;islPetStats 吃品級×基礎、成長率×每級成長(速度一半)、個性攻防速%;個性另外接 被盯上權重(islBtMonPickTarget)/異常抵抗(islBtPetAilBlock)/治療量(islPetHealMul)/親密度獲得(islBondGain 第二參數);✏ 命名字卡(islPetNameOpen,ISL_PI.CHARS 字庫+BLOCK 黑名單,1~4 字,免費不限次數);🏡 夥伴小屋(🏕 營地 → islPetHouseOpen:排序/篩選/取名/編入移出/出來逛/詳情);營地只畫隨身三隻+勾出來逛最多 3 隻(islCampPetsShown,總開關 ISL.petOutOn),只有隨身的會陪休息,個性影響營地走法;好友名片多 petsV(名字/品級)。同種一隊限 1 隻(裁定 K)。island_db 不動(?v= 仍 v1.456.0)。 */ void 'v1.467.0';   /* ★ v1.467.0(2026-11-27・老師「營地守衛戰新增『好友協助』的開關設定,可以關閉不讓好友出現,增加自己玩的體驗」)— 夜襲開場視窗新增「👥 好友協助:開/關」按鈕(islDefFrToggle,存 ISL.flags.defNoFr,一直記住);關掉時 islDefHelpersInit 不放好友小人。只有登入且有好友時才顯示。② 同日 15:15 老師「荒島求生的烹飪新增可以設定製作數量」— 烹飪選單每張卡片加「− N 鍋 ＋」(islCookQMax 上限 10,受食材/貝幣/AP 限制;_islCookQ 記住每道菜的鍋數),N 鍋 = 食材×N、貝幣×N、⚡×N,小遊戲只玩一次,份數 ×N(islCookCost 新增 qty 參數;islActResult 烹飪分支與 islApPay 跟著乘)。 */ void 'v1.466.0';   /* ★ v1.466.0(2026-11-25 晚・老師「荒島的寵物飢餓時頭上的泡泡被裁切了,肉的圖案位置也不正確」)— 營地寵物容器 overflow:hidden 把 💭🍖 切掉 ⇒ 改自己畫的白色思考泡泡(.isl-camp-hun,肉置中)+ 冒泡泡那隻加 .hungry 放開 overflow;只改 index + sw,island_db 不動(?v= 仍 v1.456.0) */ void 'v1.465.0';   /* ★ v1.465.0(2026-11-25・老師四項+一項:①「pc版的繪圖板筆觸無法拖曳筆刷、透明度粗細、圖層位置等」②「創藝工坊好幾位ipad學生畫到一半變成訪客模式」③「角色皮膚和裝飾的筆刷新增 噴槍」④「有更新的時候不要強制中斷畫圖或戰鬥到一半的玩家,等他們離開該模式再從頂部更新提示按下去」⑤「秀拉點描法關卡的審核太嚴苛,降低標準」)— ① paintkit v1.2.1 K.penRange ② onUser 第七把鑰匙 mgArtLivePass(lxps_mg_art_live)③ designer v1.2.9 BRUSH.air ④ mgDrawBusy/mgHardBusyNow/mgUpdDefer/#mg-updbar2 ⑤ art v1.3.3 點描 */ void 'v1.464.0';   /* ★ v1.464.0(2026-11-25・老師「筆刷新增『液化』功能,同procreate。角色皮膚新增 參考(同荒島裝飾描圖功能),可以從現有所有角色中挑選出來」)— designer v1.2.8、designer_db v1.2.5;DSG_FILE_VER v1.2.8 + sw;與大對抗 v5.452.0 同包 */ void 'v1.463.0';   /* ★ v1.463.0(2026-11-25・老師「1.右下角的圖層功能鍵太佔空間,高度縮小些。圖層可看的高度提高到三層。2.繳交作品改成打字命名,最多10字。智慧金鑰審核增加不雅字詞判別」)— designer v1.2.7、designer_db v1.2.4;DSG_FILE_VER v1.2.7 + sw;與大對抗 v5.452.0 同包 */ void 'v1.462.0';   /* ★ v1.462.0(2026-11-25・老師「遊戲美術設計師 1.角色皮膚和荒島裝飾要有吸色滴管在色環旁邊可以使用 2.用橡皮擦擦掉的東西,要減去相對應的步數」)— designer v1.2.6;DSG_FILE_VER v1.2.6 + sw;與大對抗 v5.452.0 同包 */ void 'v1.461.0';   /* ★ v1.461.0(2026-11-25・老師「皮膚和裝飾繳交追加『作品說明』20字到100字內」)— designer v1.2.5 作品說明(存 designSubmit.mod.desc,不改規則);與大對抗 v5.452.0 同包(GM 投稿區顯示);DSG_FILE_VER v1.2.5 + sw */ void 'v1.460.0';   /* ★ v1.460.0(2026-11-25・老師「步數計算,在同一條線或色塊上用相同的筆刷或色彩重疊,只算一步」)— designer v1.2.4 重疊格;DSG_FILE_VER v1.2.4 + sw;其他檔不動 */ void 'v1.459.0';   /* ★ v1.459.0(2026-11-25・老師「創藝工坊角色皮膚設計的人物骨架,走路和奔跑的姿勢是嚴重錯誤的,請重新以多角度檢視,調整各關節正確位置」)— designer v1.2.3 / designer_db v1.2.3:走路/奔跑改真 3D 範本;DSG_FILE_VER v1.2.3 + sw;其他檔不動 */ void 'v1.458.0';   /* ★ v1.458.0(2026-11-25・老師「PC 版用繪圖板+觸控筆:1 只能畫圖但無法點擊所有功能鍵 2 感壓筆刷收筆時容易留下一大圓點」)— minigame_paintkit.js(MGPK v1.2.0:筆壓 0 不再當滿壓、筆點按鈕保險 K.penTap)、minigame_art.js v1.3.2(老師「平板旋轉後畫布被壓扁轉不回來」:轉螢幕後重新量畫布大小)、designer v1.2.2(老師「投稿要求步數增加至500步」+轉向重新對齊)、designer_db v1.2.2;ART_FILE_VER v1.3.2、DSG_FILE_VER v1.2.2 + sw;island_db 不動(?v= 仍 v1.456.0) */ void 'v1.457.0';   /* ★ v1.457.0(2026-11-25・老師「互動時出現的科學知識對話隱藏,改成寫在各裝飾的說明中」)— islDecoActBegin 不再冒 OBJ_TALK/def.d 泡泡;營地 islDecoTap、小木屋 islCabinFurTap 的說明前加 🔬。只改 index + sw,island_db 不動(?v= 仍 v1.456.0) */ void 'v1.456.0';   /* ★ v1.456.0(2026-11-25・老師「飯桌坐下好怪」「坐的方向跟椅子不同」「物品包新增食物類標籤」)— islDecoActCover(遮擋框,在 islDecoActDecorate 結尾)、ISL_GRP 加「🍙 食物」(islIsFood,islSortBar/islSortRows)、islBagFeedPick + 物品視窗「🐾 餵夥伴」、islPetFeedGo 第三參數 after */ void 'v1.455.0';   /* ★ v1.455.0(2026-11-24・老師「荒島新增飢餓值」+ 23:13 裁定全甲/招募 +10/天賦減輕)— 🍙 飽足度模組(islHun* / islPetFeed 新版 / islPetDietHtml,在 islEatApply 正上方)+ 掛鉤:islApPay、islSeaReturnGo 強制回航、islBattleEnd、islNewDay、islBtPlayerStats、islBtMakeAllies、islBtOpen、islBtItemUse、野外移動、islCampWalkSpd、烹飪一鍋多份、islPetGet、夥伴卡/編組/圖鑑/營地泡泡、HUD、⚙ GM 開關;CSS 在 island-style 最後 */ void 'v1.454.0';   /* ★ v1.454.0(2026-11-24・老師「設計荒島求生的主角與營地裝飾互動的功能」)— 營地裝飾互動:走近冒泡泡/長按選單多一顆互動鈕 ⇒ 主角走到錨點坐/躺/席地坐(新動作圖 island_sit_/island_lie_ 24 張)或撥弄/照顧/看/擦亮/抱/開關燈(站立待機+裝飾特效);坐躺休息每秒 +1 體力不設上限;🌙 休息分頁「🛋 坐下休息」自動找最近的椅子或床;床/雙層床/吊床可「😴 睡到明天」舒適度 +5;每種裝飾每天第一次互動練巧手/巧思;位置微調存 deco.ax/ay、燈開關存 deco.on。只做戶外營地(小木屋室內、好友營地、夥伴陪睡留待下一版)。island_db D.DECO_ACT(?v= 跟)。 */ void 'v1.453.0';   /* ★ v1.453.0(2026-11-24・老師「荒島求生的夜襲,好友的攻擊頻率降低50%」)— minigame_sea_db.js 覆寫 D.FRIEND_HIT_SEC 為原值 ×2(夜襲好友小人出手間隔加倍)+ D.LOG 一筆;本檔只改版號與 sea_db ?v=。同輪修 BUG(學生回報「到大地圖只看到一片藍」,載入錯誤 cur.map.x):islMapPaint 主角位置 cur 若是遺跡地下秘穴(沒有 map 座標)改用上層區域 cur.up(遺跡),再不行用沙灘。同輪老師「有學生玩荒島一直不斷地突然變成訪客模式」:①閒置計時 mgIdleShared 讀同帳號的 lxps_idle_last(其他分頁的活動也算,背景分頁不再把正在別頁玩的人登出)②登入/登出紀錄 lxps_mg_authlog(手動/閒置/共用裝置保護[附原因、頁面類型、分頁章、主畫面 App]/外部登出/登入放行鑰匙),🆘 錯誤回報附「登入紀錄」③外部登出(本頁沒登出卻被登出)跳 toast 說明。 */ void 'v1.452.0';   /* ★ v1.452.0(2026-11-23・老師「創藝工坊的旋轉畫布功能,顯示當前角度、復原原本角度、45/90/180 度順逆時針旋轉」)— minigame_art.js(ART v1.3.1);同輪老師「美術設計師的作品增加『不存檔直接退出』的選項」⇒ minigame_designer.js(DSG v1.2.1) */ void 'v1.451.0';   /* ★ v1.451.0(2026-11-19 15:09・老師選「乙」做 Procreate 對照 17 項+「畫筆感壓、即時反應和流暢感再提升;網路上推薦的其他繪圖 APP 好用功能學起來」+「美術設計師的面板適當縮小左右的工具介面面板尺寸和字體,讓中央畫圖區域加大」)— 創藝工坊 ART v1.3.0、美術設計師 DSG v1.2.0、共用繪圖工具包 MGPK v1.1.0;細節見 minigame_art.js 檔頭 */ void 'v1.450.0';   /* ★ v1.450.0(2026-11-19 10:18・老師看學生 iPad「三分法創作判定有問題,放寬:中間有人物或動物形狀的主角、周圍有色塊背景就算通過」)— 創藝工坊 ART_FILE_VER v1.2.4:evalDraw thirds 新增 thirdsLoose(背景色塊+主角形狀),過關 2★、主角靠近交叉點 3★;12:36 第二輪(同版號,前一包未上傳):主角可以是物品、五階明暗/點描/三種筆觸判定一起修;小遊戲本體/荒島零改動 */ void 'v1.449.0';   /* ★ v1.449.0(2026-11-19・老師「創藝工坊個人榜都在上限,沒有意義」)— 創藝工坊 ART_FILE_VER v1.2.3:降每次答題基本分(星星 10→2、首次 20→5、今日挑戰 10→2、表現分每題 3→2、同關每天表現分 3→2 次),保留答題品質;本週排行清空,11/23 08:00 起重新計算(搭配大對抗 v5.427.0 結算) */ void 'v1.448.0';   /*★ v1.448.0(2026-11-18 晚・老師「荒島信箱可以收到 GM 給的設計師獎勵」)— 荒島信箱新增 type 'gm' 老師獎勵信(貝幣 $shell + 稀有材料,islMailPaint/islMailGive);設計師繳交勾選希望獎勵(DSG v1.1.4) */ void 'v1.447.0';   /* ★ v1.447.0(2026-11-18・老師「主角SP除了放絕招以外,增加別的消耗用途」選甲乙丙)— 💠 SP 技收合鈕:📣號令夥伴 SP50(計量滿+冷卻−1,不佔回合,每回合1次)/🛡強化防禦 SP34(buff spGuard 30:全隊受傷−30%+不吃附加狀態,接原本防禦)/🎯精準智取 SP50(多刪一個錯的、不打折);函式群 islBtSpUse/islBtSpCan/islBtSpCost;資料 D.BT.SP_COST(sea_db)。 */ void 'v1.446.0';   /* ★ v1.446.0(2026-11-18・老師)— 主角 SP 只在主角自己行動完才回(+34,鷹眼 +50,放絕招那輪不回;冷卻 3 回合,鷹眼 2);天賦星盤絕招說明「每場戰鬥 1 次」→「SP 滿並且冷卻結束即可發動」;烹飪清單改武器面板同款 .isl-cards.sm 大卡片;actAdd 標籤改「絕招 SP 恢復加快」。 */ void 'v1.445.0';   /* ★ v1.445.0(2026-11-17 深夜・老師三項)— ①主角 SP 改成跟寵物一樣的計量(每個角色行動 +25,滿 100 且冷卻 3 回合結束才能放絕招;鷹眼改冷卻 −1)②平衡:我方 HP 每級成長壓低(主角 HP_LV 9→5、寵物 ×0.55,Lv1 不變)、魔物 HP 成長綁主角曲線(MON_LV_HP 0.05→0.0625)×1.15(頭目不吃)、MON_LV_ATK 0.16→0.18③守墓者之間頭目巢穴固定在祭壇中央(sc.lair)。資料在 sea_db 檔尾 v1.445.0 區塊。 */ void 'v1.444.0';   /* ★ v1.444.0(2026-11-17・老師四項)— ①營地設施可賣(材料價一半;最後一座營火/帳篷/有東西的倉庫、帆船、施工中不可賣)＋施工中的設施在建造選單算已蓋(根治多蓋一座水道);②🕳 遺跡地下秘穴開放:三區可走地圖 dg_b1~b3(islUnder*,⚡1 進入,B2/B3 要上一層探索 ≥50%)、3 新魔物、3 新材料、3 新裝飾、守墓石像・不朽之王頭目,圖 30 張(老師 ChatGPT);③銅線蛇精英掉雷精核心(雲豹相機材料多一條來源)。minigame_sea_db.js ?v= → v1.444.0 */ void 'v1.443.0';   /* ★ v1.443.0(2026-11-17・老師「題庫正解太長」)— 荒島題庫 149 題錯誤選項加長、考試複習共用題庫同步更新;minigame_island_db.js ?v= 對齊 v1.443.0 */ void 'v1.442.0';   /* ★ v1.442.0(2026-11-13 15:06・老師「荒島求生的戰鬥中,智取追加取消的功能」)— islBtOutwit 選單加「取消」(data-wx):收起選單與情境小視窗、行動權還給玩家、不算回合不進冷卻、同一題保留(不能靠取消換題);地下層智取本來就有「撤退」不動;只改本檔+sw */ void 'v1.441.0';   /* ★ v1.441.0(2026-11-13・老師三項)— 創藝工坊 ART_FILE_VER v1.2.2(畫布右欄:選色器固定右上、圖層獨立小視窗捲動;復原扣回筆畫次數)+ 美術設計師 DSG_FILE_VER v1.1.3(復原扣回操作次數;「我的作品」下載 PNG 可去背、畫布右欄同樣固定選色器);今日挑戰重玩改「二星以上」;小遊戲本體/荒島零改動 */ void 'v1.440.0';   /* ★ v1.440.0(2026-11-12・大對抗 v5.389.0 同步,老師「不重複題目累積答對 2000/4000/6000 題各得 UR 自選」)— 小遊戲/荒島答對的題目也記進 minigameScores/{uid}.quizUC(不重複答對題數,mgUcMerge);獎章與 UR 發放在大對抗 */ void 'v1.439.0';   /* ★ v1.439.0(2026-11-11 20:25・老師「設計師繪圖系統在 PC 版,手繪、點陣、像素畫出來的點(線)都比滑鼠游標低,要修精準」)— 設計師 DSG_FILE_VER v1.1.2(座標換算吃進 PC 放大 zoom;20:50 老師「新增 PC 版快捷鍵 CTRL+Z 復原,空白鍵把游標切換成手掌拖曳畫布」)+ 創藝工坊 ART_FILE_VER v1.2.1(同快捷鍵在注音輸入法下也有效);小遊戲本體/荒島零改動 */ void 'v1.438.0';   /* ★ v1.438.0(2026-11-11・老師:iPad 開遊戲還是舊版)從背景叫回 App(離開 ≥60 秒)也當成重新打開,自動存檔更新(對應主程式 v5.379.0) */ /*★ v1.437.0(2026-11-10・老師)創藝工坊 v1.2.0+美術設計師 v1.1.0 繪圖工具大更新(油漆桶/長按變形狀/圖層 ⋯/環形選色器/剪刀/變形/7 種畫筆/存檔時間/每日積分 1000+答題表現分/設計師每月皮膚、裝飾各 1 件);新檔 minigame_paintkit.js 由 ?mode=art 與 ?mode=designer 載入 */ void 'v1.436.0';   /* ★ v1.436.0(2026-11-10・老師「檢查所有登入按鈕…不會再登入又被登出」稽核)— _mgMarkAppHandoff 同時蓋 lxps_idle_last(與大對抗 v5.374.0 一起) */ void 'v1.435.0';   /*★ v1.435.0(2026-11-10・老師「學生在創藝工坊左上角登入,不到 3 秒又變訪客,什麼訊息都沒跳」)— iPad 主畫面版 🔑 登入改借大對抗直連 Google 登入(mgOAuthDirectGo,大對抗 v5.373.0 回程蓋交接鑰匙回原頁);popup 被擋也改走直連,不再走回來恆為空的 redirect */ void 'v1.434.0';   /*★ v1.434.0(2026-11-10・老師「創藝工坊自由畫圖一隻手指畫不出線條,反而變成縮放」)— 只改 minigame_art.js(ART_FILE_VER v1.1.10:清除幽靈手指) */ void 'v1.433.0';   /* ★ v1.433.0(2026-11-09・老師「檢查藝術村的題目,有些重複性較高的,難度太低的,都重新設計優化」)— 只改創藝工坊兩支檔(ART_FILE_VER v1.1.9):題庫變大+每次抽題、錯誤選項題庫與易混淆選項、生活情境題、美感原則圖隨機畫法、光影題與找不同加難度;關卡 id 不變(星數/設計師解鎖不受影響);小遊戲本體/荒島/設計師零改動 */ void 'v1.432.0';   /* ★ v1.432.0(2026-11-09・老師「小遊戲的英雄選單圖片也是要高度調整。特殊能力標示的位置改成左下角」)選角清單縮圖依頭頂位置對齊(mgFaceFitImg/MG_FACE_T)、天賦標籤移到縮圖左下角 */ void 'v1.431.0';   /*★ v1.431.0(2026-11-09・老師「遊戲美術設計師改成有條件解鎖(全部關卡 ≥2★)」「創藝工坊和設計師的自定義設定、作品集都自動保持雲端同步」)— 新增共用同步引擎 window.MG_CSYNC(_sync.json 目錄+墓碑+設定);設計師直入先載 minigame_art_db.js 判斷解鎖;ART_FILE_VER v1.1.8、DSG_FILE_VER v1.0.7 */ void 'v1.430.0';   /* ★ v1.430.0(2026-11-09・老師「PC 版字太小,小遊戲/荒島一起放大」)— 檔尾 #mg-pc-zoom-js:PC 大螢幕 .wrap / 荒島 / 全螢幕視窗依螢幕放大(1920=1.15、2560≈1.53;手機平板不動);mgFitGrid 等三處剩餘高度除以 mgPcZ() */ void 'v1.429.0';   /* ★ v1.429.0(2026-11-08 18:07・老師手機版三項)— ①創藝工坊地圖不再被下方 dock/今日挑戰蓋到入口(ART_FILE_VER v1.1.7 mapFit)②設計師畫布雙指縮放/挪動(DSG_FILE_VER v1.0.6)③設計師手機/平板可直式繪圖(本檔只加一條 html.dsg-mode 不顯示轉向遮罩)、◧ 面板收合;荒島/小遊戲本體零改動 */ void 'v1.428.0';   /*★ v1.428.0(2026-11-08 13:06・老師「創藝工坊的設計師角色繪製部分,骨架改成有關節,可以3D拖曳調整人物姿勢」)— 只改設計師兩支檔(DSG_FILE_VER v1.0.5);小遊戲本體/荒島/創藝零改動 */ void 'v1.427.0';   /* ★ v1.427.0(2026-11-08 11:27~11:36・老師)荒島移除套用大對抗主角造型(按鈕+自動)、藝術村頂部項目點一下展開說明(ART v1.1.6)、設計師作品名不可與上架商品同名+全身圖+老師台改價(DSG v1.0.4) */ void 'v1.426.0';   /* ★ v1.426.0(2026-11-08 上午・老師「藝術史長廊雕像換掉」「設計師操作次數只算增加、變色」「正式開放藝術村前把週排行雙發獎做完」)— 藝術村地圖同名覆蓋(MG_IMG_FVER art_village_map 6)、DSG_FILE_VER v1.0.2、ART_FILE_VER v1.1.5、荒島 islArtRankClaim 領創藝工坊週排行貝幣、window.artInstallUrls 給首頁完整下載 */ void 'v1.425.0';   /* ★ v1.425.0(2026-11-08・老師「進創藝工坊先看到進入荒島過場」「進美術設計師工作室過場卡很久」)— ?mode=art/designer 簾幕立刻換字(不再閃荒島字樣)、小遊戲/荒島素材對帳改進場後背景補(不再擋 879 個不相干的檔) */ void 'v1.424.0';   /* ★ v1.424.0(2026-11-07・大對抗 v5.362.0 同步・老師選「乙」)— 各科答對率/每週答對率排行:小遊戲 finishAnswer、荒島知識題/頭目題/夥伴招募題作答都記到 minigameScores/{uid}.quizAcc(登入才記),排行格子寫 stats/weeklyQuiz.quizAccWeekly(見 mgAcc*) */ /*★ v1.423.0(2026-11-07・老師「依建議」+ 補充)— 🎨 遊戲美術設計師第一階段:?mode=designer 直入,載入新檔 minigame_designer_db.js/minigame_designer.js(DSG_FILE_VER v1.0.0,共用 MG_ART_BRIDGE;onUser 通知 DSGW);創藝工坊 ART_FILE_VER v1.1.4(下方多一顆「✏️ 設計師」);island_db/sea_db/db 零改動(?v= 不跟) */   void 'v1.422.0';   /* ★ v1.422.0(2026-11-06)老師兩項:①荒島主角 WASD 在注音輸入法下也能移動(野外+營地改認實體鍵位 islKeyNorm)②荒島對白框按一次空白鍵=下一頁(長按不連跳,對白中不觸發跳躍) */   void 'v1.421.0';   /* ★ v1.421.0(2026-11-05)創藝工坊 v1.1.3 修正檢查報告問題(只改 ART_FILE_VER) */   void 'v1.420.0';   /* ★ v1.420.0(2026-11-05・老師「小遊戲排行榜的學生班級座號還是舊版的,請更新並檢查還有哪些地方沒有更新」「所有玩家帳號首次登入、年級升級、帳號繼承轉移都要保留永久記錄」)— 讀 ../student_roster.js(mgRosterLoad),名字改用目前名冊班級座號:週排行寫入/顯示(自己那格登入時自動改)、成績檔 name、專注複習結算列、首頁登入名、荒島 HUD/名牌/角色名開頭舊 4 碼、拜訪好友名;創藝工坊 ART_FILE_VER v1.1.2 同步;新增帳號永久紀錄 mgAcctLog(accountLog/{uid},與大對抗共用);island_db/sea_db/db 零改動(?v= 不跟) */   void 'v1.419.0';   /* ★ v1.419.0(2026-11-04・老師「優化清單開始全部做」)— 🎨 創藝工坊優化 22 項:minigame_art.js/minigame_art_db.js v1.1.0(ART_FILE_VER)、MG_ART_BRIDGE 加 fbBase;小遊戲本體與荒島零改動(island_db/sea_db/db 的 ?v= 不跟) */   void 'v1.418.0';   /* ★ v1.418.0(2026-11-04・老師「繼續做創藝工坊」五項)— ①🎨 創藝工坊第一階段:?mode=art 直入,載入新檔 minigame_art_db.js/minigame_art.js(ART_FILE_VER v1.0.0,MG_ART_BRIDGE 交接登入/Firebase/音效;onUser 換帳號通知 ARTW;GM 限定 ART_DB.OPEN=false)②🦦 阿獺今日裝飾改現實時間每天 00:00/12:00 刷新(islShopSlot,uid|時段種子,每人不同;slotMax 防往回調時鐘)、限購改按時段(ddSlot)③🎁 今日裝飾可送好友(信箱 key dc~id~1,收信放進營地造景 NEW!;寄送失敗退款)。island_db/sea_db/db 零改動(?v= 不跟) ｜ void 'v1.417.0';   /* ★ v1.417.0(2026-11-03)— 荒島預設開放(ISL_ADMIN_ONLY=false,與主程式 v5.343.0 同步);island_db/sea_db/db 零改動(?v= 不跟) ｜★ v1.416.0(2026-11-03・老師「所有視窗都不要出現瀏覽器視窗,檢查並修正」,與大對抗 v5.341.0 同包)— 登出確認、分享網址改遊戲內視窗(mgDlgConfirm/mgDlgPrompt),window.alert 改遊戲內版;island_db/sea_db/db 零改動(?v= 不跟) ｜★ v1.415.0(2026-11-03・老師「荒島求生有學生的儲存資料被回溯,在家玩到第9天,到學校平板只看到第五天」)— 荒島存檔:同一座島先比天數再比時間(islPick)、修正「另一台寫了更新的」衝突判斷永遠不成立(islCloudNewer)、開機讀不到雲端時背景重讀(islCloudRecheck)、雲端天數較多就自動備份這台並換成雲端(islConflictMark)、覆蓋別台舊分支前先備份 ｜★ v1.414.0(2026-11-02・老師「小遊戲、荒島是否都有完整下載」)— 匯出 mgPicUrl/mgAssetUrl/mgHeroUrl/mgThumbUrl/MG_FX/MG_VER 等到 window,讓主程式首頁「完整下載小遊戲」讀得到(原本全在 IIFE 內,題圖一張都沒下載);遊戲行為零改動 ｜ */ /* ★ v1.413.0(2026-11-01・老師「讓 GM 可以自由進出外島不受每日次數和 AP 限制」)— 新增 islSeaGmFree(=GM 全開 或 islIsGm),出航/回航/每日一次/回島當天/第二天保留與強制回航/海上換島全部免;只改本檔+sw */   void 'v1.412.0';   /* ★ v1.412.0(2026-11-01・老師「荒島大地圖各區域點了先出現區域簡介、可獲得資源和魔物、boss 狀態、寶藏狀態、npc 訓練等,再按前往或離開」)— 新增 islZoneInfoOpen 區域資訊卡,本島 islMapZoneTap 與外島地圖點擊都先開它;只改本檔+sw */   void 'v1.411.0';   /* ★ v1.411.0(2026-10-28・老師裁定「登出時一併登出 Google」)— 學生帳號手動/閒置登出後整頁導向 Google 登出再回本頁(老師帳號不登出;gameConfig/googleLogout.enabled=false 可緊急關閉),見 mgGLogoutDecide;與大對抗 v5.305.0 同包 */   void 'v1.410.0';   /* ★ v1.410.0(2026-10-27・老師「荒島求生的戰鬥也加入戰鬥存檔功能」)— 比照大對抗:荒島回合制戰鬥每輪輪到你時自動存一份戰鬥存檔(ISL.btSnap,跟荒島存檔一起存本機＋雲端),戰鬥上方新增「⏸ 存檔」鈕(存好後離開荒島);下次進荒島(換平板也可以)同一個島上天數會問「繼續戰鬥/放棄(算一次逃跑)」,繼續就回到那一區從同一回合接著打。地下層、拜訪好友島的戰鬥不存。程式搜尋 islBtSnap。island_db/sea_db/db 零改動(?v= 不跟)。 */   void 'v1.409.0';   /* ★ v1.409.0(2026-10-27・老師「小遊戲的課堂專注複習也補上三上到六下完整的考題複習」+「冒險模式已經有啟動這個模式,讓學生勾選年級和版本的社會和自然」,題庫範圍選「甲」先接現有冊、下冊之後出題)— 專注課堂複習新增「📝 課本考試範圍」(ExamCore 同一份 exam/ 題庫,版本/年級冊/單元),範圍當虛擬單元 'exam':引擎 quiz/sort/drag/ear 的關卡亮起並優先出考試題(題卡標冊|版本|單元,結算列寫範圍),其餘遮罩;範圍依 uid 存本機 mg_cr_exam_<uid>,登入切換時背景恢復;程式搜尋 mgCrExam。island_db/sea_db/db 零改動(?v= 不跟)。 */   void 'v1.408.0';   /* ★ v1.408.0(2026-10-25・老師「設計荒島求生外島材料可製作新設施、新營地裝飾、新工具」草案選甲)— 冰窖/熱帶溫室/風力發電機/潮汐養殖池、營地 Lv4(20 棟)、外島裝飾 10、外島工具 4;資料在 minigame_sea_db.js(?v= 同步 v1.408.0),邏輯 islNeedIsleOk/islSeaBldEff/islSeaBldDaily/islHasTool(接在 islToolNames 後)。 */   void 'v1.407.0';   /* ★ v1.407.0(2026-10-24・老師「甲」:《繪卷新章》七位 SSR 照設計書收錄小遊戲)— MG_HEROES 76→83:楊戩/劉備/張飛/趙雲/唐三藏/豬八戒/沙悟淨;七種新天賦(eyeflash 天眼閃正解/comfortmiss 連錯救援/timeoutguard 超時再給 5 秒/streakautoclear 連對 7 題下一題直接過/calmtime 倒數變慢/buns 包子保命/debuffcarry 負面減半+首錯免傷)與七種新爆發第二效果(negateburst 看破/overhealshield 溢補轉盾/multiblock 斷橋/rescuedash 單騎救主/tightband 緊箍咒/bellyslam 天蓬肚擊/cleanseconvert 流沙反捲);新增點數護盾 hpShield 與「到第幾題為止」型狀態(mgCn2*);⭐本關推薦 7 關各加 1 位。island_db 零改動(D.VER 與 ?v= 維持 v1.399.0)。 */   void 'v1.406.0';   /* ★ v1.406.0(2026-10-22・老師「尋寶或製作出新設施或裝飾時,進到營地後統一先集中到左上方營地造景視窗(NEW!),點進去最上方先列最新獲得還沒布置的物品,按開始布置後放進左側空白區,讓玩家拖曳到營地中配置」)— 新物品(劇情裝飾/尋寶收藏品/展示櫃/新蓋設施/製作裝飾/商店裝飾)加 pend:1 不畫在營地;營地造景鈕 NEW! 標籤、視窗頂端「🆕 最新獲得・還沒布置」+「🧺 開始布置」(pend→2);營地左側 #isl-camp-pend 暫放區,往右拖進營地放手才擺上(islPendList/islPendPaint/islPendDragBind);設施照常倒數與生效;帆船完工自動擺上;好友名片不發布未布置物件。三平台 CSS 在 island-style 最後。island_db 零改動(?v= 不跟)。 */   void 'v1.405.0';   /* ★ v1.405.0(2026-10-22・與大對抗 v5.288.0 同期)— 考試複習「學校版本」改依年級+科目(MG_EXAM_SCHOOL_DEFAULT:自然三~六南一;社會三四六康軒、五翰林;GM 可在 gameConfig/examReview.byBook 改),選冊自動切版本;exam_core v1.2.0(MG_EXAM_CORE_VER 20261022b)。island_db 零改動(?v= 不跟)。 */   void 'v1.404.0';   /* ★ v1.404.0(2026-10-22・與大對抗 v5.287.0 同期,老師「冒險關卡、小遊戲、荒島求生共同加入考試複習題庫」)— 新增第 16 關「📝 考試複習大挑戰」(MG_EXAM_GAME,開關卡先選版本/冊/單元)、荒島 ☰ 更多「📝 考試複習」(開啟後 islQuizPick 改出考試題,isl_exam_on_<uid> 本機記住範圍);題庫共用 ../exam/(exam_core.js),GM 學校版本讀 gameConfig/examReview。island_db 零改動(?v= 不跟)。 */   void 'v1.403.0';   /* ★ v1.403.0(2026-10-21・與大對抗 v5.286.0 同期)— 獨立稽核修正:開機更新遮罩 6 秒後若頁面沒換掉就自動收起(iOS 偶爾靜默吞掉換頁)。island_db 零改動(?v= 不跟)。 */   /*★ v1.402.0(2026-10-21・與大對抗 v5.285.0 同期,老師裁定「開遊戲先查版本、舊了才清」)— 開機自動對版 6 秒→0.3 秒;開機 20 秒內只有戰鬥/活動/小遊戲進行中才延後(?mode=island 直入不再整節課卡舊版);更新時全螢幕「更新中」遮罩;只清程式、素材全保留。island_db 零改動(?v= 不跟)。 */   /*★ v1.401.0(2026-10-19・老師「荒島求生是否也有類似問題,有的話一起解決」,與大對抗 v5.280.0 同期)— 🏝 荒島存檔被取代前永久備份:換平板時雲端/本機兩份存檔較舊那份不再直接丟棄,先寫入 minigameIsland/{uid}/archive(只增不改不刪,GM 可在主後台「🏝 荒島存檔備份」查看與還原);同一座島兩份存檔的圖鑑/寵物圖鑑/科技/拼圖/回顧/回憶取聯集(islMergeKeep);衝突視窗「用雲端的」「確定覆蓋」兩鍵都先備份被蓋掉的那份(islArchive);本機記錄最後一次雲端寫入成功時間(isl_cloud_ok_<uid>)判斷哪份是沒上傳的進度。island_db 零改動(?v= 不跟)。 */   void 'v1.400.0';   /* ★ v1.400.0(2026-10-19・老師「荒島營地的設施和裝飾在 iPad 擺放好,到了 PC 和手機位置和尺寸比例又不正確,請讓三個裝置統一」,裁定甲)— 🏕 營地改固定世界圖:畫布固定 1024×768(=營地背景圖原始像素),背景圖搬進畫布(#isl-camp-wbg)跟所有物件同一層,整張 contain 等比縮放到視窗(雙指最多放大 3 倍),比例不是 4:3 的螢幕兩側用模糊暗化背景補邊;物件尺寸只剩一套(設施 164、裝飾 96×sz、主角/寵物跟設施連動),移除 iPad 132px/手機 64px 設施與手機裝飾 zoom:.68 三條裝置覆寫;畫布內出口/小木屋門口/設施名稱/告示牌文字用 --isl-cinv 反向縮放維持原字級;舊存檔設施/裝飾座標依「iPad 1080×810 舊畫面」一次性換算(islNormalize→islCampGeoMigrate,camp.geo 1→2),好友名片加 campGeo:2、舊名片參觀時換算副本顯示;出口對準背景石板小徑(52,91);視窗縮放/旋轉自動重 fit。沙箱實測 iPad 1080×810/1180×820、PC 1920×1080/1366×640、手機 891×411 五種視窗:物件位置%、設施高÷畫布高 0.214、主角高 0.149 全部一致。 */   void 'v1.399.0';   /* ★ v1.399.0(2026-10-18・老師「荒島求生新增尋寶系統」)— 🧭 自製羅盤探測(躲貓貓四段距離音效＋星星變色＋思考泡泡)/🪏 挖掘(挖到才扣 ⚡1、稀有連打)/每日重生/🗺 藏寶圖/古老藏寶圖/11 件收藏品/尋寶手冊/阿獺舊羅盤小任務;程式搜尋 islTr,數字在 island_db D.TREASURE */   void 'v1.398.0';   /* ★ v1.398.0(2026-10-14・老師「iPad 荒島加好友時無法輸入 wasd」)— 野外/營地鍵盤監聽在打字時(焦點在輸入框)不再攔 WASD/方向鍵/空白/Enter,新增 islIsTypingEv;island_db 零改動(?v= 維持 v1.396.0) */   void 'v1.397.0';   /* ★ v1.397.0(2026-10-13・老師「部分 iPad 登入卡很久進不了遊戲」,與大對抗 v5.250.0 同包)— 素材帳本(_mgLedgerMake)只記本站檔、舊帳本外站網址略過並清出;補不回的(逾時/5xx)累計 2 次從帳本淘汰(L.strike);開機對帳 8→4 秒沒結果就不擋;先進入鈕 5→3 秒;最多擋 2→1 分鐘。island_db 零改動(?v= 不跟)。 */  void 'v1.396.0';   /*★ v1.396.0(2026-10-13・老師六項)— ①開機素材對帳 mgAssetRepairBoot/_mgLedgerMake(快取不見的素材先補回再進場,荒島直入等補完;5 秒後可先進入)②物品包「賣普通材料」可勾 ★/★★/★★★(islBulkQ);點單一物品改 islBagItemOpen:丟掉 N 個(+−/全部)、營地內賣出 N 個 ③速度顯示 islNum1 四捨五入到小數第一位(只改顯示)④跳躍 islJumpPlan:沿面向量障礙寬度、矮障礙(獨立 ≤8 格不碰邊)/窄水(走 1、跑 3 格)可跳,高障礙/藤蔓不可,講原因 ⑤移動加成封頂 +50%(islMoveBonus,腳程 30 = +50%)、腳程減遇敵最高 50%(islEncDodge)⑥天賦「目前點亮收益」改加總(ISL_SK_SUM)⑦商店賣東西/倉庫改物品包格子(islQTileHtml),物品包/倉庫/賣東西頂端排列列 islSortBar(分類+價格/品質/數量 升降序),賣出/存入/取出步進器 islQStep 0~全部循環(0 按 − 跳最大、最大按 + 跳 1;點格子 0↔全部),底部一次結帳。island_db v1.396.0(腳程說明,?v= 同步)。 */  void 'v1.395.0';   /*★ v1.395.0(2026-10-12・老師「上週五沒登出的平板,週一直接登進上週那位的帳號」+「30分鐘沒按確認遊玩就強制登出,且不可再被下一個使用者免輸入密碼登入」)— 新增 mgIdle 閒置模組(本程式之前完全沒有閒置登出):30 分鐘無觸碰/按鍵 → 確認視窗倒數 60 秒 → 未按「繼續遊戲」就荒島立即存檔+signOut+重整;超過 30 分 60 秒(睡眠跨夜)醒來直接登出;視窗內觸碰不算活動、逾時後第一下觸碰救不回時間。裝置層 lxps_idle_last 與大對抗 v5.248.0 共用;onUser 第六道判定:逾時帳號不吃任何放行鑰匙(含同分頁 sessionStorage 章)。island_db 零改動(?v= 不跟)。 */  void 'v1.394.0';   /* ★ v1.394.0(2026-10-12・老師「智取改成隨機情境(依天氣、晝夜、現場環境),選對措施才會造成傷害」+ 選項用圖示+做法短句、地下層也改、巧思 14 以上刪一個錯誤選項)— 新函式 islWitEnv/islWitOk/islWitEnvText/islWitPick;islBtOutwit 改讀情境題(m._witQ 保留到答題、m._witLast 避免連續同題);islBtWitHint 上方小視窗改顯示環境+情境;islDgToolPick 改情境題(C.wq);CSS 2×2 做法方格(三平台)。題庫 island_db D.WIT_SC。夜襲防衛戰維持固定工具。 */  void 'v1.393.0';   /* ★ v1.393.0(2026-10-11・老師兩項)— ①同一隻魔物(含頭目)重複被智取,傷害每次減半(m.witN 計次)②智取威力改由巧思決定:新函式 islBtWitDmg = 攻擊力×(1.5+巧思×0.04) + 最大HP×min(7.5%,巧思×0.15%)(頭目 HP 部分 ×0.5),取代 v1.284.0「攻擊力×2+最大HP×20%」;智取選單顯示預估傷害與衰減。island_db D.BT.OUTWIT_* 參數。 */  void 'v1.392.0';   /* ★ v1.392.0(2026-10-09・老師四項,全部選甲)— ①營地設施耐久條平常隱藏,按住設施才浮出,< 50% 常駐(islBldHpPct)。②設施損壞分級(D.BLD_DMG):< 50% 扣舒適度、≤ 20% 嚴重受損 = islCampHasBld 不算有(全島功能停擺、解鎖它的區域進不去、帆船開不了)、0 倒塌移除要重蓋;islBldDamage 單一出口(颱風/夜襲);舊存檔 islBldDmgMigrate 一次性保護。③外島:出航/回航各 ⚡3、⛺ 紮營過夜(露宿損害 islSeaNightHarm、隔天 AP 回一半)、第 2 天保留 ⚡3 + 強制回航(islSeaApBlock/islSeaForceTry)、外島倒下免費救回。④天賦 🌊 遠洋星域 21 節點(sea_db;seaGate 第一次出海後開放、seaOnly 只在外島生效)。對應 island_db v1.392.0、sea_db v1.392.0、sw v1.392.0。 */
+var MG_VER = 'v1.474.0';   /* ★ v1.474.0(2026-11-28 07:51・老師「荒島家具互動的調整位置,增加自由旋轉(順/逆時針一次 30 度)躺下時的角度,自動儲存角度和左右高低位置,下次和相同方向的家具互動時以調整後的角度位置來躺」)— 互動操作列躺下多「角度 ↺ ↻ ⟲」,位置/角度改存 ISL.actAdj(同種家具+同方向共用,小木屋另記;舊 deco.ax/ay 為退路);程式搜尋 v1.474.0。island_db 零改動 */   void 'v1.473.0';   /* ★ v1.473.0(2026-11-27 22:00・老師「繼續 外島 12 種夥伴的專屬天賦和技能」;池子表 claude/荒島寵物個體化_第3輪之二_外島專屬池.md)— ISL_PX.T/S/POOL 補外島 12 種(各 4 天賦+4 技能,只用既有效果鍵,冰凍/破甲/處決走 islSeaCmdOnHit;招牌機制不進池);舊外島夥伴讀檔 islPxFill 固定種子自動補抽;說明頁 ISL_PET_NEWS_V 3→4(即將推出→外島 NEW 卡)。 */
+void 'v1.472.0';   /* ★ v1.472.0(2026-11-27 21:10・老師「寵物個體化第 3 輪」;設計書 claude/荒島寵物個體化_設計書.md 第 5/9/11 節,裁定 D/L/M/N)— ①本島 19 種專屬池 ISL_PX(各 4 天賦+4 技能,每隻隨機帶 2+2;舊存檔用 uid|id 固定種子補抽;外島 12 種下一次)②天賦走 islPetTal/islPartyTal 單一出口(+islPxTal,數值吃品級)③戰鬥 3 招:u.xcmds/u.xcd,每招各自冷卻+公共冷卻 2,自動 islBtCmdPick、手動預覽視窗每招一顆鈕④📘 訓練書 ISL.pxBook(阿獺常駐 500/萬獸之王 400,夥伴卡「換技能」自選)⑤星盤馴獸星域 islPxInit 只改效果與說明(幸運 8%/馴獸之心 SR+3 SSR+1/心有靈犀 傳承 50%/羈絆守護 升階+3/萬獸共鳴 每隻 SR+ +1% 最多 3/萬獸之王 升階+5 訓練書 8 折)⑥說明頁 ISL_PET_NEWS_V 2→3;反彈/自我修復/每回合補全隊/閃開 四條戰鬥紀錄改成通用文字。 */
+void 'v1.471.0';   /* ★ v1.471.0(2026-11-27 21:01・老師「遇到寵物如果身上剛好沒有攜帶食物,寵物現在會留在原地等待(用寵物在營地的角色圖即可),最多等到主角睡覺之前都可以來招募。主角睡覺後寵物就會離去等下次再遇。」)— 一般遭遇(islPetEncounterOpen)與重複遭遇(islPetDupOpen)沒食物 ⇒ islPetWaitAdd 登記 ISL.petWait(種類/區/日/座標/重複時先抽好的那一隻),場景畫營地同款角色圖+「🍽 等你帶○○來」泡泡(islPetWaitPaint,進場景時畫);主角走近 <100px 自動再開遭遇視窗(islTick 移動時 islPetWaitNear;走開 >150px 才再觸發);送出食物 islPetWaitDel;睡覺換日 islNewDay → islPetWaitClear(日誌「等不到你,回到森林裡了」)。等待的那一隻跨重讀檔編號被占用 ⇒ islPetGet 重新給號。含 v1.470.0(寵物個體化第 2 輪,尚未上傳)。island_db 零改動。 */
+void 'v1.470.0';   /* ★ v1.470.0(2026-11-27 20:35・老師「寵物個體化第 2 輪」;設計書 claude/荒島寵物個體化_設計書.md 第 7/8/10 節)— ①重複遭遇:這一區沒有沒收服的夥伴時,已擁有的種類採集類活動成功 6% 再遇到(同種一天 1 次,ISL.petDupDay),🌈 傳說擁有過後在原調查區 2%;以前答過題 ⇒ 送喜歡的食物就加入(裁定 E);NPC 4 位唯一;阿獺換購的在夥伴卡「🦦 再換一隻」。②營地空間提示「還能再收留幾隻(n/2)」+ 先看新來這一隻(islPetMiniHtml)。③滿 2 隻 ⇒ 三選一 islPetDupChoose(放生一隻舊的換新的/放棄新的,食物不退)。④🍃 放生 islPetReleaseOpen:裝備卸回、離開編組/出來逛,回饋貝幣 N20/R40/SR80/SSR150 + 1 份最愛食物,經驗傳承 30% 自選對象(可給三選一的新來的),離別禮 🍇 islPetReleaseFruitP,SR 以上再確認,日誌附自然教育小語;放生最後一隻可以,圖鑑保留(petDex),之後再遇到送食物就回來;傳說任務改看 islPetEver。⑤⬆ 打倒頭目升階:撐到戰鬥結束(沒倒下、沒被旋風吹走 _wasGone)的夥伴每隻頭目 10%(islPetsGainAfterWin)。⑥同種 2 隻前置:islPetCount 改「幾種」、islPetIndN 個體數、選隊友一隻一張卡(同格換同種另一隻 OK)、圖鑑 ×2/🍃、物品包餵食/飽足標籤/夜襲守衛改個體、章節外島夥伴數只算種類。⑦📢 說明頁 ISL_PET_NEWS_V 1→2(三張 NEW 卡)。island_db 零改動。 */
+void 'v1.469.0';   /* ★ v1.469.0(2026-11-27 19:35~19:38・老師「尋寶系統新增寶物:可以提升一隻寵物指定能力成長率1個階段的神秘果實,每天最多產出1顆」(裁定:成長率拆四項、稀有寶藏 30%)+「阿獺商店有極低機率賣神秘果實,一顆1000貝幣」+「放生時根據親密度和等級也有機率送神秘果實」)— 成長率拆 rec.gws {hp,atk,def,spd}(舊/新夥伴四項 = 原字母,rec.gw 改四項平均總評 islPiGwSync);islPetStats 四項各吃自己的倍率(速度仍一半);ISL.mfruit 持有數;islTrGot 稀有寶藏 30%、T.mfDay 每島上日 1 顆;window.islPetFruitOpen 選能力→試算→吃(夥伴卡與夥伴小屋都有入口);阿獺 islShopMfToday(uid|day 種子 5%)上架 1000 貝幣、ISL.shop.mfDay 限購 1;放生離別禮公式 islPetReleaseFruitP(第 2 輪放生上線時接);19:43「做一個說明頁教導玩家(參考大對抗近期活動公告)」⇒ window.islPetNewsOpen 📢 夥伴大更新(回營地沒看過自動跳一次 ISL.flags.newsPet1、營地選單與夥伴小屋 ❓ 說明可重看)。 */ void 'v1.468.0';   /* ★ v1.468.0(2026-11-27・老師「荒島寵物個體化 第 1 輪」,設計書 claude/荒島寵物個體化_設計書.md v2 第 14 節)— 存檔個體化:ISL.pets 每隻有 id(p+petSeq)、gr 品級 N/R/SR/SSR、gw 成長率 A~E、ps 個性(急躁/冷漠/膽小/溫柔/勇敢)、nm 名字、out 出來逛、tl/sk(第 3 輪);舊存檔 islNormalize 一次性轉 R/C、個性用帳號+種類固定種子(petIdV=1);編組格 {t:'pet',id,k}、夥伴裝備 petGear.eq 鍵改 id、戰鬥單位帶 pid/ps/gr、名字;islPetStats 吃品級×基礎、成長率×每級成長(速度一半)、個性攻防速%;個性另外接 被盯上權重(islBtMonPickTarget)/異常抵抗(islBtPetAilBlock)/治療量(islPetHealMul)/親密度獲得(islBondGain 第二參數);✏ 命名字卡(islPetNameOpen,ISL_PI.CHARS 字庫+BLOCK 黑名單,1~4 字,免費不限次數);🏡 夥伴小屋(🏕 營地 → islPetHouseOpen:排序/篩選/取名/編入移出/出來逛/詳情);營地只畫隨身三隻+勾出來逛最多 3 隻(islCampPetsShown,總開關 ISL.petOutOn),只有隨身的會陪休息,個性影響營地走法;好友名片多 petsV(名字/品級)。同種一隊限 1 隻(裁定 K)。island_db 不動(?v= 仍 v1.456.0)。 */ void 'v1.467.0';   /* ★ v1.467.0(2026-11-27・老師「營地守衛戰新增『好友協助』的開關設定,可以關閉不讓好友出現,增加自己玩的體驗」)— 夜襲開場視窗新增「👥 好友協助:開/關」按鈕(islDefFrToggle,存 ISL.flags.defNoFr,一直記住);關掉時 islDefHelpersInit 不放好友小人。只有登入且有好友時才顯示。② 同日 15:15 老師「荒島求生的烹飪新增可以設定製作數量」— 烹飪選單每張卡片加「− N 鍋 ＋」(islCookQMax 上限 10,受食材/貝幣/AP 限制;_islCookQ 記住每道菜的鍋數),N 鍋 = 食材×N、貝幣×N、⚡×N,小遊戲只玩一次,份數 ×N(islCookCost 新增 qty 參數;islActResult 烹飪分支與 islApPay 跟著乘)。 */ void 'v1.466.0';   /* ★ v1.466.0(2026-11-25 晚・老師「荒島的寵物飢餓時頭上的泡泡被裁切了,肉的圖案位置也不正確」)— 營地寵物容器 overflow:hidden 把 💭🍖 切掉 ⇒ 改自己畫的白色思考泡泡(.isl-camp-hun,肉置中)+ 冒泡泡那隻加 .hungry 放開 overflow;只改 index + sw,island_db 不動(?v= 仍 v1.456.0) */ void 'v1.465.0';   /* ★ v1.465.0(2026-11-25・老師四項+一項:①「pc版的繪圖板筆觸無法拖曳筆刷、透明度粗細、圖層位置等」②「創藝工坊好幾位ipad學生畫到一半變成訪客模式」③「角色皮膚和裝飾的筆刷新增 噴槍」④「有更新的時候不要強制中斷畫圖或戰鬥到一半的玩家,等他們離開該模式再從頂部更新提示按下去」⑤「秀拉點描法關卡的審核太嚴苛,降低標準」)— ① paintkit v1.2.1 K.penRange ② onUser 第七把鑰匙 mgArtLivePass(lxps_mg_art_live)③ designer v1.2.9 BRUSH.air ④ mgDrawBusy/mgHardBusyNow/mgUpdDefer/#mg-updbar2 ⑤ art v1.3.3 點描 */ void 'v1.464.0';   /* ★ v1.464.0(2026-11-25・老師「筆刷新增『液化』功能,同procreate。角色皮膚新增 參考(同荒島裝飾描圖功能),可以從現有所有角色中挑選出來」)— designer v1.2.8、designer_db v1.2.5;DSG_FILE_VER v1.2.8 + sw;與大對抗 v5.452.0 同包 */ void 'v1.463.0';   /* ★ v1.463.0(2026-11-25・老師「1.右下角的圖層功能鍵太佔空間,高度縮小些。圖層可看的高度提高到三層。2.繳交作品改成打字命名,最多10字。智慧金鑰審核增加不雅字詞判別」)— designer v1.2.7、designer_db v1.2.4;DSG_FILE_VER v1.2.7 + sw;與大對抗 v5.452.0 同包 */ void 'v1.462.0';   /* ★ v1.462.0(2026-11-25・老師「遊戲美術設計師 1.角色皮膚和荒島裝飾要有吸色滴管在色環旁邊可以使用 2.用橡皮擦擦掉的東西,要減去相對應的步數」)— designer v1.2.6;DSG_FILE_VER v1.2.6 + sw;與大對抗 v5.452.0 同包 */ void 'v1.461.0';   /* ★ v1.461.0(2026-11-25・老師「皮膚和裝飾繳交追加『作品說明』20字到100字內」)— designer v1.2.5 作品說明(存 designSubmit.mod.desc,不改規則);與大對抗 v5.452.0 同包(GM 投稿區顯示);DSG_FILE_VER v1.2.5 + sw */ void 'v1.460.0';   /* ★ v1.460.0(2026-11-25・老師「步數計算,在同一條線或色塊上用相同的筆刷或色彩重疊,只算一步」)— designer v1.2.4 重疊格;DSG_FILE_VER v1.2.4 + sw;其他檔不動 */ void 'v1.459.0';   /* ★ v1.459.0(2026-11-25・老師「創藝工坊角色皮膚設計的人物骨架,走路和奔跑的姿勢是嚴重錯誤的,請重新以多角度檢視,調整各關節正確位置」)— designer v1.2.3 / designer_db v1.2.3:走路/奔跑改真 3D 範本;DSG_FILE_VER v1.2.3 + sw;其他檔不動 */ void 'v1.458.0';   /* ★ v1.458.0(2026-11-25・老師「PC 版用繪圖板+觸控筆:1 只能畫圖但無法點擊所有功能鍵 2 感壓筆刷收筆時容易留下一大圓點」)— minigame_paintkit.js(MGPK v1.2.0:筆壓 0 不再當滿壓、筆點按鈕保險 K.penTap)、minigame_art.js v1.3.2(老師「平板旋轉後畫布被壓扁轉不回來」:轉螢幕後重新量畫布大小)、designer v1.2.2(老師「投稿要求步數增加至500步」+轉向重新對齊)、designer_db v1.2.2;ART_FILE_VER v1.3.2、DSG_FILE_VER v1.2.2 + sw;island_db 不動(?v= 仍 v1.456.0) */ void 'v1.457.0';   /* ★ v1.457.0(2026-11-25・老師「互動時出現的科學知識對話隱藏,改成寫在各裝飾的說明中」)— islDecoActBegin 不再冒 OBJ_TALK/def.d 泡泡;營地 islDecoTap、小木屋 islCabinFurTap 的說明前加 🔬。只改 index + sw,island_db 不動(?v= 仍 v1.456.0) */ void 'v1.456.0';   /* ★ v1.456.0(2026-11-25・老師「飯桌坐下好怪」「坐的方向跟椅子不同」「物品包新增食物類標籤」)— islDecoActCover(遮擋框,在 islDecoActDecorate 結尾)、ISL_GRP 加「🍙 食物」(islIsFood,islSortBar/islSortRows)、islBagFeedPick + 物品視窗「🐾 餵夥伴」、islPetFeedGo 第三參數 after */ void 'v1.455.0';   /* ★ v1.455.0(2026-11-24・老師「荒島新增飢餓值」+ 23:13 裁定全甲/招募 +10/天賦減輕)— 🍙 飽足度模組(islHun* / islPetFeed 新版 / islPetDietHtml,在 islEatApply 正上方)+ 掛鉤:islApPay、islSeaReturnGo 強制回航、islBattleEnd、islNewDay、islBtPlayerStats、islBtMakeAllies、islBtOpen、islBtItemUse、野外移動、islCampWalkSpd、烹飪一鍋多份、islPetGet、夥伴卡/編組/圖鑑/營地泡泡、HUD、⚙ GM 開關;CSS 在 island-style 最後 */ void 'v1.454.0';   /* ★ v1.454.0(2026-11-24・老師「設計荒島求生的主角與營地裝飾互動的功能」)— 營地裝飾互動:走近冒泡泡/長按選單多一顆互動鈕 ⇒ 主角走到錨點坐/躺/席地坐(新動作圖 island_sit_/island_lie_ 24 張)或撥弄/照顧/看/擦亮/抱/開關燈(站立待機+裝飾特效);坐躺休息每秒 +1 體力不設上限;🌙 休息分頁「🛋 坐下休息」自動找最近的椅子或床;床/雙層床/吊床可「😴 睡到明天」舒適度 +5;每種裝飾每天第一次互動練巧手/巧思;位置微調存 deco.ax/ay、燈開關存 deco.on。只做戶外營地(小木屋室內、好友營地、夥伴陪睡留待下一版)。island_db D.DECO_ACT(?v= 跟)。 */ void 'v1.453.0';   /* ★ v1.453.0(2026-11-24・老師「荒島求生的夜襲,好友的攻擊頻率降低50%」)— minigame_sea_db.js 覆寫 D.FRIEND_HIT_SEC 為原值 ×2(夜襲好友小人出手間隔加倍)+ D.LOG 一筆;本檔只改版號與 sea_db ?v=。同輪修 BUG(學生回報「到大地圖只看到一片藍」,載入錯誤 cur.map.x):islMapPaint 主角位置 cur 若是遺跡地下秘穴(沒有 map 座標)改用上層區域 cur.up(遺跡),再不行用沙灘。同輪老師「有學生玩荒島一直不斷地突然變成訪客模式」:①閒置計時 mgIdleShared 讀同帳號的 lxps_idle_last(其他分頁的活動也算,背景分頁不再把正在別頁玩的人登出)②登入/登出紀錄 lxps_mg_authlog(手動/閒置/共用裝置保護[附原因、頁面類型、分頁章、主畫面 App]/外部登出/登入放行鑰匙),🆘 錯誤回報附「登入紀錄」③外部登出(本頁沒登出卻被登出)跳 toast 說明。 */ void 'v1.452.0';   /* ★ v1.452.0(2026-11-23・老師「創藝工坊的旋轉畫布功能,顯示當前角度、復原原本角度、45/90/180 度順逆時針旋轉」)— minigame_art.js(ART v1.3.1);同輪老師「美術設計師的作品增加『不存檔直接退出』的選項」⇒ minigame_designer.js(DSG v1.2.1) */ void 'v1.451.0';   /* ★ v1.451.0(2026-11-19 15:09・老師選「乙」做 Procreate 對照 17 項+「畫筆感壓、即時反應和流暢感再提升;網路上推薦的其他繪圖 APP 好用功能學起來」+「美術設計師的面板適當縮小左右的工具介面面板尺寸和字體,讓中央畫圖區域加大」)— 創藝工坊 ART v1.3.0、美術設計師 DSG v1.2.0、共用繪圖工具包 MGPK v1.1.0;細節見 minigame_art.js 檔頭 */ void 'v1.450.0';   /* ★ v1.450.0(2026-11-19 10:18・老師看學生 iPad「三分法創作判定有問題,放寬:中間有人物或動物形狀的主角、周圍有色塊背景就算通過」)— 創藝工坊 ART_FILE_VER v1.2.4:evalDraw thirds 新增 thirdsLoose(背景色塊+主角形狀),過關 2★、主角靠近交叉點 3★;12:36 第二輪(同版號,前一包未上傳):主角可以是物品、五階明暗/點描/三種筆觸判定一起修;小遊戲本體/荒島零改動 */ void 'v1.449.0';   /* ★ v1.449.0(2026-11-19・老師「創藝工坊個人榜都在上限,沒有意義」)— 創藝工坊 ART_FILE_VER v1.2.3:降每次答題基本分(星星 10→2、首次 20→5、今日挑戰 10→2、表現分每題 3→2、同關每天表現分 3→2 次),保留答題品質;本週排行清空,11/23 08:00 起重新計算(搭配大對抗 v5.427.0 結算) */ void 'v1.448.0';   /*★ v1.448.0(2026-11-18 晚・老師「荒島信箱可以收到 GM 給的設計師獎勵」)— 荒島信箱新增 type 'gm' 老師獎勵信(貝幣 $shell + 稀有材料,islMailPaint/islMailGive);設計師繳交勾選希望獎勵(DSG v1.1.4) */ void 'v1.447.0';   /* ★ v1.447.0(2026-11-18・老師「主角SP除了放絕招以外,增加別的消耗用途」選甲乙丙)— 💠 SP 技收合鈕:📣號令夥伴 SP50(計量滿+冷卻−1,不佔回合,每回合1次)/🛡強化防禦 SP34(buff spGuard 30:全隊受傷−30%+不吃附加狀態,接原本防禦)/🎯精準智取 SP50(多刪一個錯的、不打折);函式群 islBtSpUse/islBtSpCan/islBtSpCost;資料 D.BT.SP_COST(sea_db)。 */ void 'v1.446.0';   /* ★ v1.446.0(2026-11-18・老師)— 主角 SP 只在主角自己行動完才回(+34,鷹眼 +50,放絕招那輪不回;冷卻 3 回合,鷹眼 2);天賦星盤絕招說明「每場戰鬥 1 次」→「SP 滿並且冷卻結束即可發動」;烹飪清單改武器面板同款 .isl-cards.sm 大卡片;actAdd 標籤改「絕招 SP 恢復加快」。 */ void 'v1.445.0';   /* ★ v1.445.0(2026-11-17 深夜・老師三項)— ①主角 SP 改成跟寵物一樣的計量(每個角色行動 +25,滿 100 且冷卻 3 回合結束才能放絕招;鷹眼改冷卻 −1)②平衡:我方 HP 每級成長壓低(主角 HP_LV 9→5、寵物 ×0.55,Lv1 不變)、魔物 HP 成長綁主角曲線(MON_LV_HP 0.05→0.0625)×1.15(頭目不吃)、MON_LV_ATK 0.16→0.18③守墓者之間頭目巢穴固定在祭壇中央(sc.lair)。資料在 sea_db 檔尾 v1.445.0 區塊。 */ void 'v1.444.0';   /* ★ v1.444.0(2026-11-17・老師四項)— ①營地設施可賣(材料價一半;最後一座營火/帳篷/有東西的倉庫、帆船、施工中不可賣)＋施工中的設施在建造選單算已蓋(根治多蓋一座水道);②🕳 遺跡地下秘穴開放:三區可走地圖 dg_b1~b3(islUnder*,⚡1 進入,B2/B3 要上一層探索 ≥50%)、3 新魔物、3 新材料、3 新裝飾、守墓石像・不朽之王頭目,圖 30 張(老師 ChatGPT);③銅線蛇精英掉雷精核心(雲豹相機材料多一條來源)。minigame_sea_db.js ?v= → v1.444.0 */ void 'v1.443.0';   /* ★ v1.443.0(2026-11-17・老師「題庫正解太長」)— 荒島題庫 149 題錯誤選項加長、考試複習共用題庫同步更新;minigame_island_db.js ?v= 對齊 v1.443.0 */ void 'v1.442.0';   /* ★ v1.442.0(2026-11-13 15:06・老師「荒島求生的戰鬥中,智取追加取消的功能」)— islBtOutwit 選單加「取消」(data-wx):收起選單與情境小視窗、行動權還給玩家、不算回合不進冷卻、同一題保留(不能靠取消換題);地下層智取本來就有「撤退」不動;只改本檔+sw */ void 'v1.441.0';   /* ★ v1.441.0(2026-11-13・老師三項)— 創藝工坊 ART_FILE_VER v1.2.2(畫布右欄:選色器固定右上、圖層獨立小視窗捲動;復原扣回筆畫次數)+ 美術設計師 DSG_FILE_VER v1.1.3(復原扣回操作次數;「我的作品」下載 PNG 可去背、畫布右欄同樣固定選色器);今日挑戰重玩改「二星以上」;小遊戲本體/荒島零改動 */ void 'v1.440.0';   /* ★ v1.440.0(2026-11-12・大對抗 v5.389.0 同步,老師「不重複題目累積答對 2000/4000/6000 題各得 UR 自選」)— 小遊戲/荒島答對的題目也記進 minigameScores/{uid}.quizUC(不重複答對題數,mgUcMerge);獎章與 UR 發放在大對抗 */ void 'v1.439.0';   /* ★ v1.439.0(2026-11-11 20:25・老師「設計師繪圖系統在 PC 版,手繪、點陣、像素畫出來的點(線)都比滑鼠游標低,要修精準」)— 設計師 DSG_FILE_VER v1.1.2(座標換算吃進 PC 放大 zoom;20:50 老師「新增 PC 版快捷鍵 CTRL+Z 復原,空白鍵把游標切換成手掌拖曳畫布」)+ 創藝工坊 ART_FILE_VER v1.2.1(同快捷鍵在注音輸入法下也有效);小遊戲本體/荒島零改動 */ void 'v1.438.0';   /* ★ v1.438.0(2026-11-11・老師:iPad 開遊戲還是舊版)從背景叫回 App(離開 ≥60 秒)也當成重新打開,自動存檔更新(對應主程式 v5.379.0) */ /*★ v1.437.0(2026-11-10・老師)創藝工坊 v1.2.0+美術設計師 v1.1.0 繪圖工具大更新(油漆桶/長按變形狀/圖層 ⋯/環形選色器/剪刀/變形/7 種畫筆/存檔時間/每日積分 1000+答題表現分/設計師每月皮膚、裝飾各 1 件);新檔 minigame_paintkit.js 由 ?mode=art 與 ?mode=designer 載入 */ void 'v1.436.0';   /* ★ v1.436.0(2026-11-10・老師「檢查所有登入按鈕…不會再登入又被登出」稽核)— _mgMarkAppHandoff 同時蓋 lxps_idle_last(與大對抗 v5.374.0 一起) */ void 'v1.435.0';   /*★ v1.435.0(2026-11-10・老師「學生在創藝工坊左上角登入,不到 3 秒又變訪客,什麼訊息都沒跳」)— iPad 主畫面版 🔑 登入改借大對抗直連 Google 登入(mgOAuthDirectGo,大對抗 v5.373.0 回程蓋交接鑰匙回原頁);popup 被擋也改走直連,不再走回來恆為空的 redirect */ void 'v1.434.0';   /*★ v1.434.0(2026-11-10・老師「創藝工坊自由畫圖一隻手指畫不出線條,反而變成縮放」)— 只改 minigame_art.js(ART_FILE_VER v1.1.10:清除幽靈手指) */ void 'v1.433.0';   /* ★ v1.433.0(2026-11-09・老師「檢查藝術村的題目,有些重複性較高的,難度太低的,都重新設計優化」)— 只改創藝工坊兩支檔(ART_FILE_VER v1.1.9):題庫變大+每次抽題、錯誤選項題庫與易混淆選項、生活情境題、美感原則圖隨機畫法、光影題與找不同加難度;關卡 id 不變(星數/設計師解鎖不受影響);小遊戲本體/荒島/設計師零改動 */ void 'v1.432.0';   /* ★ v1.432.0(2026-11-09・老師「小遊戲的英雄選單圖片也是要高度調整。特殊能力標示的位置改成左下角」)選角清單縮圖依頭頂位置對齊(mgFaceFitImg/MG_FACE_T)、天賦標籤移到縮圖左下角 */ void 'v1.431.0';   /*★ v1.431.0(2026-11-09・老師「遊戲美術設計師改成有條件解鎖(全部關卡 ≥2★)」「創藝工坊和設計師的自定義設定、作品集都自動保持雲端同步」)— 新增共用同步引擎 window.MG_CSYNC(_sync.json 目錄+墓碑+設定);設計師直入先載 minigame_art_db.js 判斷解鎖;ART_FILE_VER v1.1.8、DSG_FILE_VER v1.0.7 */ void 'v1.430.0';   /* ★ v1.430.0(2026-11-09・老師「PC 版字太小,小遊戲/荒島一起放大」)— 檔尾 #mg-pc-zoom-js:PC 大螢幕 .wrap / 荒島 / 全螢幕視窗依螢幕放大(1920=1.15、2560≈1.53;手機平板不動);mgFitGrid 等三處剩餘高度除以 mgPcZ() */ void 'v1.429.0';   /* ★ v1.429.0(2026-11-08 18:07・老師手機版三項)— ①創藝工坊地圖不再被下方 dock/今日挑戰蓋到入口(ART_FILE_VER v1.1.7 mapFit)②設計師畫布雙指縮放/挪動(DSG_FILE_VER v1.0.6)③設計師手機/平板可直式繪圖(本檔只加一條 html.dsg-mode 不顯示轉向遮罩)、◧ 面板收合;荒島/小遊戲本體零改動 */ void 'v1.428.0';   /*★ v1.428.0(2026-11-08 13:06・老師「創藝工坊的設計師角色繪製部分,骨架改成有關節,可以3D拖曳調整人物姿勢」)— 只改設計師兩支檔(DSG_FILE_VER v1.0.5);小遊戲本體/荒島/創藝零改動 */ void 'v1.427.0';   /* ★ v1.427.0(2026-11-08 11:27~11:36・老師)荒島移除套用大對抗主角造型(按鈕+自動)、藝術村頂部項目點一下展開說明(ART v1.1.6)、設計師作品名不可與上架商品同名+全身圖+老師台改價(DSG v1.0.4) */ void 'v1.426.0';   /* ★ v1.426.0(2026-11-08 上午・老師「藝術史長廊雕像換掉」「設計師操作次數只算增加、變色」「正式開放藝術村前把週排行雙發獎做完」)— 藝術村地圖同名覆蓋(MG_IMG_FVER art_village_map 6)、DSG_FILE_VER v1.0.2、ART_FILE_VER v1.1.5、荒島 islArtRankClaim 領創藝工坊週排行貝幣、window.artInstallUrls 給首頁完整下載 */ void 'v1.425.0';   /* ★ v1.425.0(2026-11-08・老師「進創藝工坊先看到進入荒島過場」「進美術設計師工作室過場卡很久」)— ?mode=art/designer 簾幕立刻換字(不再閃荒島字樣)、小遊戲/荒島素材對帳改進場後背景補(不再擋 879 個不相干的檔) */ void 'v1.424.0';   /* ★ v1.424.0(2026-11-07・大對抗 v5.362.0 同步・老師選「乙」)— 各科答對率/每週答對率排行:小遊戲 finishAnswer、荒島知識題/頭目題/夥伴招募題作答都記到 minigameScores/{uid}.quizAcc(登入才記),排行格子寫 stats/weeklyQuiz.quizAccWeekly(見 mgAcc*) */ /*★ v1.423.0(2026-11-07・老師「依建議」+ 補充)— 🎨 遊戲美術設計師第一階段:?mode=designer 直入,載入新檔 minigame_designer_db.js/minigame_designer.js(DSG_FILE_VER v1.0.0,共用 MG_ART_BRIDGE;onUser 通知 DSGW);創藝工坊 ART_FILE_VER v1.1.4(下方多一顆「✏️ 設計師」);island_db/sea_db/db 零改動(?v= 不跟) */   void 'v1.422.0';   /* ★ v1.422.0(2026-11-06)老師兩項:①荒島主角 WASD 在注音輸入法下也能移動(野外+營地改認實體鍵位 islKeyNorm)②荒島對白框按一次空白鍵=下一頁(長按不連跳,對白中不觸發跳躍) */   void 'v1.421.0';   /* ★ v1.421.0(2026-11-05)創藝工坊 v1.1.3 修正檢查報告問題(只改 ART_FILE_VER) */   void 'v1.420.0';   /* ★ v1.420.0(2026-11-05・老師「小遊戲排行榜的學生班級座號還是舊版的,請更新並檢查還有哪些地方沒有更新」「所有玩家帳號首次登入、年級升級、帳號繼承轉移都要保留永久記錄」)— 讀 ../student_roster.js(mgRosterLoad),名字改用目前名冊班級座號:週排行寫入/顯示(自己那格登入時自動改)、成績檔 name、專注複習結算列、首頁登入名、荒島 HUD/名牌/角色名開頭舊 4 碼、拜訪好友名;創藝工坊 ART_FILE_VER v1.1.2 同步;新增帳號永久紀錄 mgAcctLog(accountLog/{uid},與大對抗共用);island_db/sea_db/db 零改動(?v= 不跟) */   void 'v1.419.0';   /* ★ v1.419.0(2026-11-04・老師「優化清單開始全部做」)— 🎨 創藝工坊優化 22 項:minigame_art.js/minigame_art_db.js v1.1.0(ART_FILE_VER)、MG_ART_BRIDGE 加 fbBase;小遊戲本體與荒島零改動(island_db/sea_db/db 的 ?v= 不跟) */   void 'v1.418.0';   /* ★ v1.418.0(2026-11-04・老師「繼續做創藝工坊」五項)— ①🎨 創藝工坊第一階段:?mode=art 直入,載入新檔 minigame_art_db.js/minigame_art.js(ART_FILE_VER v1.0.0,MG_ART_BRIDGE 交接登入/Firebase/音效;onUser 換帳號通知 ARTW;GM 限定 ART_DB.OPEN=false)②🦦 阿獺今日裝飾改現實時間每天 00:00/12:00 刷新(islShopSlot,uid|時段種子,每人不同;slotMax 防往回調時鐘)、限購改按時段(ddSlot)③🎁 今日裝飾可送好友(信箱 key dc~id~1,收信放進營地造景 NEW!;寄送失敗退款)。island_db/sea_db/db 零改動(?v= 不跟) ｜ void 'v1.417.0';   /* ★ v1.417.0(2026-11-03)— 荒島預設開放(ISL_ADMIN_ONLY=false,與主程式 v5.343.0 同步);island_db/sea_db/db 零改動(?v= 不跟) ｜★ v1.416.0(2026-11-03・老師「所有視窗都不要出現瀏覽器視窗,檢查並修正」,與大對抗 v5.341.0 同包)— 登出確認、分享網址改遊戲內視窗(mgDlgConfirm/mgDlgPrompt),window.alert 改遊戲內版;island_db/sea_db/db 零改動(?v= 不跟) ｜★ v1.415.0(2026-11-03・老師「荒島求生有學生的儲存資料被回溯,在家玩到第9天,到學校平板只看到第五天」)— 荒島存檔:同一座島先比天數再比時間(islPick)、修正「另一台寫了更新的」衝突判斷永遠不成立(islCloudNewer)、開機讀不到雲端時背景重讀(islCloudRecheck)、雲端天數較多就自動備份這台並換成雲端(islConflictMark)、覆蓋別台舊分支前先備份 ｜★ v1.414.0(2026-11-02・老師「小遊戲、荒島是否都有完整下載」)— 匯出 mgPicUrl/mgAssetUrl/mgHeroUrl/mgThumbUrl/MG_FX/MG_VER 等到 window,讓主程式首頁「完整下載小遊戲」讀得到(原本全在 IIFE 內,題圖一張都沒下載);遊戲行為零改動 ｜ */ /* ★ v1.413.0(2026-11-01・老師「讓 GM 可以自由進出外島不受每日次數和 AP 限制」)— 新增 islSeaGmFree(=GM 全開 或 islIsGm),出航/回航/每日一次/回島當天/第二天保留與強制回航/海上換島全部免;只改本檔+sw */   void 'v1.412.0';   /* ★ v1.412.0(2026-11-01・老師「荒島大地圖各區域點了先出現區域簡介、可獲得資源和魔物、boss 狀態、寶藏狀態、npc 訓練等,再按前往或離開」)— 新增 islZoneInfoOpen 區域資訊卡,本島 islMapZoneTap 與外島地圖點擊都先開它;只改本檔+sw */   void 'v1.411.0';   /* ★ v1.411.0(2026-10-28・老師裁定「登出時一併登出 Google」)— 學生帳號手動/閒置登出後整頁導向 Google 登出再回本頁(老師帳號不登出;gameConfig/googleLogout.enabled=false 可緊急關閉),見 mgGLogoutDecide;與大對抗 v5.305.0 同包 */   void 'v1.410.0';   /* ★ v1.410.0(2026-10-27・老師「荒島求生的戰鬥也加入戰鬥存檔功能」)— 比照大對抗:荒島回合制戰鬥每輪輪到你時自動存一份戰鬥存檔(ISL.btSnap,跟荒島存檔一起存本機＋雲端),戰鬥上方新增「⏸ 存檔」鈕(存好後離開荒島);下次進荒島(換平板也可以)同一個島上天數會問「繼續戰鬥/放棄(算一次逃跑)」,繼續就回到那一區從同一回合接著打。地下層、拜訪好友島的戰鬥不存。程式搜尋 islBtSnap。island_db/sea_db/db 零改動(?v= 不跟)。 */   void 'v1.409.0';   /* ★ v1.409.0(2026-10-27・老師「小遊戲的課堂專注複習也補上三上到六下完整的考題複習」+「冒險模式已經有啟動這個模式,讓學生勾選年級和版本的社會和自然」,題庫範圍選「甲」先接現有冊、下冊之後出題)— 專注課堂複習新增「📝 課本考試範圍」(ExamCore 同一份 exam/ 題庫,版本/年級冊/單元),範圍當虛擬單元 'exam':引擎 quiz/sort/drag/ear 的關卡亮起並優先出考試題(題卡標冊|版本|單元,結算列寫範圍),其餘遮罩;範圍依 uid 存本機 mg_cr_exam_<uid>,登入切換時背景恢復;程式搜尋 mgCrExam。island_db/sea_db/db 零改動(?v= 不跟)。 */   void 'v1.408.0';   /* ★ v1.408.0(2026-10-25・老師「設計荒島求生外島材料可製作新設施、新營地裝飾、新工具」草案選甲)— 冰窖/熱帶溫室/風力發電機/潮汐養殖池、營地 Lv4(20 棟)、外島裝飾 10、外島工具 4;資料在 minigame_sea_db.js(?v= 同步 v1.408.0),邏輯 islNeedIsleOk/islSeaBldEff/islSeaBldDaily/islHasTool(接在 islToolNames 後)。 */   void 'v1.407.0';   /* ★ v1.407.0(2026-10-24・老師「甲」:《繪卷新章》七位 SSR 照設計書收錄小遊戲)— MG_HEROES 76→83:楊戩/劉備/張飛/趙雲/唐三藏/豬八戒/沙悟淨;七種新天賦(eyeflash 天眼閃正解/comfortmiss 連錯救援/timeoutguard 超時再給 5 秒/streakautoclear 連對 7 題下一題直接過/calmtime 倒數變慢/buns 包子保命/debuffcarry 負面減半+首錯免傷)與七種新爆發第二效果(negateburst 看破/overhealshield 溢補轉盾/multiblock 斷橋/rescuedash 單騎救主/tightband 緊箍咒/bellyslam 天蓬肚擊/cleanseconvert 流沙反捲);新增點數護盾 hpShield 與「到第幾題為止」型狀態(mgCn2*);⭐本關推薦 7 關各加 1 位。island_db 零改動(D.VER 與 ?v= 維持 v1.399.0)。 */   void 'v1.406.0';   /* ★ v1.406.0(2026-10-22・老師「尋寶或製作出新設施或裝飾時,進到營地後統一先集中到左上方營地造景視窗(NEW!),點進去最上方先列最新獲得還沒布置的物品,按開始布置後放進左側空白區,讓玩家拖曳到營地中配置」)— 新物品(劇情裝飾/尋寶收藏品/展示櫃/新蓋設施/製作裝飾/商店裝飾)加 pend:1 不畫在營地;營地造景鈕 NEW! 標籤、視窗頂端「🆕 最新獲得・還沒布置」+「🧺 開始布置」(pend→2);營地左側 #isl-camp-pend 暫放區,往右拖進營地放手才擺上(islPendList/islPendPaint/islPendDragBind);設施照常倒數與生效;帆船完工自動擺上;好友名片不發布未布置物件。三平台 CSS 在 island-style 最後。island_db 零改動(?v= 不跟)。 */   void 'v1.405.0';   /* ★ v1.405.0(2026-10-22・與大對抗 v5.288.0 同期)— 考試複習「學校版本」改依年級+科目(MG_EXAM_SCHOOL_DEFAULT:自然三~六南一;社會三四六康軒、五翰林;GM 可在 gameConfig/examReview.byBook 改),選冊自動切版本;exam_core v1.2.0(MG_EXAM_CORE_VER 20261022b)。island_db 零改動(?v= 不跟)。 */   void 'v1.404.0';   /* ★ v1.404.0(2026-10-22・與大對抗 v5.287.0 同期,老師「冒險關卡、小遊戲、荒島求生共同加入考試複習題庫」)— 新增第 16 關「📝 考試複習大挑戰」(MG_EXAM_GAME,開關卡先選版本/冊/單元)、荒島 ☰ 更多「📝 考試複習」(開啟後 islQuizPick 改出考試題,isl_exam_on_<uid> 本機記住範圍);題庫共用 ../exam/(exam_core.js),GM 學校版本讀 gameConfig/examReview。island_db 零改動(?v= 不跟)。 */   void 'v1.403.0';   /* ★ v1.403.0(2026-10-21・與大對抗 v5.286.0 同期)— 獨立稽核修正:開機更新遮罩 6 秒後若頁面沒換掉就自動收起(iOS 偶爾靜默吞掉換頁)。island_db 零改動(?v= 不跟)。 */   /*★ v1.402.0(2026-10-21・與大對抗 v5.285.0 同期,老師裁定「開遊戲先查版本、舊了才清」)— 開機自動對版 6 秒→0.3 秒;開機 20 秒內只有戰鬥/活動/小遊戲進行中才延後(?mode=island 直入不再整節課卡舊版);更新時全螢幕「更新中」遮罩;只清程式、素材全保留。island_db 零改動(?v= 不跟)。 */   /*★ v1.401.0(2026-10-19・老師「荒島求生是否也有類似問題,有的話一起解決」,與大對抗 v5.280.0 同期)— 🏝 荒島存檔被取代前永久備份:換平板時雲端/本機兩份存檔較舊那份不再直接丟棄,先寫入 minigameIsland/{uid}/archive(只增不改不刪,GM 可在主後台「🏝 荒島存檔備份」查看與還原);同一座島兩份存檔的圖鑑/寵物圖鑑/科技/拼圖/回顧/回憶取聯集(islMergeKeep);衝突視窗「用雲端的」「確定覆蓋」兩鍵都先備份被蓋掉的那份(islArchive);本機記錄最後一次雲端寫入成功時間(isl_cloud_ok_<uid>)判斷哪份是沒上傳的進度。island_db 零改動(?v= 不跟)。 */   void 'v1.400.0';   /* ★ v1.400.0(2026-10-19・老師「荒島營地的設施和裝飾在 iPad 擺放好,到了 PC 和手機位置和尺寸比例又不正確,請讓三個裝置統一」,裁定甲)— 🏕 營地改固定世界圖:畫布固定 1024×768(=營地背景圖原始像素),背景圖搬進畫布(#isl-camp-wbg)跟所有物件同一層,整張 contain 等比縮放到視窗(雙指最多放大 3 倍),比例不是 4:3 的螢幕兩側用模糊暗化背景補邊;物件尺寸只剩一套(設施 164、裝飾 96×sz、主角/寵物跟設施連動),移除 iPad 132px/手機 64px 設施與手機裝飾 zoom:.68 三條裝置覆寫;畫布內出口/小木屋門口/設施名稱/告示牌文字用 --isl-cinv 反向縮放維持原字級;舊存檔設施/裝飾座標依「iPad 1080×810 舊畫面」一次性換算(islNormalize→islCampGeoMigrate,camp.geo 1→2),好友名片加 campGeo:2、舊名片參觀時換算副本顯示;出口對準背景石板小徑(52,91);視窗縮放/旋轉自動重 fit。沙箱實測 iPad 1080×810/1180×820、PC 1920×1080/1366×640、手機 891×411 五種視窗:物件位置%、設施高÷畫布高 0.214、主角高 0.149 全部一致。 */   void 'v1.399.0';   /* ★ v1.399.0(2026-10-18・老師「荒島求生新增尋寶系統」)— 🧭 自製羅盤探測(躲貓貓四段距離音效＋星星變色＋思考泡泡)/🪏 挖掘(挖到才扣 ⚡1、稀有連打)/每日重生/🗺 藏寶圖/古老藏寶圖/11 件收藏品/尋寶手冊/阿獺舊羅盤小任務;程式搜尋 islTr,數字在 island_db D.TREASURE */   void 'v1.398.0';   /* ★ v1.398.0(2026-10-14・老師「iPad 荒島加好友時無法輸入 wasd」)— 野外/營地鍵盤監聽在打字時(焦點在輸入框)不再攔 WASD/方向鍵/空白/Enter,新增 islIsTypingEv;island_db 零改動(?v= 維持 v1.396.0) */   void 'v1.397.0';   /* ★ v1.397.0(2026-10-13・老師「部分 iPad 登入卡很久進不了遊戲」,與大對抗 v5.250.0 同包)— 素材帳本(_mgLedgerMake)只記本站檔、舊帳本外站網址略過並清出;補不回的(逾時/5xx)累計 2 次從帳本淘汰(L.strike);開機對帳 8→4 秒沒結果就不擋;先進入鈕 5→3 秒;最多擋 2→1 分鐘。island_db 零改動(?v= 不跟)。 */  void 'v1.396.0';   /*★ v1.396.0(2026-10-13・老師六項)— ①開機素材對帳 mgAssetRepairBoot/_mgLedgerMake(快取不見的素材先補回再進場,荒島直入等補完;5 秒後可先進入)②物品包「賣普通材料」可勾 ★/★★/★★★(islBulkQ);點單一物品改 islBagItemOpen:丟掉 N 個(+−/全部)、營地內賣出 N 個 ③速度顯示 islNum1 四捨五入到小數第一位(只改顯示)④跳躍 islJumpPlan:沿面向量障礙寬度、矮障礙(獨立 ≤8 格不碰邊)/窄水(走 1、跑 3 格)可跳,高障礙/藤蔓不可,講原因 ⑤移動加成封頂 +50%(islMoveBonus,腳程 30 = +50%)、腳程減遇敵最高 50%(islEncDodge)⑥天賦「目前點亮收益」改加總(ISL_SK_SUM)⑦商店賣東西/倉庫改物品包格子(islQTileHtml),物品包/倉庫/賣東西頂端排列列 islSortBar(分類+價格/品質/數量 升降序),賣出/存入/取出步進器 islQStep 0~全部循環(0 按 − 跳最大、最大按 + 跳 1;點格子 0↔全部),底部一次結帳。island_db v1.396.0(腳程說明,?v= 同步)。 */  void 'v1.395.0';   /*★ v1.395.0(2026-10-12・老師「上週五沒登出的平板,週一直接登進上週那位的帳號」+「30分鐘沒按確認遊玩就強制登出,且不可再被下一個使用者免輸入密碼登入」)— 新增 mgIdle 閒置模組(本程式之前完全沒有閒置登出):30 分鐘無觸碰/按鍵 → 確認視窗倒數 60 秒 → 未按「繼續遊戲」就荒島立即存檔+signOut+重整;超過 30 分 60 秒(睡眠跨夜)醒來直接登出;視窗內觸碰不算活動、逾時後第一下觸碰救不回時間。裝置層 lxps_idle_last 與大對抗 v5.248.0 共用;onUser 第六道判定:逾時帳號不吃任何放行鑰匙(含同分頁 sessionStorage 章)。island_db 零改動(?v= 不跟)。 */  void 'v1.394.0';   /* ★ v1.394.0(2026-10-12・老師「智取改成隨機情境(依天氣、晝夜、現場環境),選對措施才會造成傷害」+ 選項用圖示+做法短句、地下層也改、巧思 14 以上刪一個錯誤選項)— 新函式 islWitEnv/islWitOk/islWitEnvText/islWitPick;islBtOutwit 改讀情境題(m._witQ 保留到答題、m._witLast 避免連續同題);islBtWitHint 上方小視窗改顯示環境+情境;islDgToolPick 改情境題(C.wq);CSS 2×2 做法方格(三平台)。題庫 island_db D.WIT_SC。夜襲防衛戰維持固定工具。 */  void 'v1.393.0';   /* ★ v1.393.0(2026-10-11・老師兩項)— ①同一隻魔物(含頭目)重複被智取,傷害每次減半(m.witN 計次)②智取威力改由巧思決定:新函式 islBtWitDmg = 攻擊力×(1.5+巧思×0.04) + 最大HP×min(7.5%,巧思×0.15%)(頭目 HP 部分 ×0.5),取代 v1.284.0「攻擊力×2+最大HP×20%」;智取選單顯示預估傷害與衰減。island_db D.BT.OUTWIT_* 參數。 */  void 'v1.392.0';   /* ★ v1.392.0(2026-10-09・老師四項,全部選甲)— ①營地設施耐久條平常隱藏,按住設施才浮出,< 50% 常駐(islBldHpPct)。②設施損壞分級(D.BLD_DMG):< 50% 扣舒適度、≤ 20% 嚴重受損 = islCampHasBld 不算有(全島功能停擺、解鎖它的區域進不去、帆船開不了)、0 倒塌移除要重蓋;islBldDamage 單一出口(颱風/夜襲);舊存檔 islBldDmgMigrate 一次性保護。③外島:出航/回航各 ⚡3、⛺ 紮營過夜(露宿損害 islSeaNightHarm、隔天 AP 回一半)、第 2 天保留 ⚡3 + 強制回航(islSeaApBlock/islSeaForceTry)、外島倒下免費救回。④天賦 🌊 遠洋星域 21 節點(sea_db;seaGate 第一次出海後開放、seaOnly 只在外島生效)。對應 island_db v1.392.0、sea_db v1.392.0、sw v1.392.0。 */
 void 'v1.391.0';   /* ★ v1.391.0(2026-10-09・老師「倉庫堆滿的材料堆在背包中,新增一鍵賣出背包普通材料(容易採集大量取得的)」)— 營地裡打開物品包,標題列多一顆「💰 賣普通材料」:只賣物品包裡 D.SHOP.bulkSell 清單(收購價 1 貝幣的基礎採集物)的 ★ 品質,先列清單+總價確認再賣;★★/★★★、倉庫、料理與稀有材料一律不動。新函式 islBulkSellList/islBulkSellAsk。對應 island_db v1.391.0(新增 D.SHOP.bulkSell + D.LOG 一筆)、sw v1.391.0(SHELL v1.391.0)。 */
 void 'v1.390.0';   /* ★ v1.390.0(2026-10-08・老師「第六章之後確認沒問題就先開到第八章」)— ISL_CH6_OPEN false→true,第六~八章(時間倒轉之貝/島的抉擇/島的新樣貌)對學生開放;已停在第五章完成的玩家會自動接上 c6 開場(islMainTick 原本就在等這個旗標,存檔結構不用動)。外島篇 c9 之後仍由 ⚙ GM「外島開關」(gameConfig/islandSea)控制,本輪不動。檢查時找到 c8 卡關點(目標營地 Lv4,但營地最高 Lv3),在 island_db 改成圖鑑 50 種。 */     /* v1.389.0(2026-10-08・老師兩項裁定)— ①「當天行動力用掉一半以上(切換至夜晚)才能睡」:islRest 開頭以 islIsNight() 擋門(與夜間模式同一個門檻 D.NIGHT.apUsedPct),白天按休息只跳說明「再用 N 點就天黑」;體力 0 一律准睡(安全閥,避免卡死)。②「每日登島禮和留言板的一天一次改成看島上日誌的時間」:登島禮改記 ISL.giftDay=島上天數(進島+睡醒換日各檢查一次),留言改 ISL.msgDay=ISL.day(舊的日期字串歸 0)。island_db 零改動(?v= 不跟)。 */   void 'v1.388.0';   /* v1.388.0(2026-10-08・老師「檢查荒島還有哪些 bug 可能導致玩家可以無限刷獎勵或資源」)— 九項:①拜訪好友島已採/已撿改記在自己存檔 ISL.coopDaily(按島主分開),進出拜訪不再全部重生 ②夜襲結算記 ISL.raidDone,重新整理不能重打同一場刷科技點 ③收信改「先刪雲端信、成功才給」+ISL.mailGot 記已收 id,離線收信關 App 不能重複收 ④資源點各組數量當天凍結 daily.want,工程修復/打撈失誤改變受損度不再讓已採點重生 ⑤傳說夥伴考試/訓練師上課開始就記次數,按 ✕ 不能重考 ⑥islActResult 只結算一次 ⑦商店買價保底高於賣回價(空氣瓶特價套利)⑧料理賣價不超過材料價(islSellUnit 單一出口)⑨附禮留言立刻雲端存檔、存檔衝突中不能附禮、換帳號清信箱快取。island_db 零改動(?v= 不跟)。 */   void 'v1.387.0';   /* v1.387.0(2026-10-08・老師「檢查荒島行動力和體力還沒睡覺休息就莫名被重置全滿的原因並修復」)— ①AP 根因:islDailyCheck 在「真實日期換日」時把 ISL.ap 設回 apMax,荒島的一天只靠睡覺(islNewDay)推進,隔天重新進荒島就沒睡覺也補滿 ⇒ 拿掉,只留每日登島禮貝幣 +5。②體力:islSkApplyHp 在上限變高時會補等量體力,換飾品(泥心墜飾/年輪護符 +10% 上限)脫下再戴回就能一直回血到滿;讀檔重算上限、冒險升級(原本重複補兩次)也走同一條 ⇒ 新增 noHeal 參數,換飾品與讀檔只調上限不補體力,升級只補一次。island_db 零改動(?v= 不跟)。 */   void 'v1.386.0';   /* v1.386.0(2026-10-07・老師兩項:①「荒島經常玩到一半,突然畫面讀取不到圖片」(附圖:山谷底圖消失只剩可走格子、資源點/頭目巢穴只剩名字)②「荒島 BOSS 的經驗值和貝幣要按照比例提升」)— ①根因:圖不在快取時 SW 走網路 15 秒逾時回 504,而荒島每張圖的 onerror 都一次就永久放棄(底圖 display:none、換 emoji、islPicProbe 記 false 整場不重試)。修法:全域捕獲階段安全網 islImgRetryCatch/islImgRetryRun/islImgRetryApply(fetch 判斷 404=真的沒圖就放棄,ok=放回原圖並拿掉備援 emoji,逾時/斷線=3→8→20→45→90→180 秒退避最多 6 次;切回前景、online 立刻重試),islPicProbe 暫時性失敗 20 秒後重探(islImgFailKind 分辨 404)。②island_db D.BOSS_RULE.reward.hpRef=80;islBossRewardMul(b)=頭目 hp÷hpRef(現在 ×5,v1.299.0 HP×5 時獎勵沒跟上),乘在頭目貝幣(islBossReward)、主角頭目經驗(xpMul×倍率)、寵物頭目經驗(islPetsGainAfterWin),圖鑑「貝幣約 N 起」同步;核心素材/首殺天賦點/飾品不變。③老師「外島的頭目也要掉落特殊功能飾品」:island_db D.ACCS 新增 4 件(sea:1;猛瑪冰牙 shieldStartP/古樹年輪 regenP/風眼羅盤 autoDodgeN/深淵墨囊 inkBlindP),index 消費點 islAccBtStart(islBtOpen)、islAccTurnRegen(islBtPlayerTurn)、islAccWindDodge(islBtDodgeQte)、islBtAffixOnHit;飾品面板還不能出海時不列外島問號卡;舊存檔打倒過島主的由 islNormalize 既有掃描補發。④老師「頭目第二次以後打倒可強化該頭目飾品,每級 +10% 最多 +5;頭目每次重生 +3 級」:island_db D.ACC_UP(MAX 5/P 10/FLAG/COUNT/TXT)、BOSS_RULE.grow{lv:3,max:5};存檔 accLv;islAccLv/islAccUpVal 接進 islAccEff 與 islResist 兩個出口(全部飾品效果自動吃強化),islAccUpgrade 在 islBossReward 再次擊敗時 +1,islBossLv(z)=基礎+min(擊敗次數,max)×3 用在挑戰/巢穴/頭目一覽/經驗;面板顯示強化後實際數值 islAccEffText。 */   void 'v1.385.0';   /* v1.385.0(2026-10-07・老師問「荒島借用好友角色,好友在戰鬥中會自動施展天賦技能嗎?」→ 答:不會(cmd:null、islPetTal 只認寵物、快照只有五個數字)→ 老師選「甲」:帶好友本人的技能)— ①名片 bt 快照多存 sk(islSkActDef 目前武器的絕招)/cmds(裝設的戰鬥特殊指令,白名單 D.FRIEND_BT.CMDS,不含煙霧彈);協助邀請 islFriendNpcInvite 把 sk/cmds 跟數值一起凍結;名片規則只驗 uid/code,不必改 firestore.rules。②islBtMakeAllies 好友單位帶 fsk(經 islFriendSkClean 驗 id;舊協助快照沒有這兩欄時退回讀名片)+gauge。③計量 islBtGaugeTick/Paint/Ready 與 HP 框計量條支援好友(技能用完灰掉);islBtAllyAct 好友分支 → islBtFriendSkPick(倒下→急救、半血→呼喚夥伴/急救、≥2 隻或預告→陷阱、沒增益→號令、其餘→絕招;不符合就保留計量)→ islBtFriendSkCast/islBtFriendAct,每招每場 1 次,不吃手動模式。④戰鬥中點好友 islBtFriendSkPreview 看技能/用過沒/計量;選隊友卡與編組卡加技能圖示 islFriendSkIcons。 */   void 'v1.384.0';   /* v1.384.0(2026-10-06・老師「所有重複感太強的都重新設計,目前沒有的效果和威力,這些外島寵物可以更強大些」「BOSS技能也要有創新機制和難度,以及QTE」「腕足選甲。開工」)— ①外島戰鬥擴充區塊 islSea*(在主程式閉包內、islBtOnMonDown 前面;所有掛點先問 islSeaOn()):12 位外島夥伴新機制(企鵝分攤/抱團、雪鴞鎖定處決、北極狐閃避冰凍、水豚光環增幅、鸚鵡學舌抗毒、美洲豹穿甲破甲、海鸚存魚急救、象龜封頂無敵、信天翁多行動連鎖、旗魚速度貫穿、海獺手牽手淨化、具足蟲殘血減傷吸收爆發)+4 隻島主新招式/第二階段/部位單位(氣根、腕足)+4 種 QTE(冰面裂縫方向滑動/割斷氣根劃線/十七級強風逆時針畫圈/深淵之眼按住放開,三平台樣式在最後一個 style 區塊尾端)。②本檔掛點:islBtHurtUnit/islBtBossDmg/islBtMonAct/islBtMonHitSeq/islBtMonSkill/islBtMonSkillRun/islBtGrdRelease/islBtGrdTaken/islBtGrdAfter/islBtBossUlt/islBtBossPhaseCheck/islBtOnMonDown/islBtStatusTick/islBtOpen/islBattleEnd/islBtAllyTurn/islBtAllySeq/islBtAllyAct/islBtHealNeeded/islBtAllyBasic/islBtPetCmd/islBtResolveAttack/islSkAct/islBtOutwit/islPetDmgMul/islPetHealMul/islAdvXpOf/islBtHp/islBtFxSkill、ISL_FX_POW_KEYS;野外特長(體溫/水分/氧氣/陣風)。③sea_db ?v= → v1.384.0;腕足圖 6 張(大王魷本體圖裁切暫代)。 */   void 'v1.383.0';   /* v1.383.0(2026-10-06・老師「現在正式開放上述做得到的好友互動功能,檢查是否做好了」)— 稽核:對照 firestore.rules 全部好友相關寫入(名片/好友碼查詢/信箱選句+附禮/拜訪名額/位置心跳/通知/presences/大對抗好友連結),沙盒 puppeteer + 依 rules 驗欄位的模擬雲端實跑三帳號全流程零拒絕零錯誤。修一個真 bug:拜訪名額 slotUids 只在按「離開拜訪」時移除,直接關平板/切 App 的名額永久佔住,4 次後該島永遠「人滿了」⇒ islCoopJoin 進場前先讀 players 子集合,心跳超過 COOP_STALE_SEC 或已標 npc 的名額在交易裡清掉;離開整個荒島模式(islLeave)時也補 islCoopSlotRelease+離開通知。 */   void 'v1.382.0';   /* v1.382.0(2026-10-05・老師「荒島的日誌,上限改成300筆。改成每天都保留至少3件重要的事情(採集、掉落雜物、點天賦這些都不用記),避免再清除前面的記錄。已經被刪除的重要記錄要幫玩家補回來(如果可以)」)— LOG_MAX 150→300;islLog 先過 islLogSkip(D.LOG_SKIP:戰鬥掉落/天賦/採集不記);超過上限改 islLogTrim(每天依 ENDING.pri 分數留 LOG_DAY_KEEP=3 件,其餘依分數低→日子早刪,不再從最前面整筆砍);讀檔 islLogRestore 一次(flags.logRestore):清舊雜項+從 ISL.mem 與存檔現況補回已被刪的大事(各區用該區第一筆圖鑑日、科技/解謎/料理用圖鑑日、夥伴 petDex 日、好友 day、建築用解鎖區前一天或最早紀錄前一天並標「(補回)」),日期 islLogDateFor 依留著的紀錄內插;補回後 toast 告知件數。日曆格子圖示改 islFirstGlyph(舊 slice(0,1) 切半個 emoji)。pri 新增低分項(<memMin,只給日誌排序,islMemPick 已過濾不進回憶)。 */   void 'v1.381.0';   /* v1.381.0(2026-10-05・老師三項)—①營地帆船圖基本尺寸放大 100%(BUILDINGS.ship.baseK=2,islCampBldApplyTransforms 與拜訪好友營地兩處都乘上,玩家自己的縮放疊在上面)。②島嶼回顧:每張投影片加 1~2 句感性話語(island_db D.ENDING.feel:各區生態見解、建築、夥伴 PETS.sci+情感句、料理 RECIPES.why、馴養 ANIMALS.d…;islMemFeel)、每張都配相關圖片(islMemImg:舊紀錄的 bld_xxx 鍵其實不存在,改依分類找場景/建築_1/夥伴/料理/動物圖,最後退營地)、有話語的停留 feelSec 7.2 秒;帆船完成時自動收藏一份到 ISL.recaps(islRecapSave),側欄 🎬 回憶 改開收藏清單 islRecapOpen 隨時重看,音樂沿用 bgm-isl-ending;字幕加暗色漸層底,三平台字級。③冰天雪地島拿掉踩雪聲(snowstep),腳步聲改回本島規則。 */   void 'v1.380.0';   /* v1.380.0(2026-10-04・老師「完成帆船後的回顧,沒有從第一天開始。應該多注重在完成重要設施、第一次踏進場景、發現寵物、製作料理…等比較生活有意思的回顧點」)— 根因:ISL.log 上限 150 筆從最前面輪替刪除(第一天紀錄早被刪光)+ 結局從 log 平均抽樣(大半是戰鬥掉落/每日戰鬥統計等瑣碎紀錄)。修法:新增 ISL.mem 回憶精選(island_db D.ENDING.pri 打分表,≥memMin 另存、不受輪替)、islMemAll 合併 mem+log+存檔現況補齊(舊存檔被刪的早期事件:漂流/營地/營火/各區/建築/夥伴/料理/馴養)、islMemPick 第一天漂流開頭+帆船完成結尾、中間依分數+分組上限挑選後照時間排;新增三個回憶點 🍳 第一次做出料理、👀 第一次遇見寵物、🐣 第一次馴養動物;投影片無圖時的大圖示改取完整 emoji(islFirstGlyph,舊 charAt(0) 切半個代理對)。②老師「寵物到冰天雪地島打 5X 級的小怪經驗值還是只有 24,寵物獲得經驗值應該跟玩家一樣」— islPetsGainAfterWin 小怪經驗由固定 PET_XP.win×隻數 改成與主角同一公式 islAdvXpOf(打輸 ×ADV.lose、劇情分支加成同套),頭目戰取「同主角」與 v1.375.0 頭目公式較高者。 */   void 'v1.379.0';   /* v1.379.0(2026-10-04・老師三項)—①洞窟不下雨、沒有颳風飄葉與雲影(islAmbWx 回 'cave');洞窟裡雨聲/雷聲 ×0.35、沒有狂風吹樹與閃電聲(islWxSndProfileOf)②野外戰鬥維持雨與閃電:#isl-battle 內加 .isl-bt-wx 畫布(islBtWxAttach/islBtWxTick),天氣音效層在野外戰鬥照播 ×0.7(洞窟/地下層/防衛戰不播);回到野外 islShowScreen('zone') 延後一拍檢查動態背景不在就重掛(原本戰鬥/活動後雨和雷消失)③颱風天(本島、非洞窟、非外島)遇敵池去掉 D.MON_TYPHOON 6 種(islEncMonPool,安全網同夜行性)。island_db 有改(?v= 同步),sea_db 零改動維持 v1.378.0。 */   void 'v1.378.0';   /* v1.378.0(2026-10-04・老師三項)— ①⛵ 外島篇主線 c9~c13(資料在 sea_db;index 新增目標類型 sail/seaObs/armor/tool/seaPets、islMainSeaWait 閘門、islSeaSail 記出海次數 trips)②採集/伐木/採石/捕魚/打撈海廢題庫各 +50(island_db);islQuizPick 題庫變大時從新題開始出 ③品質小遊戲新增 ⭕縮圈 islQteRing/👊連打 islQteMash/🧠記憶順序 islQteSeq,採集/伐木/採石/捕魚由 islQteVariant 輪替(不連續兩次同一種)④⚙ 設定新增「⛵ 外島開關(GM)」:雲端 gameConfig/islandSea.open(islSeaAdminOnly 單一出口,取代直接讀 ISL_SEA_ADMIN_ONLY);上鎖時造好帆船的玩家看到「⛵ 出海探險 🔒」敬請期待 ⑤颱風/雷雨天:動態背景大雨(斜打、更粗更快)、白光閃電後播閃電聲、間歇遠雷、雨聲+狂風吹樹循環(老師上傳 4 個音效 wx-isl-*;天氣音效層 islWxSnd*,狂風暴雨島/雨林午後雷陣雨也套用)。 */   void 'v1.377.0';   /* v1.377.0(2026-10-04・老師「洞穴中的地圖新增可以直接撿取的蜘蛛絲」)— island_db D.SCENE.cave.pick.items 加入 silk(蛛絲)兩份(每個撿取點約 1/3 機率);index 零邏輯改動(撿取流程 islPickUp 本來就吃任何 D.ITEMS 素材,圖示直接用素材 emoji 🕸)。 */   void 'v1.376.0';   /* v1.376.0(2026-10-04・老師「天賦點完後冷卻太短,戰鬥變得很沒難度;全部按照建議;希望每種寵物都值得培養且有獨特不可取代之處」)— ①新增 islPetCmdCd(base,cut)=max(ceil(base/2), base−cut, 1),兩個施放點(islBtManualCast 手動/islBtAllyAct 自動)改用它,三種縮減來源(生死之交/馴獸專精精通/水晶風鈴)仍可疊加但最多縮一半 ②夥伴詳情卡冷卻顯示實際值 ③island_db 基礎冷卻:石虎 1→2、黑面琵鷺 2→3、綠蠵龜 4→3、螢火蟲 6→5、雲豹 4→3。 */   void 'v1.375.0';   /* v1.375.0(2026-10-04・老師「荒島的 boss 戰給寵物的經驗值太少了,修正」)— 根因:islPetsGainAfterWin 只把 k==='guardian' 當頭目,地圖頭目(m.boss)與出海島主全被當小怪,每場只給 PET_XP.win(6);改成 guardian 或 m.boss 都算頭目、頭目經驗只算一份(不被召喚幫手重複乘)、公式 PET_XP.boss + bossPerLv × 頭目等級(island_db 新增 bossPerLv:4)。同輪(老師「阿獺商店新增重新喚醒頭目可再次戰鬥的道具,一個 100 元、每日限購 1 個;挑戰頭目改成需要 1 AP」):①D.BOSS_RULE.ap 2→1(挑戰鈕/提示文字都讀 R.ap) ②新道具 boss_wake「🔔 頭目喚醒鈴」:islShopDailyEntries 虛擬商品 id=bosswake(打倒過任一頭目才上架,不進每日輪替與特價,不套數量步進器),每日限購 ISL.shop.bwDay/bwN 對 D.SHOP.bossWake.limit;頭目巢穴在沉睡(cool)時出現「🔔 使用喚醒鈴」鈕 → islBossWake 扣 1 個、sv.lastDay=ISL.day−respawnDays 使狀態變 ready(kills/best 不動)。 */   void 'v1.374.0';   /* v1.374.0(2026-10-04・老師「檢查還有沒有其他地方也有相同的 bug,一起修」)— 稽核全檔約 57 處觸控/指標事件綁定(動作鈕 touchend 開面板、passive 觸控+滑鼠雙綁、touchstart+mousedown 雙綁):戰鬥動作鈕(v1.373.0 已修)之外,僅營地主角/寵物長按綁定 islLongTapBind 屬同類(passive touchstart 擋不住 Android 補發的滑鼠事件 ⇒ 單點被算兩次 ⇒ 營地「連點兩下=跑步」規則誤判單點也跑步),已比照 islCampViewBindDrag 加 800ms 幽靈滑鼠過濾;其餘路徑(野外搖桿/設施裝飾小木屋拖曳/釣魚/閃避「!」鈕/三消/拖曳題)touchstart 本來就 preventDefault 或為純點擊,無需改動。 */   void 'v1.373.0';   /* v1.373.0(2026-10-04・老師回報「只在 Android 手機版:①回力鏢第一次按完 Bar 就消失、只打一段 ②按智取沒跳選項、直接套用某個結果」)— 同一根因:動作鈕在 touchend 就開面板且沒 preventDefault,Android 補發的幽靈 click 落在剛彈出的 #isl-bt-qte 面板上,把「打!」鈕/智取某個選項直接按掉。修法:islBtActsBindTip 的 touchend 一律 preventDefault+面板捕獲階段 450ms 保險(說明見該函式內)。island_db 零改動(?v= 維持 v1.363.0)。 */   void 'v1.372.0';   /* v1.372.0(2026-10-04・老師「完整下載主程式非常久,檢查原因並設法提高下載速度」)— ①出海探險素材(約 65MB,學生進不去)在 ISL_SEA_ADMIN_ONLY=true 時不列入下載 ②安裝請求帶 X-Lxps-Install 標頭,SW 不攔截(原本每檔存兩份+15 秒逾時回 504) ③單檔 90 秒逾時+暫時性失敗重試 1 次 ④並行 6→10 ⑤大小提示由「60~120MB」改實測的約 230MB(含出海約 300MB)。 */   void 'v1.371.0';   /* v1.371.0(2026-10-04・老師「角色都是完整的,不需要 GM 調整髮型位置了,隱藏,改回跟玩家一樣的完整髮型/髮色/染色切換」)— 設定選單的「造型工房(GM)」與換造型面板的「調髮型/調服裝」兩顆入口隱藏(旗標 ISL_LAYER_LAB_ON=false,程式整套保留);GM 的換造型面板本來就與玩家同一套(髮型/髮色/膚色/服裝染色),只是 GM 不吃 1 小時冷卻;🗡 武器工房保留。 */   /* 上一版註解接續如下 */   void 'v1.370.0';   /* ★ v1.370.0(2026-10-04・老師「359 張新圖已上傳,檢查確認,重建可走區域,確保主角移動不會被卡死」)—
    ①外島 20 區遮罩改用真場景圖重建(資料在 minigame_sea_db.js 檔尾覆寫區);翻頁地圖區域標記對齊 4 張全景圖。
@@ -18077,7 +18151,7 @@ var _IS = {          /* 執行期狀態(不存檔) */
 var ISL_LS_GUEST = '_islSave';
 var ISL_LS_USER  = '_islSave_u_';
 
-function islDB(){ var d = window.ISL_DB || null; if(d && !d.SEA && window.ISL_SEA_APPLY){ try{ window.ISL_SEA_APPLY(d); }catch(_sa){} } return d; }   /* ★ v1.368.0 出海探險資料檔(minigame_sea_db.js)保險:萬一它比 island_db 先跑完(onerror 重試的少見路徑),第一次取資料表時補套用一次;D.SEA 已存在就不會重複 */
+function islDB(){ var d = window.ISL_DB || null; if(d && !d.SEA && window.ISL_SEA_APPLY){ try{ window.ISL_SEA_APPLY(d); }catch(_sa){} } if(d && !d._pxInit && d.SK_NODES && typeof islPxInit === 'function') islPxInit(d); return d; }   /* ★ v1.472.0 第一次取資料表時登記寵物新技能、套用星盤馴獸星域新效果(islPxInit 只跑一次) */   /* ★ v1.368.0 出海探險資料檔(minigame_sea_db.js)保險:萬一它比 island_db 先跑完(onerror 重試的少見路徑),第一次取資料表時補套用一次;D.SEA 已存在就不會重複 */
 function islToday(){ var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
 function islImgUrl(key){ var db = islDB(); var f = db && db.IMG[key]; return f ? mgPicUrl(f) : ''; }
 function islEsc(s){ return esc(s == null ? '' : s); }
@@ -18106,6 +18180,8 @@ function islDefaultSave(){
     pets: [],   /* ★ v1.163.0 🐾 已收服的夥伴 [{k:寵物鍵, lv, xp, bond, hp}];資料表見 island_db D.PETS */
     party: [null, null, null],   /* ★ v1.163.0 🧭 探險編組:主角 + 最多 3 位隊友;每格 null 或 {t:'pet',k:'bear'} / {t:'friend',uid:'…'} */
     petDex: {},   /* ★ v1.163.0 📖 夥伴圖鑑 {寵物鍵:第一次入隊那天};收服過就永久留著,放生也不會消失 */
+    petWait: [],   /* ★ v1.471.0 🐾 沒帶食物、留在原地等你的夥伴 [{k,z,d,x,y,dup,rec}];睡覺換日清空 */
+    petDupDay: {},   /* ★ v1.470.0 🐾 已擁有的種類今天重複遇到過了 {種類:島上日};同種一天最多 1 次 */
     petEnc: {},   /* ★ v1.181.0 🐾 野外遇到夥伴的記錄 {寵物鍵:最近一次遇到的遊戲日};同一天同一隻只彈一次遇到畫面,避免洗版 */
     petGear: { bag: [], eq: {}, seq: 0 },   /* ★ v1.331.0 🐾 夥伴專用裝備:bag=[{u:唯一編號,id,q:★}]、eq={寵物鍵:u};裝備跟著夥伴走,只作用在穿戴的那位(islPetGearEff) */
     legend: { cam: {}, shot: {}, camOwn: 0, rockDay: 0, tree: null, fly: null, chaseDay: 0, meet: {}, quizDay: {}, gone: {} },   /* ★ v1.331.0 🌈 傳說夥伴調查:cam={區:架設日}、shot={區:拍到日}、camOwn=手上還沒架的相機數、rockDay=今天已擲過潮池判定的日序、tree={day:種下日}、fly={st:階段索引,day:進入該階段日}、chaseDay=幼蟲期最近一次趕天敵的日序、meet={寵物鍵:遭遇可答題的日序}、quizDay={寵物鍵:上次答題沒過的日序}、gone={寵物鍵:今天嚇跑的日序} */
@@ -18210,7 +18286,8 @@ function islNormalize(d){
   })();
   d.petIdV = 1;
   if(typeof d.petOutOn !== 'boolean') d.petOutOn = false;
-  if(typeof d.mfruit !== 'number' || !(d.mfruit >= 0)) d.mfruit = 0; else d.mfruit = Math.floor(d.mfruit);   /* ★ v1.469.0 🍇 神秘果實持有數 */   /* 夥伴小屋總開關:false = 不在編組的全部隱藏;true = 勾「出來逛」的出來(最多 3 隻) */
+  if(typeof d.mfruit !== 'number' || !(d.mfruit >= 0)) d.mfruit = 0; else d.mfruit = Math.floor(d.mfruit);
+  if(typeof d.pxBook !== 'number' || !(d.pxBook >= 0)) d.pxBook = 0; else d.pxBook = Math.floor(d.pxBook);   /* ★ v1.472.0 📘 寵物技能訓練書持有數 */   /* ★ v1.469.0 🍇 神秘果實持有數 */   /* 夥伴小屋總開關:false = 不在編組的全部隱藏;true = 勾「出來逛」的出來(最多 3 隻) */
   if(!d.party || !(d.party instanceof Array)) d.party = [null, null, null];
   while(d.party.length < db.PARTY.MAX_ALLY) d.party.push(null);
   if(d.party.length > db.PARTY.MAX_ALLY) d.party.length = db.PARTY.MAX_ALLY;
@@ -20739,10 +20816,11 @@ function islMainSeaObsN(isle){
 }
 /* ★ v1.378.0 外島夥伴人數(夥伴取得區域在外島的才算);isle 省略 = 四島合計 */
 function islMainSeaPetsN(isle){
-  var db = islDB(), n = 0, i, p, z;
+  var db = islDB(), n = 0, i, p, z, seen = {};
   if(!db || !db.seaZone || !ISL || !ISL.pets) return 0;
   for(i = 0; i < ISL.pets.length; i++){
     p = ISL.pets[i] && db.PETS[ISL.pets[i].k];
+    if(!p || seen[ISL.pets[i].k]) continue; seen[ISL.pets[i].k] = 1;   /* ★ v1.470.0 同一種 2 隻只算 1 種 */
     z = p && p.get && p.get.zone ? db.seaZone(p.get.zone) : null;
     if(z && (!isle || z.isle === isle)) n++;
   }
@@ -23395,6 +23473,7 @@ function islEnterZone(zoneId, cb){
   islCamera(true);
   if(_IS.coop){ islCoopHeartbeatSend(); islCoopPeersRender(); }   /* ★ v1.108.0 拜訪模式:一進場景立刻回報位置+畫出場上其他人,不用等下個心跳 */
   try{ islTrZoneEnter(zoneId); }catch(_tre){ try{ console.warn('[尋寶] 進場', _tre); }catch(_){} }   /* ★ v1.399.0 🧭 尋寶按鈕/古老藏寶圖圓圈/大冠鷲提醒 */
+  try{ _IS.pwArm = true; islPetWaitPaint(zoneId); }catch(_pwp){}   /* ★ v1.471.0 等你帶食物來的夥伴 */
   if(cb) cb();
 }
 function islNodeHtml(n, i){
@@ -23834,6 +23913,7 @@ function islTick(t){
       }
     }
     if(_okx) _IS.cx = nx; if(_oky) _IS.cy = ny;
+    if(ISL && ISL.petWait && ISL.petWait.length){ try{ islPetWaitNear(); }catch(_pwn){} }   /* ★ v1.471.0 走近等待中的夥伴 ⇒ 打開遭遇視窗 */
     /* ★ v1.370.0 點地走路的看門狗:跟著路徑走時,0.6 秒(只算真的在走的時間,開視窗暫停不算)內離下一個路徑點
        沒有更近 4px 以上 ⇒ 判定被擋住,直接放棄這段路徑,讓玩家可以重新點地或用方向鍵。
        涵蓋兩種卡法:①兩軸都被擋(貼牆/貼水)②一軸被擋、另一軸在路徑點附近來回抖動(兩軸不會同時被擋,舊版永遠不會放棄)。 */
@@ -27316,7 +27396,7 @@ function islSubItems(cat){
     L.push({ e:'🍳', t:'烹飪', f:'islCookOpen()', dis: !hasFire, img:'res_d_soup' });
     L.push({ e:'🪴', t:'裝飾', f:'islDecoOpen()', img:'ui_deco' });
     L.push({ e:'🏚', t:'倉庫', f:'islStoreOpen()', img:'bld_storage_1' });
-    if(islPetCount()) L.push({ e:'🏡', t:'夥伴小屋', f:'islPetHouseOpen()', n: islPetCount() });
+    if(islPetCount()) L.push({ e:'🏡', t:'夥伴小屋', f:'islPetHouseOpen()', n: islPetIndN() });
     if(islPetCount()) L.push({ e:'📢', t:'夥伴大更新', f:'islPetNewsOpen()' });   /* ★ v1.469.0 說明頁 */   /* ★ v1.468.0 寵物個體化:全部夥伴一覽/改名/換編組/出來逛(有夥伴才出現;沒有專屬圖示,用 emoji) */
     if(islCampHasBld('farm')) L.push({ e:'🌱', t:'農田', f:'islFarmOpen()', img:'ui_farm' });
     if(islCampHasBld('pen')) L.push({ e:'🐔', t:'畜欄', f:'islPenOpen()', img:'ui_pen' });
@@ -27767,6 +27847,7 @@ function islNewDay(){
   try{ if(MG.user) islMailRefresh(function(){ islCampPaint(); }); }catch(_ml){}   /* ★ v1.106.0 每日更新信箱數量 */
   try{ if(MG.user && !islLocalOnly()) islPresenceBeat('day'); }catch(_pb2){}   /* ★ v1.244.0 換日再寫一次心跳(刷新制,不做每分鐘輪詢) */
   try{ islFriendNpcTick(); }catch(_fn2){}
+  try{ islPetWaitClear(); }catch(_pwc){}   /* ★ v1.471.0 主角睡覺 ⇒ 等待中的夥伴離開 */
   var db = islDB(), root = $('island-root'), ov = document.createElement('div'), k;
   playSfx('sfx-gentle', 0.45);
   ov.style.cssText = 'position:absolute;left:0;top:0;right:0;bottom:0;background:#000;z-index:50;display:flex;align-items:center;justify-content:center;font-size:24px;text-align:center;padding:20px;opacity:0;transition:opacity .6s';
@@ -28207,22 +28288,32 @@ window.islStoreOpen = function(){
  *   ⚠ 三個入口都掛在 👤 角色子選單,與既有的天賦星域/武器/物品包同一層,學生不必重新學位置。
  * ══════════════════════════════════════════════════════════════════════════ */
 function islPetHas(k){ return !!islPetSave(k); }
-function islPetCount(){ return (ISL.pets || []).length; }
+/* ★ v1.470.0 寵物個體化第 2 輪:同一種最多 2 隻 ⇒ islPetCount() 改成「收服過幾種(圖鑑/傳說門檻/章節目標用)」,
+   個體總數用 islPetIndN();某一種的全部個體 islPetRecsOf(k);曾經擁有過(放生後圖鑑仍保留)islPetEver(k)。 */
+function islPetCount(){ var L = (ISL && ISL.pets) || [], s = {}, i, n = 0; for(i = 0; i < L.length; i++){ if(L[i] && !s[L[i].k]){ s[L[i].k] = 1; n++; } } return n; }
+function islPetIndN(){ return ((ISL && ISL.pets) || []).length; }
+function islPetRecsOf(k){ var L = (ISL && ISL.pets) || [], out = [], i; for(i = 0; i < L.length; i++){ if(L[i] && L[i].k === k) out.push(L[i]); } return out; }
+function islPetEver(k){ return islPetHas(k) || !!(ISL && ISL.petDex && ISL.petDex[k] != null); }
 function islPartyCount(){ var i, n = 0; for(i = 0; i < ISL.party.length; i++){ if(ISL.party[i]) n++; } return n; }
 function islPartyHasPet(k){ var i; for(i = 0; i < ISL.party.length; i++){ if(ISL.party[i] && ISL.party[i].t === 'pet' && ISL.party[i].k === k) return true; } return false; }
+/* ★ v1.470.0 除了第 skip 格以外,隊上有沒有這一種(選隊友把同一格換成同種另一隻時不算重複) */
+function islPartyPetElse(k, skip){ var i; for(i = 0; i < ISL.party.length; i++){ if(i !== skip && ISL.party[i] && ISL.party[i].t === 'pet' && ISL.party[i].k === k) return true; } return false; }
 /* 取得一位新夥伴。第一次取得會自動補進空的編組格——不然學生招募完還要再進一次編組頁才用得到,
    而低年級最常見的回報就是「我明明抓到了為什麼戰鬥沒出現」。 */
-function islPetGet(k, quiet){
-  var db = islDB(), p = db.PETS[k], i;
-  if(!p || islPetHas(k)) return false;
-  var _nr = { k: k, lv: Math.max(1, p.joinLv | 0), xp: 0, bond: 0, bondPt: (db.HUNGER && db.HUNGER.bond) ? db.HUNGER.bond.recruitStart : 0, hun: 100 };   /* ★ v1.455.0 老師「招募時直接 +10」(不然一加入、一餓就鬧脾氣);剛加入吃飽飽 */   /* ★ v1.368.0 外島夥伴加入時直接是該島的等級(D.SEA.joinLv),Lv1 加入在 Lv50+ 的島上派不上用場 */
+function islPetGet(k, quiet, opt){
+  var db = islDB(), p = db.PETS[k], i, _dup = !!(opt && opt.dup);   /* ★ v1.470.0 opt.dup = 重複收服(同種第 2 隻);opt.rec = 遭遇時先抽好的那一隻 */
+  if(!p) return false;
+  if(_dup ? (p.get.how === 'npc' || islPetRecsOf(k).length >= ISL_PI.DUP.max) : islPetHas(k)) return false;
+  var _nr = (opt && opt.rec) || { k: k, lv: Math.max(1, p.joinLv | 0), xp: 0, bond: 0, bondPt: (db.HUNGER && db.HUNGER.bond) ? db.HUNGER.bond.recruitStart : 0, hun: 100 };
+  _nr.k = k;
+  (function(){ var q, L = ISL.pets || []; for(q = 0; q < L.length; q++){ if(L[q] && _nr.id && L[q].id === _nr.id){ _nr.id = ''; break; } } })();   /* ★ v1.471.0 等待中先抽好的那一隻跨過重讀檔,編號可能被別人用掉 ⇒ 重新給號 */   /* ★ v1.455.0 老師「招募時直接 +10」(不然一加入、一餓就鬧脾氣);剛加入吃飽飽 */   /* ★ v1.368.0 外島夥伴加入時直接是該島的等級(D.SEA.joinLv),Lv1 加入在 Lv50+ 的島上派不上用場 */
   islPiFill(_nr, ISL, false);   /* ★ v1.468.0 新夥伴:個體編號+隨機品級/成長率/個性 */
   ISL.pets.push(_nr);
-  ISL.petDex[k] = ISL.day;
+  if(ISL.petDex[k] == null) ISL.petDex[k] = ISL.day;   /* ★ v1.470.0 圖鑑記第一次收服那天(重複收服/放生後回來不覆蓋) */
   var _inP = false;
   for(i = 0; i < ISL.party.length; i++){ if(!ISL.party[i] && !islPartyHasPet(k)){ ISL.party[i] = islPartySlotMake(_nr); _inP = true; break; } }
   try{ islCodexAdd(k); }catch(_c){}
-  try{ islLog('🐾 ' + p.e + p.n + ' 成為夥伴了' + (_nr.gr === 'SSR' ? '(✨SSR!)' : ''), 'bt_pet_' + k + '_idle'); }catch(_l){}
+  try{ islLog('🐾 ' + p.e + p.n + (_dup ? '(第 ' + islPetRecsOf(k).length + ' 隻)' : '') + ' 成為夥伴了' + (_nr.gr === 'SSR' ? '(✨SSR!)' : ''), 'bt_pet_' + k + '_idle'); }catch(_l){}
   islSave('pet');
   try{ if(_IS.screen === 'camp') islCampPetsPaint(); }catch(_cp){}
   if(!quiet){
@@ -28314,7 +28405,7 @@ function islPetEncounterRoll(zone){
     if(ISL.petEnc[k] === ISL.day) continue;
     pick = k; break;
   }
-  if(!pick) return;
+  if(!pick){ try{ islPetDupRoll(zone); }catch(_dr){} return; }   /* ★ v1.470.0 這一區沒有沒收服的了 ⇒ 已擁有的種類有機率再遇到(第 2 輪) */
   if(ISL.petEnc[pick] == null && !_IS.coop){ try{ islLog('👀 在' + db.zone(zone).n + '第一次遇見 ' + db.PETS[pick].e + db.PETS[pick].n, 'bt_pet_' + pick + '_idle'); }catch(_pe){} }   /* ★ v1.380.0 回憶點:發現寵物 */
   ISL.petEnc[pick] = ISL.day;
   setTimeout(function(){ islPetEncounterOpen(pick); }, 1400);
@@ -28323,14 +28414,16 @@ function islPetEncounterRoll(zone){
 function islPetEncounterOpen(k){
   var db = islDB(), p = db.PETS[k], fd, have;
   if(!p || islPetHas(k)) return;
+  if(ISL.petDex[k] != null){ islPetDupOpen(k); return; }   /* ★ v1.470.0 以前收服過、放生了:知識學過了,送喜歡的食物就回來(不用再考) */
   playSfx('sfx-summon-smoke', 0.4);
   if(!ISL.petFriend[k]){
     fd = islItemDef(p.food); have = islHave(p.food) >= 1;
+    if(!have) try{ islPetWaitAdd(k, false); }catch(_pw){}   /* ★ v1.471.0 沒帶食物 ⇒ 牠留在原地等到你睡覺前 */
     islModal('<div style="text-align:center">' + islPetPicHtml(k, 96) + '</div><h3>👀 你遇到了 ' + p.e + ' ' + islEsc(p.n) + '!</h3>' +
       '<p>牠停在不遠的地方看著你,好像肚子餓了……</p>' +
       (have
         ? '<p>牠喜歡吃 ' + fd.e + islEsc(fd.n) + ',你身上剛好有!要不要送給牠?</p>'
-        : '<p style="color:#ffb0b0">牠喜歡吃 ' + fd.e + islEsc(fd.n) + ',可是你現在身上沒有——先去採集或烹飪準備好,下次再遇到牠的時候送給牠吧。</p>') +
+        : '<p style="color:#ffb0b0">牠喜歡吃 ' + fd.e + islEsc(fd.n) + ',可是你現在身上沒有。</p><p style="color:#ffe6a8">🐾 牠決定<b>留在這裡等你</b>,一直等到你今天睡覺前!快去採集或烹飪準備 ' + fd.e + islEsc(fd.n) + ',再走回牠身邊就能送給牠。(睡覺後牠就會離開,要等下次再遇到喔)</p>') +
       '<p style="font-size:15px;opacity:.85">🔬 ' + islEsc(p.sci) + '</p>',
       have
         ? [{ t: '先不管牠', cls: 'ghost' }, { t: '🎁 送牠 ' + fd.e + islEsc(fd.n), cls: 'gold', cb: function(){ islPetGift(k); } }]
@@ -28347,11 +28440,293 @@ function islPetGift(k){
   var db = islDB(), p = db.PETS[k], fd = islItemDef(p.food);
   if(!islConsume(p.food, 1)){ toast('食物不夠了'); return; }
   ISL.petFriend[k] = true;
+  try{ islPetWaitDel(k); }catch(_wd){}   /* ★ v1.471.0 等待中的送到食物了 */
   islHeartFx();   /* ★ 送禮愛心特效+音效,親密度系統同款視覺(見下方 islHeartFx) */
   islSave('pet');
   islModal('<h3>💚 ' + p.e + islEsc(p.n) + ' 收下了 ' + fd.e + islEsc(fd.n) + '!</h3><p>牠吃得很開心,似乎放下戒心了。要不要趁現在多聊聊,答對幾題就能正式成為朋友?</p>',
     [{ t: '休息一下', cls: 'ghost' },
      { t: '📝 開始問答', cls: 'gold', cb: function(){ islPetQuizStart(k); } }]);
+}
+/* ══════════════════════════════════════════════════════════════════════════
+ * ★ v1.470.0 🐾 荒島寵物個體化 第 2 輪(設計書 claude/荒島寵物個體化_設計書.md 第 7/8/10 節;老師 2026-11-27 裁定 E/F/G/H/I/K)
+ *   ①重複遭遇:這一區沒有沒收服的夥伴時,已擁有的種類在採集/伐木/釣魚/採石/撿垃圾/馴養成功時 6% 再遇到(同種一天最多 1 次);
+ *     🌈 傳說 3 位已擁有(或放生過)後在原本的調查區 2% 再遇到。NPC 4 位(how:'npc')與阿獺換購的 2 位不會在野外遇到
+ *     (阿獺換購的可以在夥伴卡「🦦 再換一隻」)。以前答過題 ⇒ 送喜歡的食物就加入,不用再考(裁定 E)。
+ *   ②營地空間提示:遭遇視窗寫「營地還能再收留幾隻(目前 n/2)」,先看新來這一隻的品級/成長/個性/等級/四維。
+ *   ③三選一:營地已經 2 隻 ⇒ 送完食物跳比較視窗,選一隻舊的放生(新的加入),或放棄新的(食物不退)。
+ *   ④放生(islPetReleaseOpen):夥伴裝備卸回裝備包、離開編組/出來逛;回饋 🐚(N20/R40/SR80/SSR150)+1 份最愛食物;
+ *     經驗傳承 30% 給另一位夥伴(可以不給);離別禮 🍇 神秘果實機率 islPetReleaseFruitP;SR 以上再確認一次;日誌附一句自然教育小語。
+ *     放生最後一隻也可以(裁定 G):圖鑑紀錄保留(petDex),之後再遇到送食物就回來。
+ *   ⑤打倒頭目升階:撐到戰鬥結束(沒倒下、沒被旋風吹走)的夥伴,每打倒 1 隻頭目擲一次 10%,N→R→SR→SSR(見 islPetsGainAfterWin)。
+ *   存檔新欄位:ISL.petDupDay {種類:今天已經重複遇到過的島上日}。
+ * ══════════════════════════════════════════════════════════════════════════ */
+function islPetDupZones(k){
+  var db = islDB(), p = db.PETS[k], L = db.LEGEND;
+  if(!p || !p.get) return [];
+  if(p.get.how === 'tame') return [p.get.zone];
+  if(p.legend && L){
+    if(L.camera && L.camera.pet === k) return (L.camera.zones || []).slice();
+    if(L.tidepool && L.tidepool.pet === k) return [L.tidepool.zone];
+    if(L.butterfly && L.butterfly.pet === k) return [L.butterfly.treeBoss];
+  }
+  return [];
+}
+function islPetDupRoll(zone){
+  var db = islDB(), P = ISL_PI.DUP, i, k, p, ok;
+  if(!ISL || _IS.coop) return false;
+  if(!ISL.petDupDay || typeof ISL.petDupDay !== 'object') ISL.petDupDay = {};
+  for(i = 0; i < db.PET_ORDER.length; i++){
+    k = db.PET_ORDER[i]; p = db.PETS[k];
+    if(!p || !p.get || p.get.how === 'npc' || p.get.how === 'shop') continue;
+    ok = p.legend ? islPetEver(k) : islPetHas(k);   /* 一般野生:要已擁有(放生光的走一般遭遇,一定遇到);傳說:擁有過就算 */
+    if(!ok || islPetDupZones(k).indexOf(zone) < 0 || ISL.petDupDay[k] === ISL.day) continue;
+    if(Math.random() * 100 >= (p.legend ? P.legendP : islPxDupP())) continue;   /* ★ v1.472.0 🍀 幸運:6% → 8% */
+    ISL.petDupDay[k] = ISL.day;
+    (function(kk){ setTimeout(function(){ islPetDupOpen(kk); }, 1400); })(k);
+    return true;
+  }
+  return false;
+}
+/* 遭遇時先抽好「新來的這一隻」(品級/成長/個性),讓學生看了再決定要不要換 */
+var _islDup = null;
+function islPetDupCand(k){
+  var db = islDB(), p = db.PETS[k], r = { k: k, lv: Math.max(1, p.joinLv | 0), xp: 0, bond: 0, bondPt: (db.HUNGER && db.HUNGER.bond) ? db.HUNGER.bond.recruitStart : 0, hun: 100 };
+  islPiFill(r, ISL, false);
+  return r;
+}
+/* 一隻夥伴的小卡(遭遇/三選一/放生共用) */
+function islPetMiniHtml(rec, tag, btn){
+  var db = islDB(), p = db.PETS[rec.k], ps = islPetStats(rec.k, rec.lv, rec.bond, rec), PS = islPetPsDef(rec), cmd = p && db.PET_CMDS[p.cmd];
+  if(!p || !ps) return '';
+  return '<div class="isl-pmini g-' + rec.gr + '">' + (tag ? '<div class="tag">' + tag + '</div>' : '') +
+    '<div class="pic">' + islPetPicHtml(rec.k, 'fill') + '</div>' +
+    '<div class="nm">' + islPetGrHtml(rec) + ' ' + islEsc(islPetNm(rec)) + (rec.nm ? '<small>・' + islEsc(p.n) + '</small>' : '') + '</div>' +
+    '<div class="ln">Lv' + rec.lv + '　' + islPetGwHtml(rec) + ' ' + islPetPsHtml(rec) + '</div>' +
+    '<div class="ln">' + islPetGwsHtml(rec) + '</div>' +
+    '<div class="ln st">❤' + ps.hp + ' ⚔' + ps.atk + ' 🛡' + ps.def + ' 💨' + islNum1(ps.spd) + '</div>' +
+    (PS ? '<div class="ln sm">' + PS.e + ' ' + islEsc(PS.fx) + '</div>' : '') +
+    '<div class="ln sm">' + (cmd ? cmd.e + ' ' + islEsc(cmd.n) + '・' : '') + '✨ ' + islEsc(p.talent) + '</div>' +
+    islPxMiniLn(rec) +
+    (btn || '') + '</div>';
+}
+/* ★ v1.472.0 小卡:天生 2 天賦 + 2 招(只列名字,詳細看夥伴卡) */
+function islPxMiniLn(rec){
+  var i, a = [], b = [];
+  for(i = 0; rec && rec.tl && i < rec.tl.length; i++){ if(ISL_PX.T[rec.tl[i]]) a.push(ISL_PX.T[rec.tl[i]].n); }
+  for(i = 0; rec && rec.sk && i < rec.sk.length; i++){ if(ISL_PX.S[rec.sk[i]]) b.push(ISL_PX.S[rec.sk[i]].e + ISL_PX.S[rec.sk[i]].n); }
+  if(!a.length && !b.length) return '';
+  return '<div class="ln sm px">🆕 ' + (a.length ? '✨' + islEsc(a.join('、')) : '') + (b.length ? '　' + islEsc(b.join('、')) : '') + '</div>';
+}
+function islPetDupTip(k){
+  var p = islDB().PETS[k], n = islPetRecsOf(k).length, M = ISL_PI.DUP.max;
+  if(!n) return '<div class="isl-pdup-tip ok">🏕 牠以前住過你的營地,送牠喜歡的食物就會回來(目前 0/' + M + ')</div>';
+  if(n < M) return '<div class="isl-pdup-tip ok">🏕 營地還能再收留 <b>' + (M - n) + ' 隻</b> ' + islEsc(p.n) + '(目前 ' + n + '/' + M + ')</div>';
+  return '<div class="isl-pdup-tip full">⚠ 營地的' + islEsc(p.n) + '已經 ' + n + '/' + M + ' 了,要讓牠加入就得放生其中一隻</div>';
+}
+window.islPetDupOpen = function(k){
+  var db = islDB(), p = db.PETS[k], fd, have, n;
+  if(!p || !p.get || p.get.how === 'npc') return;
+  if(!_islDup || _islDup.k !== k || _islDup.day !== ISL.day) _islDup = { k: k, day: ISL.day, rec: islPetDupCand(k) };
+  n = islPetRecsOf(k).length;
+  fd = islItemDef(p.food); have = !!fd && islHave(p.food) >= 1;
+  if(!have) try{ islPetWaitAdd(k, true, _islDup.rec); }catch(_pw){}   /* ★ v1.471.0 沒帶食物 ⇒ 新來的這一隻留在原地等到你睡覺前(同一隻,品級不重抽) */
+  playSfx(p.legend ? 'sfx-summon-reveal' : 'sfx-summon-smoke', 0.4);
+  islModal('<div class="isl-pdup">' +
+    '<h3>' + (n ? '👀 又遇到一隻 ' : '👀 ') + p.e + ' ' + islEsc(p.n) + (n ? '!' : ' 回來看你了!') + '</h3>' + islPetDupTip(k) +
+    '<div class="pd-row">' + islPetMiniHtml(_islDup.rec, '✨ 新來的這一隻') +
+    '<div class="pd-txt"><p>' + (n ? '牠好像也想住進你的營地。你以前就認識' + islEsc(p.n) + '了,不用再答題——' : '你們以前是好朋友。') + '送牠喜歡吃的 ' + (fd ? fd.e + islEsc(fd.n) : '食物') + ' 牠就會跟你走。</p>' +
+    (have ? '' : '<p style="color:#ffb0b0">可是你現在身上沒有 ' + (fd ? fd.e + islEsc(fd.n) : '') + '。</p><p style="color:#ffe6a8">🐾 牠會<b>留在這裡等你</b>到今天睡覺前,準備好食物再走回牠身邊就行!(睡覺後牠就會離開)</p>') +
+    '<p class="sm">💡 每一隻的品級、成長率、個性都不一樣,看清楚再決定值不值得換!<br>🔬 ' + islEsc(p.sci) + '</p></div></div></div>',
+    have ? [{ t: '先不管牠', cls: 'ghost', cb: function(){ islZoneResume(); } }, { t: '🎁 送牠 ' + fd.e + islEsc(fd.n), cls: 'gold', cb: function(){ islPetDupGift(k); } }]
+         : [{ t: '知道了', cls: 'gold', cb: function(){ islZoneResume(); } }]);
+};
+function islPetDupGift(k){
+  var db = islDB(), p = db.PETS[k], S = _islDup, n;
+  if(!S || S.k !== k){ islZoneResume(); return; }
+  if(!islConsume(p.food, 1)){ toast('食物不夠了'); islZoneResume(); return; }
+  try{ islPetWaitDel(k); }catch(_wd){}   /* ★ v1.471.0 */
+  try{ islHeartFx(); }catch(_hf){}
+  n = islPetRecsOf(k).length;
+  if(n < ISL_PI.DUP.max){ _islDup = null; islPetGet(k, false, { dup: n > 0, rec: S.rec }); return; }
+  islSave('petdup');
+  islPetDupChoose(k);
+}
+/* 三選一:左邊兩隻舊的、右邊新的;選一隻舊的放生(新的加入),或放棄新的(食物不退) */
+function islPetDupChoose(k){
+  var db = islDB(), p = db.PETS[k], S = _islDup, olds = islPetRecsOf(k), h = '', i;
+  if(!S || S.k !== k){ islZoneResume(); return; }
+  h += '<div class="isl-bagbox wide full isl-pchoose"><h3>🏕 營地的' + islEsc(p.n) + '滿了(' + olds.length + '/' + ISL_PI.DUP.max + ')<span class="grow"></span></h3><div class="bd">';
+  h += '<p class="pc-lead">' + p.e + ' 新來的' + islEsc(p.n) + '收下食物了!營地同一種最多住 ' + ISL_PI.DUP.max + ' 隻,要讓牠加入,就選一隻舊的回到大自然(有回饋,經驗也可以傳給別的夥伴)。</p><div class="pc-row">';
+  for(i = 0; i < olds.length; i++) h += islPetMiniHtml(olds[i], '🏡 營地的', '<button class="isl-btn ghost rel" data-act="rel" data-id="' + olds[i].id + '">🍃 讓牠回大自然</button>');
+  h += islPetMiniHtml(S.rec, '✨ 新來的', '<button class="isl-btn ghost" data-act="skip">放棄新的這隻</button>');
+  h += '</div><p class="pc-foot">放棄新的這隻:牠吃完東西就走了(食物不會退回)。</p></div></div>';
+  islPanel(h, function(t){
+    var a = t.getAttribute('data-act'), id = t.getAttribute('data-id');
+    if(a === 'close' || a === 'skip'){
+      islModalClose(); _islDup = null;
+      toast('👋 ' + p.e + ' 新來的' + p.n + '吃飽之後回到' + islPetHomeName(k) + '了');
+      islZoneResume(); return;
+    }
+    if(a === 'rel' && id) islPetReleaseOpen(id, function(){ islPetDupChoose(k); }, { swap: S });
+  }, { wide: true });
+}
+/* 牠的家(放生時說「回到哪裡」) */
+function islPetHomeName(k){ var db = islDB(), p = db.PETS[k], z = p && p.get && p.get.zone && db.zone ? db.zone(p.get.zone) : null; return z ? z.n : '大自然'; }
+/* 累積經驗(放生傳承用):Lv1 到現在等級的升級門檻總和 + 目前經驗 */
+function islPetXpTotal(rec){ var L = islDB().PET_LV, s = rec.xp | 0, l; for(l = 1; l < (rec.lv | 0); l++) s += L.XP_BASE + L.XP_STEP * (l - 1); return s; }
+function islPetXpGive(rec, n){
+  var db = islDB(), up = 0;
+  rec.xp = (rec.xp | 0) + Math.max(0, n | 0);
+  while(rec.lv < islCapFor(db.PET_LV.MAX) && rec.xp >= db.PET_LV.XP_BASE + db.PET_LV.XP_STEP * (rec.lv - 1)){
+    rec.xp -= db.PET_LV.XP_BASE + db.PET_LV.XP_STEP * (rec.lv - 1); rec.lv++; up++;
+    islPetLevelHpBonus(rec.k, rec);
+  }
+  if(rec.lv >= islCapFor(db.PET_LV.MAX)) rec.xp = 0;
+  return up;
+}
+/* 🍃 放生:after = 放生完(或取消)要回哪裡;opt.swap = 三選一的新夥伴(放生後讓牠加入) */
+window.islPetReleaseOpen = function(id, after, opt){
+  var db = islDB(), rec = islPetSave(id), p, P = ISL_PI.DUP, sh, fav, fd, give, fp, sw = opt && opt.swap, back;
+  if(!rec) return;
+  p = db.PETS[rec.k]; if(!p) return;
+  back = function(){ if(after) after(); };
+  if(p.get && p.get.how === 'npc'){ islModal('<h3>' + p.e + ' ' + islEsc(islPetNm(rec)) + '</h3><p>' + islEsc(p.n) + '是帶你認識荒島的老師夥伴,會一直住在營地,不能放生喔。</p>', [{ t: '好', cls: 'gold', cb: back }]); return; }
+  sh = P.shell[rec.gr] || P.shell.R; fav = islPetDietOf(rec.k).f || p.food; fd = fav ? islItemDef(fav) : null;
+  give = Math.floor(islPetXpTotal(rec) * islPxInhP() / 100); fp = Math.round(islPetReleaseFruitP(rec));
+  playSfx('sfx-tap', 0.3);
+  islModal('<div class="isl-prel"><h3>🍃 要讓 ' + p.e + ' ' + islEsc(islPetNm(rec)) + ' 回到大自然嗎?</h3>' +
+    '<p>' + islPetGrHtml(rec) + ' ' + islEsc(p.n) + ' Lv' + rec.lv + ' 會回到' + islEsc(islPetHomeName(rec.k)) + '。<b>放生後就不會回來了</b>(圖鑑紀錄會保留,以後在野外再遇到,送牠喜歡的食物就可能再成為夥伴,但會是另一隻)。</p>' +
+    '<div class="pr-gift"><b>牠會留下:</b><span>🐚 ' + sh + ' 貝幣</span>' + (fd ? '<span>' + fd.e + ' ' + islEsc(fd.n) + ' ×1</span>' : '') +
+      (give > 0 ? '<span>📈 經驗傳承 ' + give + ' EXP(可以給另一位夥伴)</span>' : '') + '<span>' + ISL_PI.MF.e + ' 離別禮機率 ' + fp + '%(等級越高、感情越好越容易)</span>' +
+      (islPetGearInst(rec.id) ? '<span>🐾 身上的夥伴裝備會放回裝備包</span>' : '') + '</div></div>',
+    [{ t: '再想想', cls: 'ghost', cb: back },
+     { t: '🍃 放生', cls: 'gold', cb: function(){
+        if(ISL_PI.GR_ORDER.indexOf(rec.gr) >= ISL_PI.GR_ORDER.indexOf('SR')){
+          islModal('<h3>⚠ 再確認一次</h3><p>' + islPetGrHtml(rec) + ' 是很少見的品級!真的要讓 ' + islEsc(islPetNm(rec)) + ' 回到大自然嗎?</p>',
+            [{ t: '不要了', cls: 'ghost', cb: back }, { t: '確定放生', cls: 'gold', cb: function(){ islPetReleaseXp(rec, give, sw, back); } }]);
+        } else islPetReleaseXp(rec, give, sw, back);
+     } }]);
+};
+/* 經驗傳承對象(可以不給) */
+function islPetReleaseXp(rec, give, sw, back){
+  var db = islDB(), L = [], i, r, h = '';
+  if(give > 0){
+    if(sw) L.push({ r: sw.rec, nw: true });
+    for(i = 0; i < ISL.pets.length; i++){ r = ISL.pets[i]; if(r && r !== rec && db.PETS[r.k] && r.lv < islCapFor(db.PET_LV.MAX)) L.push({ r: r }); }
+  }
+  if(!L.length){ islPetReleaseDo(rec, null, sw, back); return; }
+  h += '<div class="isl-bagbox wide full isl-prelxp"><h3>📈 ' + islEsc(islPetNm(rec)) + ' 的經驗要傳給誰?<span class="grow"></span></h3><div class="bd">';
+  h += '<p>' + islEsc(islPetNm(rec)) + ' 練了很久的經驗,可以把 <b>' + give + ' EXP</b>(' + islPxInhP() + '%)傳給一位夥伴。</p><div class="px-list">';
+  for(i = 0; i < L.length; i++){
+    r = L[i].r;
+    h += '<button class="isl-recipe can" data-act="xp" data-i="' + i + '"><span class="rn">' + islPetPicHtml(r.k, 34) + ' ' + (L[i].nw ? '✨ 新來的 ' : '') + islPetGrHtml(r) + ' ' + islEsc(islPetNm(r)) + (r.nm ? '・' + islEsc(db.PETS[r.k].n) : '') + ' Lv' + r.lv + (islPartyHasPid(r.id) ? ' 🧭' : '') + '</span></button>';
+  }
+  h += '</div><div class="isl-dexfoot"><button class="isl-btn ghost" data-act="none">不用傳承</button></div></div></div>';
+  islPanel(h, function(t){
+    var a = t.getAttribute('data-act');
+    if(a === 'close'){ islModalClose(); back(); return; }
+    if(a === 'none'){ islModalClose(); islPetReleaseDo(rec, null, sw, back); return; }
+    if(a === 'xp'){ var it = L[parseInt(t.getAttribute('data-i'), 10)]; if(!it) return; islModalClose(); islPetReleaseDo(rec, it.r, sw, back); }
+  }, { wide: true });
+}
+function islPetReleaseDo(rec, tgt, sw, back){
+  var db = islDB(), p = db.PETS[rec.k], P = ISL_PI.DUP, got = [], i, sh, fav, fd, give, up, fr = false, say, home, nm = islPetNm(rec), idx;
+  idx = ISL.pets.indexOf(rec); if(idx < 0){ back(); return; }
+  if(ISL.petGear && ISL.petGear.eq && ISL.petGear.eq[rec.id] != null){ delete ISL.petGear.eq[rec.id]; got.push('🐾 身上的夥伴裝備放回裝備包了'); }
+  for(i = 0; i < ISL.party.length; i++){ if(islPartySlotIs(ISL.party[i], rec)) ISL.party[i] = null; }
+  rec.out = false;
+  if(tgt){ give = Math.floor(islPetXpTotal(rec) * islPxInhP() / 100); up = islPetXpGive(tgt, give); got.push('📈 ' + islEsc(islPetNm(tgt)) + ' 得到 EXP+' + give + (up ? '(升到 Lv' + tgt.lv + '!)' : '')); }
+  fr = Math.random() * 100 < islPetReleaseFruitP(rec);
+  ISL.pets.splice(idx, 1);
+  sh = P.shell[rec.gr] || P.shell.R; ISL.shell = (ISL.shell | 0) + sh; got.unshift('🐚 +' + sh + ' 貝幣');
+  fav = islPetDietOf(rec.k).f || p.food; fd = fav ? islItemDef(fav) : null;
+  if(fd){ if(!islBagAdd(fav, 1, 1)) islStoreAdd(fav, 1, 1); got.splice(1, 0, fd.e + ' ' + islEsc(fd.n) + ' ×1'); }
+  if(fr){ ISL.mfruit = (ISL.mfruit | 0) + 1; got.push(ISL_PI.MF.e + ' ' + ISL_PI.MF.n + ' ×1(離別禮!)'); }
+  say = ISL_PI.REL_SAY[Math.floor(Math.random() * ISL_PI.REL_SAY.length)]; home = islPetHomeName(rec.k);
+  try{ islLog('🍃 ' + p.e + nm + (rec.nm ? '(' + p.n + ')' : '') + ' 回到' + home + '了。' + say, 'bt_pet_' + rec.k + '_idle'); }catch(_l){}
+  if(sw && sw.rec && sw.k === rec.k){ _islDup = null; islPetGet(rec.k, true, { dup: islPetRecsOf(rec.k).length > 0, rec: sw.rec }); got.push('✨ 新來的' + p.n + '加入營地了'); }
+  try{ islHud(); }catch(_h){}
+  islSave('petrelease');
+  try{ if(_IS.screen === 'camp') islCampPetsPaint(); }catch(_cp){}
+  playSfx(fr ? 'sfx-fantasy' : 'sfx-heal', 0.45);
+  islModal('<div class="isl-prel done"><h3>🍃 ' + p.e + ' ' + islEsc(nm) + ' 回到' + islEsc(home) + '了</h3>' +
+    '<div class="pr-pic">' + islPetPicHtml(rec.k, 96) + '</div>' +
+    '<p class="pr-say">「' + islEsc(say) + '」</p>' +
+    '<div class="pr-gift"><b>' + (fr ? '牠送你一份離別禮!' : '牠留下了:') + '</b>' + got.map(function(s){ return '<span>' + s + '</span>'; }).join('') + '</div></div>',
+    [{ t: '再見了,' + nm, cls: 'gold', cb: function(){ if(sw && sw.rec){ var nr = sw.rec; islPetJoinedNote(nr); } else back(); } }]);
+}
+/* 三選一換來的新夥伴:放生結果關掉後,補一張簡短的「加入了」並回到野外 */
+function islPetJoinedNote(rec){
+  var db = islDB(), p = db.PETS[rec.k];
+  if(!p || ISL.pets.indexOf(rec) < 0){ islZoneResume(); return; }
+  playSfx('sfx-applause', 0.45);
+  islModal('<h3>🎉 ' + p.e + ' 新的' + islEsc(p.n) + ' 加入了!</h3>' + islPetMiniHtml(rec, '✨ 新夥伴') + '<p style="font-size:15px;opacity:.85">到 🏕 營地 → 🏡 夥伴小屋 可以幫牠取名字、編入探險隊。</p>',
+    [{ t: '✏ 幫牠取名字', cls: 'ghost', cb: function(){ islPetNameOpen(rec.id, function(){ islZoneResume(); }); } }, { t: '太好了', cls: 'gold', cb: function(){ islZoneResume(); } }]);
+}
+/* ⑤ 打倒頭目升階:品級往上一階(SSR 是最高);回傳新品級或 null */
+function islPetGrUp(rec){ var o = ISL_PI.GR_ORDER, i = o.indexOf(rec.gr); if(i < 0 || i >= o.length - 1) return null; rec.gr = o[i + 1]; return rec.gr; }
+/* ══ ★ v1.471.0 🐾 沒帶食物 ⇒ 夥伴留在原地等你(老師 2026-11-27 21:01「遇到寵物如果身上剛好沒有攜帶食物,寵物現在會留在原地等待(用寵物在營地的角色圖即可),
+   最多等到主角睡覺之前都可以來招募。主角睡覺後寵物就會離去等下次再遇。」)
+   ・存檔 ISL.petWait = [{ k, z:區, d:島上日, x, y, dup:1|0, rec:(重複遭遇先抽好的那一隻) }];同一種只留一筆。
+   ・遭遇視窗(一般 islPetEncounterOpen / 重複 islPetDupOpen)沒有食物時登記;送出食物(islPetGift / islPetDupGift)就刪掉。
+   ・進場景 islPetWaitPaint 畫出營地同款角色圖(islPetPicHtml idle)+「🍽 等你帶○○來」泡泡;主角走近(<100px)自動再打開遭遇視窗,
+     走開(>150px)才會再觸發(避免關掉視窗後一直跳)。
+   ・睡覺換日(islNewDay)全部清掉,日誌記「離開了」。參觀好友島不登記。 */
+function islPetWaitList(){ if(!ISL) return []; if(!(ISL.petWait instanceof Array)) ISL.petWait = []; return ISL.petWait; }
+function islPetWaitGet(k){ var L = islPetWaitList(), i; for(i = 0; i < L.length; i++){ if(L[i] && L[i].k === k) return L[i]; } return null; }
+function islPetWaitDel(k){ var L = islPetWaitList(), i, hit = false; for(i = L.length - 1; i >= 0; i--){ if(!L[i] || L[i].k === k){ L.splice(i, 1); hit = true; } } if(hit){ try{ islPetWaitPaint(_IS.zone); }catch(_wp){} } return hit; }
+function islPetWaitAdd(k, dup, rec){
+  var w, z = _IS.zone, sc = _IS.scene, ox = 0, oy = 0, tries = [[84, 0], [-84, 0], [0, 70], [0, -70], [60, 50], [-60, 50]], i;
+  if(!ISL || _IS.coop || _IS.screen !== 'zone' || !z) return null;
+  w = islPetWaitGet(k);
+  if(w && w.z === z && w.d === ISL.day){ if(dup && rec) w.rec = rec; return w; }
+  islPetWaitDel(k);
+  for(i = 0; i < tries.length; i++){ try{ if(islWalkable(_IS.cx + tries[i][0], _IS.cy + tries[i][1])){ ox = tries[i][0]; oy = tries[i][1]; break; } }catch(_wk){ break; } }
+  w = { k: k, z: z, d: ISL.day, x: Math.round(_IS.cx + ox), y: Math.round(_IS.cy + oy), dup: dup ? 1 : 0 };
+  if(dup && rec) w.rec = rec;
+  islPetWaitList().push(w);
+  _IS.pwArm = false;   /* 剛登記時主角就站在旁邊:先走開才會再觸發 */
+  try{ islSave('petwait'); }catch(_s){}
+  try{ islPetWaitPaint(z); }catch(_p){}
+  return w;
+}
+function islPetWaitPaint(zoneId){
+  var zm = $('isl-zone-map'), L = islPetWaitList(), i, w, p, el, old, sz, fd, db = islDB();
+  if(!zm) return;
+  old = zm.querySelectorAll('.isl-petwait'); for(i = 0; i < old.length; i++){ if(old[i].parentNode) old[i].parentNode.removeChild(old[i]); }
+  if(_IS.coop || !ISL) return;
+  for(i = 0; i < L.length; i++){
+    w = L[i]; p = w && db.PETS[w.k];
+    if(!p || w.z !== zoneId || w.d !== ISL.day) continue;
+    sz = Math.round(96 * ISL_CAMP_PET_RATIO * islPetPicMul(w.k)); fd = islItemDef(p.food);
+    el = document.createElement('div'); el.className = 'isl-petwait'; el.setAttribute('data-k', w.k);
+    el.style.left = w.x + 'px'; el.style.top = w.y + 'px'; el.style.width = sz + 'px'; el.style.height = sz + 'px'; el.style.marginLeft = (-sz / 2) + 'px'; el.style.marginTop = (-sz) + 'px';
+    el.innerHTML = '<div class="shadow"></div><span class="pp">' + islPetPicHtml(w.k, sz, '', 'idle') + '</span><span class="bb">🍽 等你帶' + (fd ? fd.e + islEsc(fd.n) : '食物') + '來</span>';
+    zm.appendChild(el);
+  }
+}
+/* islTick 每幀呼叫:走近就打開遭遇視窗 */
+function islPetWaitNear(){
+  var L, i, w, dx, dy, d, best = null, bd = 1e9, m;
+  if(_IS.coop || !ISL || !ISL.petWait || !ISL.petWait.length) return;
+  L = ISL.petWait;
+  for(i = 0; i < L.length; i++){ w = L[i]; if(!w || w.z !== _IS.zone || w.d !== ISL.day) continue; dx = w.x - _IS.cx; dy = w.y - _IS.cy; d = Math.sqrt(dx * dx + dy * dy); if(d < bd){ bd = d; best = w; } }
+  if(!best) return;
+  if(bd > 150){ _IS.pwArm = true; return; }
+  if(bd > 100 || !_IS.pwArm) return;
+  m = $('isl-modal'); if(m && !m.classList.contains('hidden')) return;
+  if(_IS.act || _IS.trBusy || _islBt || ($('isl-dialog') && !$('isl-dialog').classList.contains('hidden'))) return;
+  _IS.pwArm = false;
+  _IS.path = null; _IS.pathRun = false; try{ _IS.keys = {}; }catch(_k){}
+  if(best.dup){ if(best.rec) _islDup = { k: best.k, day: ISL.day, rec: best.rec }; islPetDupOpen(best.k); }
+  else islPetEncounterOpen(best.k);
+}
+/* 睡覺換日:等待中的夥伴都離開 */
+function islPetWaitClear(){
+  var L = islPetWaitList(), db = islDB(), i, p, n = [];
+  for(i = 0; i < L.length; i++){ p = L[i] && db.PETS[L[i].k]; if(p) n.push(p.e + p.n); }
+  if(n.length){ try{ islLog('🌙 ' + n.join('、') + ' 等不到你,回到森林裡了(下次遇到記得帶牠喜歡的食物)'); }catch(_l){} }
+  if(ISL) ISL.petWait = [];
 }
 /* 問答:10 題題庫隨機抽 D.PET_RECRUIT.quizPick 題,逐題作答,答對 ≥ quizPass 題才合格。
    ⚠ 自建輕量彈窗式問答(不借 islQuizOne——那支綁死在「島上活動」的 _IS.act/islActBody 體系,
@@ -28464,7 +28839,9 @@ window.islPetDexOpen = function(pickIdx){
     k = db.PET_ORDER[i]; p = db.PETS[k]; rec = islPetSave(k); got = !!rec;
     if(pick && !got) continue;
     if(ft !== 'all' && p.type !== ft) continue;   /* ft==='friend' 時所有夥伴都不符合 ⇒ 只剩好友卡 */
-    list.push({ k: k, p: p, rec: rec, got: got, ps: got ? islPetStats(k, rec.lv, rec.bond) : null, o: i });
+    /* ★ v1.470.0 同一種可以有 2 隻:選隊友時一隻一張卡(才選得到第二隻);圖鑑仍是一種一張,標 ×2 */
+    if(pick){ (function(L2){ var q; for(q = 0; q < L2.length; q++) list.push({ k: k, p: p, rec: L2[q], got: true, ps: islPetStats(k, L2[q].lv, L2[q].bond, L2[q]), o: i, n2: L2.length }); })(islPetRecsOf(k)); continue; }
+    list.push({ k: k, p: p, rec: rec, got: got, ps: got ? islPetStats(k, rec.lv, rec.bond, rec) : null, o: i, n2: islPetRecsOf(k).length, rel: !got && ISL.petDex[k] != null });
   }
   if(F.s === 'def'){ if(F.d > 0) list.reverse(); }
   else list.sort(function(a, b){
@@ -28477,14 +28854,14 @@ window.islPetDexOpen = function(pickIdx){
   for(i = 0; i < list.length; i++){
     it = list[i]; k = it.k; p = it.p; rec = it.rec; got = it.got; ps = it.ps;
     typeDef = db.PET_TYPES[p.type];
-    rs = !!(got && islPetDown(rec)); inP = islPartyHasPet(k); blk = pick && (rs || inP || islPetSulk(rec));   /* ★ v1.455.0 鬧脾氣的不能選 */
-    h += '<button class="isl-petcard t-' + p.type + (got ? '' : ' lock') + (inP ? ' inparty' : '') + (rs ? ' rest' : '') + (blk ? ' blk' : '') + '" data-act="pet" data-k="' + k + '">';
-    h += '<div class="pic">' + (got ? islPetPicHtml(k, 'fill', null, rs ? 'sleep' : 'idle') : '❔') + (got ? '' : '<span class="pk">🔒</span>') + '</div>';   /* ★ v1.208.0 'fill' 讓 CSS 的 width:100%/object-fit:contain 真正生效(見 islPetPicHtml 說明);★ v1.323.0 休息中換睡覺姿態 */
-    h += '<div class="nm">' + (got ? islEsc(p.n) : '???') + '</div>';
-    if(rs) h += '<div class="rst">💤 今天受傷休息</div><span class="isl-dexrev" data-act="rev" data-k="' + k + '">' + islPetReviveShortText() + '</span>';   /* ★ v1.323.0 ② 短版復活鈕貼在名字正下方 */
+    rs = !!(got && islPetDown(rec)); inP = pick ? islPartyHasPid(rec.id) : islPartyHasPet(k); blk = pick && (rs || inP || islPetSulk(rec) || islPartyPetElse(k, pickIdx));   /* ★ v1.455.0 鬧脾氣的不能選;★ v1.470.0 選隊友比個體、同種已在別格也擋 */
+    h += '<button class="isl-petcard t-' + p.type + (got ? '' : ' lock') + (inP ? ' inparty' : '') + (rs ? ' rest' : '') + (blk ? ' blk' : '') + '" data-act="pet" data-k="' + (got ? rec.id : k) + '">';
+    h += '<div class="pic">' + (got || it.rel ? islPetPicHtml(k, 'fill', null, rs ? 'sleep' : 'idle') : '❔') + (got ? '' : '<span class="pk">' + (it.rel ? '🍃' : '🔒') + '</span>') + (!pick && it.n2 > 1 ? '<span class="isl-dexn2">×' + it.n2 + '</span>' : '') + '</div>';   /* ★ v1.208.0 'fill' 讓 CSS 的 width:100%/object-fit:contain 真正生效(見 islPetPicHtml 說明);★ v1.323.0 休息中換睡覺姿態;★ v1.470.0 ×2 / 🍃 放生過 */
+    h += '<div class="nm">' + (got ? (pick ? islPetGrHtml(rec) + ' ' + islEsc(islPetNm(rec)) : islEsc(p.n)) : (it.rel ? islEsc(p.n) : '???')) + '</div>';
+    if(rs) h += '<div class="rst">💤 今天受傷休息</div><span class="isl-dexrev" data-act="rev" data-k="' + rec.id + '">' + islPetReviveShortText() + '</span>';   /* ★ v1.323.0 ② 短版復活鈕貼在名字正下方 */
     h += '<div class="tp">' + (typeDef ? typeDef.e + ' ' + typeDef.n : '') + '</div>';
     if(got) h += '<div class="lv">Lv' + rec.lv + '　' + db.PET_BOND[rec.bond].e + (islPetSulk(rec) ? ' 💢' : '') + '</div><div class="st">❤️' + ps.hp + '　⚔' + ps.atk + '　🛡' + ps.def + '　💨' + islNum1(ps.spd) + '</div>';
-    else h += '<div class="lv hint">' + islEsc(islPetGetHint(p)) + '</div>';
+    else h += '<div class="lv hint">' + islEsc(it.rel ? (p.get.how === 'shop' ? '🍃 放生過了——可以再跟阿獺換一隻' : '🍃 放生過了——再遇到時,送牠喜歡的食物就會回來') : islPetGetHint(p)) + '</div>';
     h += (inP ? '<span class="pin">🧭 ' + (pick ? '已在隊上' : '編組中') + '</span>' : '') + '</button>';
   }
   if(pick && (ft === 'all' || ft === 'friend')){
@@ -28513,7 +28890,8 @@ window.islPetDexOpen = function(pickIdx){
     else if(a === 'pet'){
       if(!pick){ islPetCardOpen(kk); return; }
       r2 = islPetSave(kk); if(!r2) return;
-      if(islPartyHasPet(kk)){ toast('牠已經在隊上了'); return; }
+      if(islPartyHasPid(r2.id)){ toast('牠已經在隊上了'); return; }
+      if(islPartyPetElse(r2.k, pickIdx)){ toast('同一種夥伴一隊只能帶 1 隻'); return; }   /* ★ v1.470.0 裁定 K;同一格換成同種另一隻可以 */
       if(r2.rest === ISL.day){ toast('💤 牠今天在休息——按名字下面的復活,或等明天'); return; }
       if(islPetSulk(r2)){ toast('💢 牠在鬧脾氣,不想出門——先餵牠吃東西,親密度回到 ' + islHunCfg().bond.sulkBack + ' 就會和好'); return; }   /* ★ v1.455.0 */
       islModalClose(); playSfx('sfx-ok', 0.4);
@@ -28597,8 +28975,8 @@ function islPetCardOpen(k, back){
   h += '<div class="sec typ"><span class="badge" style="background:' + _tc.bg + ';color:' + _tc.tx + '">' + (db.PET_TYPES[p.type] ? db.PET_TYPES[p.type].e + ' ' + islEsc(db.PET_TYPES[p.type].n) : '') + '</span><span class="d">' + (db.PET_TYPES[p.type] ? islEsc(db.PET_TYPES[p.type].d) : '') + '</span></div>';
   h += '<div class="sec lv-box"><div class="hd">🎓 已收錄馴養　Lv.' + rec.lv + '</div><div class="xpbar"><i style="width:' + _bondPct + '%"></i></div><div class="sub">' + (nxt ? 'EXP ' + rec.xp + ' / ' + nxt : '已滿級') + '</div></div>';
   h += '<div class="sec stat"><span>❤️<b>' + ps.hp + '</b><i>HP</i></span><span>⚔<b>' + ps.atk + '</b><i>攻擊</i></span><span>🛡<b>' + ps.def + '</b><i>防禦</i></span><span>💨<b>' + islNum1(ps.spd) + '</b><i>速度</i></span></div>';   /* ★ v1.213.0 老師「寵物狀態的四維有圖示也要有中文」— 原本只有 emoji+數字,補上 <i>HP/攻擊/防禦/速度</i> 小字標籤(CSS 見 .isl-petinfo .sec.stat i) */
-  h += '<div class="sec skill"><div class="hd">' + cmd.e + ' ' + islEsc(cmd.n) + '<span class="cd">冷卻 ' + cmd.cd + ' 回合' + (islPetCmdCd(cmd.cd, ps.cdCut) !== cmd.cd ? '(你的縮減 −' + (ps.cdCut | 0) + (islPetCmdCd(cmd.cd, ps.cdCut) > cmd.cd - (ps.cdCut | 0) ? ',最多縮一半' : '') + ' → ' + islPetCmdCd(cmd.cd, ps.cdCut) + ')' : '') + '</span></div><div class="bd2">' + islEsc(cmd.d) + '</div></div>';
-  h += '<div class="sec talent"><div class="hd">✨ 天賦</div><div class="bd2">' + islEsc(p.talent) + '</div></div>';
+  h += '<div class="sec skill"><div class="hd">' + cmd.e + ' ' + islEsc(cmd.n) + '<span class="cd">冷卻 ' + cmd.cd + ' 回合' + (islPetCmdCd(cmd.cd, ps.cdCut) !== cmd.cd ? '(你的縮減 −' + (ps.cdCut | 0) + (islPetCmdCd(cmd.cd, ps.cdCut) > cmd.cd - (ps.cdCut | 0) ? ',最多縮一半' : '') + ' → ' + islPetCmdCd(cmd.cd, ps.cdCut) + ')' : '') + '</span></div><div class="bd2">' + islEsc(cmd.d) + (rec.sk && rec.sk.length ? '<div class="isl-pxsk">🆕 天生的技能' + islPxSkLines(rec) + '</div>' : '') + '</div></div>';   /* ★ v1.472.0 3 招 */
+  h += '<div class="sec talent"><div class="hd">✨ 天賦</div><div class="bd2">' + islEsc(p.talent) + islPxTalLines(rec) + '</div></div>';   /* ★ v1.472.0 + 2 個專屬新天賦(數值已吃品級) */
   var _gi = islPetGearInst(_pid), _gd = _gi ? db.petGear(_gi.id) : null;   /* ★ v1.331.0 🐾 夥伴裝備;★ v1.468.0 用個體 id */
   h += '<div class="sec talent"><div class="hd">🐾 夥伴裝備</div><div class="bd2">' + (_gd ? _gd.e + ' ' + islEsc(_gd.n) + ' <span style="color:#ffd166">' + '★★★'.slice(0, _gi.q) + '</span>　' + islEsc(islPetGearDescQ(_gd, _gi.q)) : '(還沒戴)') + '</div></div>';
   h += '<div class="sec bond-box"><div class="hd">💖 親密度　' + db.PET_BOND[rec.bond].e + ' ' + islEsc(db.PET_BOND[rec.bond].n) + '</div><div class="bondbar"><i style="width:' + Math.min(100, Math.round(rec.bondPt / (db.PET_BOND[db.PET_BOND.length - 1].need || 220) * 100)) + '%"></i></div><div class="sub">' + islEsc(db.PET_BOND[rec.bond].d) + '</div></div>';
@@ -28606,6 +28984,7 @@ function islPetCardOpen(k, back){
   h += '</div>';
   btns.push({ t: '✏ 改名字', cls: 'ghost', cb: function(){ islPetNameOpen(_pid, function(){ islPetCardOpen(_pid, back); }); } });   /* ★ v1.468.0 免費、不限次數 */
   if((ISL.mfruit | 0) > 0 && !islPiGwsAllA(rec)) btns.push({ t: ISL_PI.MF.e + ' 吃神秘果實(' + (ISL.mfruit | 0) + ')', cls: 'gold', cb: function(){ islPetFruitOpen(_pid, function(){ islPetCardOpen(_pid, back); }); } });   /* ★ v1.469.0 */
+  if(islPxBookCan(rec)) btns.push({ t: ISL_PX.BOOK.e + ' 換技能(' + (ISL.pxBook | 0) + ')', cls: (ISL.pxBook | 0) > 0 ? 'gold' : 'ghost', cb: function(){ islPxBookOpen(_pid, function(){ islPetCardOpen(_pid, back); }); } });   /* ★ v1.472.0 📘 訓練書 */
   btns.push({ t: '🐾 夥伴裝備', cls: 'ghost', cb: function(){ islPetGearOpen(_pid); } });   /* ★ v1.331.0 */
   /* ★ v1.455.0 裁定 G 甲:取消「每天只能餵 1 次」,改成每天前 3 次加親密度(之後還能餵來補飽足);v1.333.0 的 feedDay 不再使用 */
   btns.push({ t: '🍖 餵食', cls: islPetSulk(rec) ? 'gold' : 'ghost', cb: function(){ islPetFeed(_pid); } });
@@ -28614,6 +28993,17 @@ function islPetCardOpen(k, back){
   else if(islPartyHasPet(k)) btns.push({ t: '🧭 隊上已經有一隻' + p.n, cls: 'ghost', cb: function(){ toast('同一種夥伴一隊只能帶 1 隻'); islPetCardOpen(_pid, back); } });   /* 裁定 K */
   else if(islPartyCount() < db.PARTY.MAX_ALLY) btns.push({ t: '🧭 加入編組', cls: 'gold', cb: function(){ var i; for(i = 0; i < ISL.party.length; i++){ if(!ISL.party[i]){ ISL.party[i] = islPartySlotMake(rec); break; } } rec.out = false; playSfx('sfx-ok', 0.4); islSave('party'); try{ if(_IS.screen === 'camp') islCampPetsPaint(); }catch(_cp2){} if(back === 'house') islPetHouseOpen(); else islPartyOpen(); } });
   else btns.push({ t: '🧭 編組已滿(去換人)', cls: 'ghost', cb: function(){ islPartyOpen(); } });
+  /* ★ v1.470.0 第 2 輪:同種另一隻 / 阿獺再換一隻 / 🍃 放生 */
+  (function(){
+    var L2 = islPetRecsOf(k), j, oth = null;
+    for(j = 0; j < L2.length; j++){ if(L2[j] !== rec){ oth = L2[j]; break; } }
+    if(oth) btns.push({ t: '🔁 看另一隻' + p.n + '(' + islPetNm(oth) + ')', cls: 'ghost', cb: function(){ islPetCardOpen(oth.id, back); } });
+    if(p.get.how === 'shop' && L2.length < ISL_PI.DUP.max) btns.push({ t: '🦦 再換一隻(🐚' + p.get.price + ')', cls: 'ghost', cb: function(){
+      if(ISL.shell < p.get.price){ toast('🐚 貝幣不夠,還差 ' + (p.get.price - ISL.shell)); islPetCardOpen(_pid, back); return; }
+      if(islPetRecsOf(k).length >= ISL_PI.DUP.max){ toast('營地的' + p.n + '已經 ' + ISL_PI.DUP.max + ' 隻了'); return; }
+      ISL.shell -= p.get.price; islPetGet(k, false, { dup: true }); islHud(); } });
+    if(p.get.how !== 'npc') btns.push({ t: '🍃 放生', cls: 'ghost', cb: function(){ islPetReleaseOpen(_pid, function(){ if(islPetSave(_pid)) islPetCardOpen(_pid, back); else _back(); }); } });
+  })();
   btns.push({ t: '關閉', cls: 'ghost', cb: _back });
   islModal(h, btns);
 }
@@ -28647,7 +29037,7 @@ function islPetNameRnd(){
    版面仿大對抗 _showNewHeroAnnouncement:深色漸層卡、發光標題、一塊一塊彩色說明卡、底部「即將推出」預告。
    入口:回營地時沒看過(ISL.flags.newsPet1 沒設)且已有夥伴 ⇒ 等畫面沒有其他視窗時自動跳一次;之後在 🏕 營地選單「📢 夥伴大更新」、🏡 夥伴小屋右上「❓ 說明」隨時重看。
    ⚠ 第 2/3 輪上線時,把「即將推出」那塊的對應項目搬到正式說明、ISL_PET_NEWS_V +1(會讓所有人再自動看一次)。 */
-var ISL_PET_NEWS_V = 1;
+var ISL_PET_NEWS_V = 4;   /* ★ v1.470.0 第 2 輪上線 1→2(重複遭遇/放生/頭目升階搬成正式說明);★ v1.472.0 第 3 輪 2→3;★ v1.473.0 外島 12 種 3→4 */
 function islPetNewsAuto(){
   var n = 0;
   if(!ISL || !ISL.flags || (ISL.flags.newsPet1 | 0) >= ISL_PET_NEWS_V || !islPetCount() || _IS.coop) return;
@@ -28677,12 +29067,33 @@ window.islPetNewsOpen = function(){
   /* ④ 取名 */
   h += '<div class="pn-card c-nm"><div class="pn-ttl">✏ 幫夥伴取名字</div><div class="pn-txt">點字卡組出 1~4 個字的名字(🎲 也可以隨機取名)。名字會出現在營地、戰鬥、編組,好友來你的營地也看得到!免費、隨時可以改。</div></div>';
   /* ⑤ 夥伴小屋 & 營地 */
-  h += '<div class="pn-card c-ph"><div class="pn-ttl">🏡 夥伴小屋&營地</div><div class="pn-txt">到 <b>🏕 營地 → 🏡 夥伴小屋</b> 看所有夥伴:排序、取名、換編組都在這裡。<br>• 🧭 編組裡的夥伴(最多 3 位)會在營地走來走去,還會陪你坐椅子、躺床休息。<br>• 其他夥伴平常待在小屋;打開「讓勾選的出來逛」,最多再挑 3 隻出來散步。<br>• 同一種夥伴一隊只能帶 1 隻。</div></div>';
+  h += '<div class="pn-card c-ph"><div class="pn-ttl">🏡 夥伴小屋&營地</div><div class="pn-txt">到 <b>🏕 營地 → 🏡 夥伴小屋</b> 看所有夥伴:排序、取名、換編組都在這裡。<br>• 🧭 編組裡的夥伴(最多 3 位)會在營地走來走去,還會陪你坐椅子、躺床休息。<br>• 其他夥伴平常待在小屋;打開「讓勾選的出來逛」,最多再挑 3 隻出來散步。<br>• 同一種夥伴一隊只能帶 1 隻(另一隻可以勾「出來逛」)。</div></div>';
   /* ⑥ 神秘果實 */
   h += '<div class="pn-card c-mf"><div class="pn-ttl">' + mf.e + ' 新寶物:' + mf.n + '</div><div class="pn-txt">給一隻夥伴吃,<b>指定的一項能力</b>(體/攻/防/速)成長率升 1 階(例如 C → B)。<br>' +
     '• 🧭 尋寶挖到 🟣 稀有寶藏時有機會出現(每天最多 1 顆)<br>• 🦦 阿獺偶爾會上架,一顆 ' + mf.shopPrice + ' 貝幣(很少見喔!)<br>• 吃果實:夥伴小屋的夥伴卡 →「' + mf.e + ' 吃果實」</div></div>';
   /* ⑦ 即將推出 */
-  h += '<div class="pn-card c-soon"><div class="pn-ttl">🔜 即將推出</div><div class="pn-txt">• 已經有的夥伴也可能再遇到,營地同一種最多住 2 隻<br>• 🍃 放生:讓夥伴回到大自然(有回饋,感情很好的夥伴還可能送你神秘果實當離別禮)<br>• ⬆ 打倒頭目時夥伴有機會升品級<br>• 每種夥伴都有自己的專屬天賦和技能,每一隻天生帶的不一樣;📘 技能訓練書可以換技能</div></div>';
+  /* ★ v1.470.0 第 2 輪上線:重複遭遇/放生/頭目升階 從「即將推出」搬成正式說明卡(ISL_PET_NEWS_V 1→2,大家會再自動看一次) */
+  h += '<div class="pn-card c-dup"><div class="pn-ttl">👀 NEW!又遇到同一種夥伴</div><div class="pn-txt">已經有的夥伴,在野外採集、伐木、釣魚、採石、撿垃圾時也可能再遇到(每種一天最多 1 次;🌈 傳說夥伴很少見)。<br>' +
+    '• 你已經認識牠了,<b>送牠喜歡的食物就會加入</b>,不用再答題。<br>• 身上剛好沒帶食物?沒關係,夥伴會<b>留在原地等你到睡覺前</b>(第一次遇到的夥伴也一樣),準備好再走回牠身邊就行。<br>• 營地<b>同一種最多住 ' + ISL_PI.DUP.max + ' 隻</b>;遇到時會告訴你還能收留幾隻,也能先看新來這一隻的品級、成長率、個性再決定。<br>' +
+    '• 已經 ' + ISL_PI.DUP.max + ' 隻了還想要新的?送完食物會出現「三選一」:選一隻舊的放生,或放棄新的。<br>• 阿獺換購的夥伴(櫻花鉤吻鮭、五色鳥)可以在夥伴卡「🦦 再換一隻」。</div></div>';
+  h += '<div class="pn-card c-rel"><div class="pn-ttl">🍃 NEW!放生</div><div class="pn-txt">夥伴小屋的卡片或夥伴卡 →「🍃 放生」,讓夥伴回到大自然(放生後不會回來,SR 以上會再確認一次)。牠會留下:<br>' +
+    '• 🐚 貝幣(N ' + ISL_PI.DUP.shell.N + '/R ' + ISL_PI.DUP.shell.R + '/SR ' + ISL_PI.DUP.shell.SR + '/SSR ' + ISL_PI.DUP.shell.SSR + ')+ 1 份牠最愛的食物<br>• 📈 <b>經驗傳承 ' + islPxInhP() + '%</b>:練很久的經驗可以傳給另一位夥伴<br>' +
+    '• ' + mf.e + ' 等級越高、感情越好,越有機會送你<b>' + mf.n + '</b>當離別禮<br>• 身上的夥伴裝備會放回裝備包。圖鑑紀錄永遠保留,以後再遇到,送食物就能再當朋友。<br>• 4 位老師夥伴(黑熊、領角鴞、海鷗小白、梅花鹿)會一直住在營地,不能放生。</div></div>';
+  h += '<div class="pn-card c-up"><div class="pn-ttl">⬆ NEW!打倒頭目升品級</div><div class="pn-txt">夥伴在打倒頭目的那場戰鬥有上場,而且<b>撐到戰鬥結束沒有倒下</b>,每打倒 1 隻頭目就有 ' + islPxUpP() + '% 機率升 1 階:N → R → SR → SSR。升階後能力立刻用新品級重新計算,永遠有效!<br>• 地圖頭目、遺跡地下秘穴頭目、外島島主都算;被旋風吹走、借用的好友不算。</div></div>';
+  /* ★ v1.472.0 第 3 輪上線:專屬天賦技能/3 招選單/訓練書/星盤 從「即將推出」搬成正式說明卡(ISL_PET_NEWS_V 2→3) */
+  h += '<div class="pn-card c-sk"><div class="pn-ttl">⚔ NEW!每一隻天生的天賦和技能</div><div class="pn-txt">每一種夥伴都有自己的 <b>4 個專屬天賦 + 4 招專屬技能</b>,每一隻加入時會隨機帶 <b>2 個天賦、2 招技能</b>——所以兩隻石虎的招式可能不一樣!<br>' +
+    '• 加上原本的天賦和專屬指令,每一隻都是「3 個天賦 + 3 招技能」,一開始就會,不用練。<br>• 新天賦的效果跟著品級變強(N 比較弱、SSR 最強);技能的威力每一隻都一樣。<br>' +
+    '• 原本就有的夥伴也自動補上了天生的天賦和技能,到夥伴卡看看牠帶了什麼!</div></div>';
+  h += '<div class="pn-card c-sk"><div class="pn-ttl">🎯 NEW!戰鬥時選招式</div><div class="pn-txt">技能計量集滿時,<b>點夥伴的圖片或血條</b>,會跳出 3 招的選單:冷卻好的招才能按,每一招各自計算冷卻。<br>' +
+    '• 🤖 自動模式:夥伴會自己挑冷卻好、現在最需要的那一招(有人受傷才放治療)。<br>• 放完一招,其他招要休息到下下回合(每 2 回合最多放 1 招),原本的專屬指令不會比以前慢。</div></div>';
+  h += '<div class="pn-card c-bk"><div class="pn-ttl">' + ISL_PX.BOOK.e + ' NEW!寵物技能訓練書</div><div class="pn-txt">在 🦦 阿獺雜貨鋪買,一本 <b>' + ISL_PX.BOOK.price + ' 貝幣</b>(點了星盤「👑 萬獸之王」打 8 折:' + ISL_PX.BOOK.kingPrice + ' 貝幣),想買幾本都可以。<br>' +
+    '• 使用:夥伴卡 →「' + ISL_PX.BOOK.e + ' 換技能」→ 選要忘掉的那一招 → 從牠還沒學的招式裡<b>自己挑一招</b>學會。<br>• 只能換天生的 2 招,原本的專屬指令和天賦不能換;戰鬥中不能用。</div></div>';
+  h += '<div class="pn-card c-st"><div class="pn-ttl">🌟 NEW!天賦星盤「馴獸專精」加強</div><div class="pn-txt">節點位置都沒變,點過的不用重點,效果自動加上:<br>' +
+    '• 🍀 幸運:又遇到已經有的夥伴 6% → 8%<br>• 🐾 馴獸之心:新夥伴抽到 SR +3%、SSR +1%<br>• 💞 心有靈犀:放生的經驗傳承 30% → 50%<br>• 🌟 羈絆守護:打倒頭目升品級 +3%<br>' +
+    '• 🎶 萬獸共鳴:隊上每有 1 隻 SR 以上的夥伴,全體寵物四維 +1%(最多 +3%)<br>• 👑 萬獸之王:升品級再 +5%(全部點滿 18%)、訓練書 8 折</div></div>';
+  /* ★ v1.473.0 第 3 輪之二:外島 12 種專屬池上線,「即將推出」拿掉(ISL_PET_NEWS_V 3→4) */
+  h += '<div class="pn-card c-sk"><div class="pn-ttl">🌊 NEW!外島夥伴也有天生的天賦和技能</div><div class="pn-txt">皇帝企鵝、雪鴞、北極狐、水豚、金剛鸚鵡、美洲豹、海鸚、象龜、信天翁、旗魚、海獺、大王具足蟲,<b>12 種外島夥伴</b>也各有 4 個專屬天賦 + 4 招專屬技能,每一隻隨機帶 2+2。<br>' +
+    '• 冰天雪地島的夥伴有會「🧊 冰凍」敵人的招,金剛鸚鵡會「🥜 咬碎硬殼」讓敵人防禦變低。<br>• 已經有的外島夥伴也自動補上了,到夥伴卡看看!</div></div>';
   h += '<div class="pn-foot"><button class="isl-btn ghost" data-act="close">知道了</button><button class="isl-btn gold" data-act="house">🏡 去夥伴小屋看看</button></div>';
   h += '</div></div>';
   islPanel(h, function(t){
@@ -28799,12 +29210,12 @@ window.islPetHouseOpen = function(){
     else v = a.o - b.o;
     return v || (a.o - b.o) || (a.n - b.n);
   });
-  h += '<div class="isl-bagbox wide full isl-phouse"><h3>🏡 夥伴小屋 <span style="font-size:16px;opacity:.85">' + islPetCount() + ' 位夥伴</span><span class="grow"></span><button class="isl-btn ghost ph-news" data-act="news">❓ 說明</button><button data-act="close">✕</button></h3><div class="bd">';
+  h += '<div class="isl-bagbox wide full isl-phouse"><h3>🏡 夥伴小屋 <span style="font-size:16px;opacity:.85">' + islPetIndN() + ' 位夥伴(' + islPetCount() + ' 種)</span><span class="grow"></span><button class="isl-btn ghost ph-news" data-act="news">❓ 說明</button><button data-act="close">✕</button></h3><div class="bd">';
   h += '<div class="ph-out"><span class="lb">其他夥伴(不在編組):</span>' +
     '<button class="isl-btn ' + (on ? 'ghost' : 'gold') + '" data-act="outoff">○ 全部隱藏</button>' +
     '<button class="isl-btn ' + (on ? 'gold' : 'ghost') + '" data-act="outon">● 讓勾選的出來逛(最多 ' + ISL_PI.OUT_MAX + ' 隻)</button>' +
     (on ? '<span class="cnt">🚶 出來逛 ' + outN + '/' + ISL_PI.OUT_MAX + '</span>' : '') + '</div>';
-  h += '<p class="ph-hint">🧭 編組裡的夥伴(最多 3 位)會在營地走來走去,也會陪你坐椅子、躺床休息;勾了 🚶 的只在營地走動。同一種夥伴一隊只能帶 1 隻。</p>';
+  h += '<p class="ph-hint">🧭 編組裡的夥伴(最多 3 位)會在營地走來走去,也會陪你坐椅子、躺床休息;勾了 🚶 的只在營地走動。同一種夥伴一隊只能帶 1 隻;營地同一種最多住 ' + ISL_PI.DUP.max + ' 隻(🍃 放生 會留下貝幣、食物,經驗也能傳給別的夥伴)。</p>';
   if((ISL.mfruit | 0) > 0) h += '<p class="ph-mf">' + ISL_PI.MF.e + ' 你有 <b>' + (ISL.mfruit | 0) + '</b> 顆' + ISL_PI.MF.n + ':按夥伴卡上的「' + ISL_PI.MF.e + ' 吃果實」,選一項能力讓成長率升 1 階(體/攻/防/速)。</p>';   /* ★ v1.469.0 */
   h += '<div class="isl-dexbar"><div class="row"><span class="lb">類型</span><span class="chip' + (F.t === 'all' ? ' on' : '') + '" data-act="phT" data-v="all">全部</span>';
   for(tk in db.PET_TYPES){ if(db.PET_TYPES.hasOwnProperty(tk)) h += '<span class="chip ty-' + tk + (F.t === tk ? ' on' : '') + '" data-act="phT" data-v="' + tk + '">' + db.PET_TYPES[tk].e + ' ' + islEsc(db.PET_TYPES[tk].n) + '</span>'; }
@@ -28828,6 +29239,7 @@ window.islPetHouseOpen = function(){
         '<button class="isl-btn ' + (r.out && !inP ? 'gold' : 'ghost') + '" data-act="phOut" data-id="' + r.id + '"' + (inP || !on ? ' disabled' : '') + '>' + (inP ? '🚶 隨身中' : (r.out ? '🚶 出來逛 ✔' : '🚶 出來逛')) + '</button>' +
         '<button class="isl-btn ghost" data-act="phCard" data-id="' + r.id + '">📄 詳情</button>' +
         ((ISL.mfruit | 0) > 0 ? '<button class="isl-btn gold mf" data-act="phFruit" data-id="' + r.id + '"' + (islPiGwsAllA(r) ? ' disabled' : '') + '>' + ISL_PI.MF.e + (islPiGwsAllA(r) ? ' 已經全部 A' : ' 吃果實') + '</button>' : '') +
+        (p.get && p.get.how !== 'npc' ? '<button class="isl-btn ghost rel" data-act="phRel" data-id="' + r.id + '">🍃 放生</button>' : '') +   /* ★ v1.470.0 */
       '</div></div>';
   }
   h += '</div></div></div>';
@@ -28842,6 +29254,7 @@ window.islPetHouseOpen = function(){
     else if(a === 'phCard' && rr){ islPetCardOpen(rr.id, 'house'); return; }
     else if(a === 'phName' && rr){ islPetNameOpen(rr.id, function(){ islPetHouseOpen(); }); return; }
     else if(a === 'phFruit' && rr){ islPetFruitOpen(rr.id, function(){ islPetHouseOpen(); }); return; }
+    else if(a === 'phRel' && rr){ islPetReleaseOpen(rr.id, function(){ islPetHouseOpen(); }); return; }   /* ★ v1.470.0 🍃 放生 */
     else if(a === 'phParty' && rr){
       if(islPartyHasPid(rr.id)){ for(j = 0; j < ISL.party.length; j++){ if(islPartySlotIs(ISL.party[j], rr)) ISL.party[j] = null; } toast('🏡 ' + islPetNm(rr) + ' 回小屋休息了'); done = true; }
       else if(islPetSulk(rr)){ toast('💢 牠在鬧脾氣,不想出門——先餵牠吃東西'); return; }
@@ -28903,7 +29316,7 @@ function islPetFeed(k){
   if(!rec || !p) return;
   if(!H){ islPetFeed_v1333(k); return; }
   L = islPetFeedCands(k); ph = Math.round(islHunPetGet(rec));
-  h = '<h3>🍖 餵 ' + p.e + ' ' + islEsc(p.n) + ' 吃什麼?</h3><p style="font-size:15px;opacity:.85;margin:0 0 6px">' + (islPartyHasPet(k) ? '飽足 🍖' + ph + '%　' : '') + '❤ 最愛的最飽、親密度 +' + H.bond.fav + ';一般食物親密度 +' + H.bond.ok + '(每天前 ' + H.bond.perDay + ' 次)</p>';
+  h = '<h3>🍖 餵 ' + p.e + ' ' + islEsc(p.n) + ' 吃什麼?</h3><p style="font-size:15px;opacity:.85;margin:0 0 6px">' + (islPartyHasPid(_pid) ? '飽足 🍖' + ph + '%　' : '') + '❤ 最愛的最飽、親密度 +' + H.bond.fav + ';一般食物親密度 +' + H.bond.ok + '(每天前 ' + H.bond.perDay + ' 次)</p>';
   if(!L.length){
     islModal(h + '<p>物品包' + ((_IS.screen === 'camp' || _IS.cabin) ? '和倉庫' : '') + '裡沒有牠吃的東西。' + (islPetDietOf(k).f ? '牠最愛 ' + islItemDef(islPetDietOf(k).f).e + islEsc(islItemDef(islPetDietOf(k).f).n) + '!' : '') + '</p>', [{ t: '知道了', cls: 'gold', cb: function(){ islPetCardOpen(_pid); } }]);
     return;
@@ -30532,16 +30945,16 @@ var ISL_DEFPET = { MAX:3, R:75, BLOCK_MS:3000, STUN_MS:5000, TICK:120, HOLD_MS:3
 function islDefPetsInit(){
   var D = _islDef, d = $('isl-def'), pool = [], i, j, k, el, w = d.clientWidth || 800, h = d.clientHeight || 500, ang, r = 150, db = islDB();
   D.pets = []; D.petT = null;
-  for(i = 0; i < (ISL.pets || []).length; i++){ if(db.PETS[ISL.pets[i].k]) pool.push(ISL.pets[i].k); }
+  for(i = 0; i < (ISL.pets || []).length; i++){ if(db.PETS[ISL.pets[i].k]) pool.push(ISL.pets[i]); }   /* ★ v1.470.0 池子改放個體(同種 2 隻各自有名字) */
   for(i = pool.length - 1; i > 0; i--){ j = Math.floor(Math.random() * (i + 1)); k = pool[i]; pool[i] = pool[j]; pool[j] = k; }
   pool = pool.slice(0, ISL_DEFPET.MAX);
   for(i = 0; i < pool.length; i++){
     ang = Math.PI / 2 + i * (Math.PI * 2 / 3) - 0.7;
-    el = document.createElement('div'); el.className = 'isl-defpet'; el.setAttribute('data-pet', pool[i]);
-    el.innerHTML = '<div class="ring"></div>' + islPetPicHtml(pool[i], 64) + '<span class="zz">💫</span><span class="pn">' + islEsc(db.PETS[pool[i]].n) + '</span>';
+    el = document.createElement('div'); el.className = 'isl-defpet'; el.setAttribute('data-pet', pool[i].k);
+    el.innerHTML = '<div class="ring"></div>' + islPetPicHtml(pool[i].k, 64) + '<span class="zz">💫</span><span class="pn">' + islEsc(islPetNm(pool[i])) + '</span>';
     el.style.left = (w / 2 + Math.cos(ang) * r) + 'px'; el.style.top = (h / 2 + Math.sin(ang) * r) + 'px';
     d.appendChild(el);
-    D.pets.push({ k: pool[i], el: el, x: w / 2 + Math.cos(ang) * r, y: h / 2 + Math.sin(ang) * r, state: 'ready', until: 0, held: [], drag: null });
+    D.pets.push({ k: pool[i].k, el: el, x: w / 2 + Math.cos(ang) * r, y: h / 2 + Math.sin(ang) * r, state: 'ready', until: 0, held: [], drag: null });
     islDefPetBindDrag(D.pets[i]);
   }
   if(D.pets.length){ D.petT = setInterval(islDefPetsTick, ISL_DEFPET.TICK); toast('🐾 ' + D.pets.length + ' 隻夥伴來幫忙守營火!長按拖曳可以布防'); }
@@ -32037,21 +32450,46 @@ function islActStillHere(C){   /* 互動中的場景還在不在(出了小木屋
   return !_IS.coop && !_IS.cabin;
 }
 function islActLayer(ctx){ return ctx === 'cabin' ? $('isl-cabin-room') : $('isl-camp-grid'); }
+/* ★ v1.474.0(2026-11-28・老師「荒島家具互動的調整位置,增加自由旋轉(順時針、逆時針,一次旋轉30度)躺下時的角度,
+   並且會自動儲存該角度和左右高低位置,下次和相同方向的家具互動時會以玩家調整後的角度位置來躺」)—
+   微調值改存在 ISL.actAdj[鍵] = { x, y, r }(x/y = 營地或房間 %、r = 躺下角度,−150~180,30 度一格)。
+   鍵 = (小木屋 'cb:')+ 裝飾 id + '|' + 方向(islDecoFace 0 側/1 翻轉側/2 正面)⇒ 同一種家具、同一個方向共用一組,換一張同款床也照樣躺。
+   沒有新鍵時退回舊版存在單件裝飾上的 deco.ax/deco.ay(v1.454.0 起的舊存檔不會跑掉)。好友營地讀自己的設定、不能改。
+   角度只轉主角圖(#isl-camp-char .sp 的 rotate 屬性,繞身體中段),不影響位置錨點與裝飾本身。 */
+function islActAdjKey(o, ctx){ var def = islDecoDef(o.id) || {}; return (ctx === 'cabin' ? 'cb:' : '') + o.id + '|' + islDecoFace(o, def); }
+function islActAdjGet(o, ctx){
+  var m = ISL && ISL.actAdj, v = m && m[islActAdjKey(o, ctx)];
+  if(v) return { x: parseFloat(v.x) || 0, y: parseFloat(v.y) || 0, r: parseFloat(v.r) || 0 };
+  return { x: parseFloat(o.ax) || 0, y: parseFloat(o.ay) || 0, r: 0 };
+}
+function islActAdjSet(o, ctx, v){
+  if(!ISL.actAdj || typeof ISL.actAdj !== 'object') ISL.actAdj = {};
+  if(!v.x && !v.y && !v.r){ ISL.actAdj[islActAdjKey(o, ctx)] = { x: 0, y: 0, r: 0 }; }   /* 歸零也要記(蓋掉舊版單件 ax/ay) */
+  else ISL.actAdj[islActAdjKey(o, ctx)] = { x: v.x, y: v.y, r: v.r };
+}
+function islActRotApply(){
+  var ch = $('isl-camp-char'), C = _IS.campAct, o = C && C.i >= 0 ? islActObj(C) : null, r = 0;
+  if(!ch) return;
+  if(o && C.a === 'lie') r = islActAdjGet(o, C.ctx).r;
+  if(r){ ch.style.setProperty('--actrot', r + 'deg'); ch.classList.add('isl-actrot'); }
+  else { ch.classList.remove('isl-actrot'); ch.style.removeProperty('--actrot'); }
+}
 /* 主角腳底要站的位置(營地 x=left%、y=bottom%)+ 面向。裝飾框 = .isl-deco 左上角 (x%,y%) 再 margin −20px、邊長 96×sz、以中心 scale(玩家縮放) */
 function islDecoAnchor(o, A, ctx){
   var def = islDecoDef(o.id), face = islDecoFace(o, def), sz = def.sz || 1, sc = parseFloat(o.scale) || parseFloat(o.s) || 1, S = ISL_CAMP_DECO * sz,
-      an = (face === 2 && A.f) ? A.f : (A.s || ['d', 0, 0.42]), fc = an[0] || 'd', ax = an[1] || 0, ay = an[2] || 0, cx, cy, room, W, H, db;
+      an = (face === 2 && A.f) ? A.f : (A.s || ['d', 0, 0.42]), fc = an[0] || 'd', ax = an[1] || 0, ay = an[2] || 0, cx, cy, room, W, H, db,
+      adj = islActAdjGet(o, ctx);   /* ★ v1.474.0 玩家微調(同種家具+同方向共用,存 ISL.actAdj) */
   if(face === 1){ ax = -ax; fc = fc === 'r' ? 'l' : (fc === 'l' ? 'r' : fc); }   /* 側面左右翻轉:錨點與面向一起鏡像 */
   if(ctx === 'cabin'){
     /* 小木屋:.isl-cfur 以 (x%,y%) 為中心 translate(-50%,-50%) scale;邊長 = 房間高 × furBaseH × min(sz, furSzMax)(最少 28px);主角座標 y = 腳底離頂端 % */
     db = islDB(); room = $('isl-cabin-room'); H = (room && room.offsetHeight) || 300; W = (room && room.offsetWidth) || H * 1.6;
     S = Math.max(28, Math.round(H * (db.CABIN.furBaseH || 0.15) * Math.min(sz, db.CABIN.furSzMax || 1.8)));
-    cx = (parseFloat(o.x) || 0) / 100 * W + ax * S * sc + (parseFloat(o.ax) || 0) / 100 * W;
-    cy = (parseFloat(o.y) || 0) / 100 * H + ay * S * sc - (parseFloat(o.ay) || 0) / 100 * H;
+    cx = (parseFloat(o.x) || 0) / 100 * W + ax * S * sc + adj.x / 100 * W;
+    cy = (parseFloat(o.y) || 0) / 100 * H + ay * S * sc - adj.y / 100 * H;
     return { x: cx / W * 100, y: cy / H * 100, face: fc, cx: cx, cy: cy, W: W, H: H, S: S * sc, top: (parseFloat(o.y) || 0) / 100 * H - S * sc / 2, mid: (parseFloat(o.x) || 0) / 100 * W };
   }
-  cx = (parseFloat(o.x) || 0) / 100 * ISL_CAMP_W - 20 + S / 2 + ax * S * sc + (parseFloat(o.ax) || 0) / 100 * ISL_CAMP_W;
-  cy = (parseFloat(o.y) || 0) / 100 * ISL_CAMP_H - 20 + S / 2 + ay * S * sc - (parseFloat(o.ay) || 0) / 100 * ISL_CAMP_H;
+  cx = (parseFloat(o.x) || 0) / 100 * ISL_CAMP_W - 20 + S / 2 + ax * S * sc + adj.x / 100 * ISL_CAMP_W;
+  cy = (parseFloat(o.y) || 0) / 100 * ISL_CAMP_H - 20 + S / 2 + ay * S * sc - adj.y / 100 * ISL_CAMP_H;
   return { x: cx / ISL_CAMP_W * 100, y: (ISL_CAMP_H - cy) / ISL_CAMP_H * 100, face: fc, cx: cx, cy: cy, W: ISL_CAMP_W, H: ISL_CAMP_H, S: S * sc, top: (parseFloat(o.y) || 0) / 100 * ISL_CAMP_H - 20 + S / 2 - S * sc / 2, mid: (parseFloat(o.x) || 0) / 100 * ISL_CAMP_W - 20 + S / 2 };
 }
 /* 主角腳底目前在哪(與 islDecoAnchor 同一套 px:cx/cy) */
@@ -32105,6 +32543,7 @@ function islDecoActBegin(i){
   _IS.campDir = an.face;
   if(A.a === 'light'){ o.on = o.on ? 0 : 1; toast(o.on ? '💡 燈亮了' : '🌑 燈關了'); if(ctx !== 'coop') islSave('decolight'); }   /* 好友營地:只亮在自己畫面上,不存 */
   _IS.campAct.an = { x: an.x, y: an.y };
+  islActRotApply();   /* ★ v1.474.0 套用記住的躺下角度 */
   try{ if(_IS.campAct.rest && ctx === 'camp') islActPetsJoin(an); }catch(_pj){}   /* 夥伴陪你休息 */
   islDecoActDecorate(true);
   islDecoActBar();
@@ -32162,7 +32601,7 @@ window.islDecoActStop = function(quiet){
   if(!C) return;
   _IS.campAct = null;
   if(!quiet) _IS.bedSleepDay = 0;   /* 自己起身 ⇒ 不算「在床上睡到明天」 */
-  if(ch){ ch.classList.remove('isl-actrock'); ch.classList.remove('isl-actswing'); }
+  if(ch){ ch.classList.remove('isl-actrock'); ch.classList.remove('isl-actswing'); ch.classList.remove('isl-actrot'); ch.style.removeProperty('--actrot'); }   /* ★ v1.474.0 起身就轉回直立 */
   try{ islActPetsLeave(); }catch(_pl){}
   islDecoActDecorate(false, C);
   islDecoActBarHide();
@@ -32268,6 +32707,10 @@ function islDecoActBar(){
   if(C.sleep) h += '<button class="sl" onclick="islDecoActSleep()">😴 睡到明天</button>';
   if(C.rest) h += '<span class="hp">❤ +' + (islDB().DECO_ACT_HP_SEC || 1) + '/秒</span>';
   if(C.i >= 0 && C.ctx !== 'coop') h += '<span class="adj"><span class="lb">位置</span><button onclick="islDecoActNudge(-1,0)">◀</button><button onclick="islDecoActNudge(1,0)">▶</button><button onclick="islDecoActNudge(0,1)">▲</button><button onclick="islDecoActNudge(0,-1)">▼</button></span>';
+  if(C.i >= 0 && C.ctx !== 'coop' && C.a === 'lie'){   /* ★ v1.474.0 躺下角度:逆/順時針各 30 度 + 一鍵回預設 */
+    var _o = islActObj(C), _r = _o ? islActAdjGet(_o, C.ctx).r : 0;
+    h += '<span class="adj"><span class="lb">角度 ' + _r + '°</span><button onclick="islDecoActRot(-1)" title="逆時針轉 30 度">↺</button><button onclick="islDecoActRot(1)" title="順時針轉 30 度">↻</button><button onclick="islDecoActAdjReset()" title="位置與角度回預設">⟲</button></span>';
+  } else if(C.i >= 0 && C.ctx !== 'coop') h += '<span class="adj"><button onclick="islDecoActAdjReset()" title="位置回預設">⟲</button></span>';
   bar.innerHTML = h;
   bar.classList.remove('hidden');
 }
@@ -32277,11 +32720,37 @@ window.islDecoActNudge = function(dx, dy){
   if(!C || C.i < 0) return;
   if(C.ctx === 'coop') return;   /* 好友的裝飾不改 */
   o = islActObj(C); A = islDecoActOk(o); if(!A) return;
-  o.ax = islClamp(Math.round(((parseFloat(o.ax) || 0) + dx * 0.5) * 10) / 10, -15, 15);
-  o.ay = islClamp(Math.round(((parseFloat(o.ay) || 0) + dy * 0.5) * 10) / 10, -15, 15);
-  an = islDecoAnchor(o, A, C.ctx); islActCharSet(C.ctx, an); void p;
+  p = islActAdjGet(o, C.ctx);   /* ★ v1.474.0 改存同種家具+同方向共用的 ISL.actAdj(角度一起保留) */
+  p.x = islClamp(Math.round((p.x + dx * 0.5) * 10) / 10, -15, 15);
+  p.y = islClamp(Math.round((p.y + dy * 0.5) * 10) / 10, -15, 15);
+  islActAdjSet(o, C.ctx, p);
+  an = islDecoAnchor(o, A, C.ctx); islActCharSet(C.ctx, an);
+  C.an = { x: an.x, y: an.y };
   playSfx('sfx-tap', 0.2);
   clearTimeout(_IS.campActNudgeT); _IS.campActNudgeT = setTimeout(function(){ islSave('decoadj'); }, 1200);
+};
+/* ★ v1.474.0 躺下角度:dir = 1 順時針 / −1 逆時針,一次 30 度,範圍 −150~180(轉一圈回 0) */
+window.islDecoActRot = function(dir){
+  var C = _IS.campAct, o, A, p;
+  if(!C || C.i < 0 || C.ctx === 'coop' || C.a !== 'lie') return;
+  o = islActObj(C); A = islDecoActOk(o); if(!A) return;
+  p = islActAdjGet(o, C.ctx);
+  p.r = ((Math.round(p.r / 30) + (dir > 0 ? 1 : -1)) * 30) % 360;
+  if(p.r > 180) p.r -= 360; if(p.r <= -180) p.r += 360;
+  islActAdjSet(o, C.ctx, p);
+  islActRotApply(); islDecoActBar();
+  playSfx('sfx-tap', 0.2);
+  clearTimeout(_IS.campActNudgeT); _IS.campActNudgeT = setTimeout(function(){ islSave('decoadj'); }, 1200);
+};
+window.islDecoActAdjReset = function(){
+  var C = _IS.campAct, o, A, an;
+  if(!C || C.i < 0 || C.ctx === 'coop') return;
+  o = islActObj(C); A = islDecoActOk(o); if(!A) return;
+  islActAdjSet(o, C.ctx, { x: 0, y: 0, r: 0 });
+  an = islDecoAnchor(o, A, C.ctx); islActCharSet(C.ctx, an); C.an = { x: an.x, y: an.y };
+  islActRotApply(); islDecoActBar();
+  toast('⟲ 這種家具(這個方向)的位置和角度回到預設');
+  clearTimeout(_IS.campActNudgeT); _IS.campActNudgeT = setTimeout(function(){ islSave('decoadj'); }, 600);
 };
 /* 走近可互動的裝飾 ⇒ 頭上冒泡泡;走過步道/木橋/花拱門 ⇒ 腳下冒小粒子。每 200ms 檢查一次(由 islCampTick 呼叫) */
 function islActBubCheck(){
@@ -33250,14 +33719,14 @@ function islIsFood(id){ var f = islFoodOf(id); return !!(f && (f.h || f.p)); }  
 function islBagFeedPick(it){
   var db = islDB(), H = islHunCfg(), d = islItemDef(it.id), L = [], i, rec, p, ce, h, bs, j, inP;
   if(!H) return;
-  for(i = 0; i < (ISL.pets || []).length; i++){ rec = ISL.pets[i]; p = db.PETS[rec.k]; if(!p) continue; ce = islPetCanEat(rec.k, it.id); L.push({ k: rec.k, rec: rec, p: p, ce: ce, inP: islPartyHasPet(rec.k) }); }
+  for(i = 0; i < (ISL.pets || []).length; i++){ rec = ISL.pets[i]; p = db.PETS[rec.k]; if(!p) continue; ce = islPetCanEat(rec.k, it.id); L.push({ k: rec.k, rec: rec, p: p, ce: ce, inP: islPartyHasPid(rec.id) }); }   /* ★ v1.470.0 個體 */
   if(!L.length){ islModal('<h3>🐾 還沒有夥伴</h3><p>先去野外招募夥伴吧!</p>', [{ t: '知道了', cls: 'gold', cb: function(){ islBagOpen(); } }]); return; }
   L.sort(function(a, b){ var sa = (a.inP ? 0 : 2) + (a.ce.ok ? 0 : 4) + (a.ce.fav ? 0 : 1), sb = (b.inP ? 0 : 2) + (b.ce.ok ? 0 : 4) + (b.ce.fav ? 0 : 1); return sa - sb; });
   h = '<h3>🐾 把 ' + d.e + ' ' + islEsc(d.n) + (it.q > 1 ? ' ' + islQStar(it.q) : '') + ' 餵給誰?</h3><p style="font-size:15px;opacity:.85;margin:0 0 6px">❤ = 牠最愛吃的;🧭 = 在探險隊上(只有隊上的夥伴會餓)</p><div class="isl-pickwrap">';
   for(i = 0; i < L.length; i++){
     rec = L[i].rec; ce = L[i].ce; inP = L[i].inP;
     if(ce.ok && islHunPetGet(rec) >= H.petFullStop) ce = { ok: false, why: '🍖' + Math.round(islHunPetGet(rec)) + '% 吃飽了' };
-    h += '<button class="isl-recipe' + (ce.ok ? ' can' : '') + '" data-pf="' + i + '"' + (ce.ok ? '' : ' disabled') + '><span class="rn">' + (ce.fav ? '❤ ' : '') + L[i].p.e + ' ' + islEsc(L[i].p.n) + (inP ? ' 🧭' : '') + (islPetSulk(rec) ? ' 💢' : '') + '</span>' +
+    h += '<button class="isl-recipe' + (ce.ok ? ' can' : '') + '" data-pf="' + i + '"' + (ce.ok ? '' : ' disabled') + '><span class="rn">' + (ce.fav ? '❤ ' : '') + L[i].p.e + ' ' + islPetGrHtml(rec) + ' ' + islEsc(islPetNm(rec)) + (rec.nm ? '・' + islEsc(L[i].p.n) : '') + (inP ? ' 🧭' : '') + (islPetSulk(rec) ? ' 💢' : '') + '</span>' +
          '<span class="rd">' + (ce.ok ? (inP ? '🍖' + Math.round(islHunPetGet(rec)) + '% → +' + islHunPetFull(rec.k, it.id, it.q) : '🍖 +' + islHunPetFull(rec.k, it.id, it.q)) : islEsc(ce.why || '牠不吃這個')) + '</span></button>';
   }
   h += '</div>';
@@ -33268,7 +33737,7 @@ function islBagFeedPick(it){
     var c = L[parseInt(this.getAttribute('data-pf'), 10)];
     if(!c || !c.ce.ok) return;
     islModalClose();
-    islPetFeedGo(c.k, { src: 'bag', id: it.id, q: it.q, ce: c.ce }, function(){ islBagOpen(); });
+    islPetFeedGo(c.rec.id, { src: 'bag', id: it.id, q: it.q, ce: c.ce }, function(){ islBagOpen(); });   /* ★ v1.470.0 傳個體 id */
   }; }
 }
 function islHunQMul(q){ var H = islHunCfg(); return (H && H.qMul[(q || 1) - 1]) || 1; }
@@ -33391,7 +33860,7 @@ function islPetHunTag(rec){
   if(!rec || !islHunOn() || !islHunCfg()) return '';
   if(islPetSulk(rec)) return '<span class="isl-pethun sulk">💢 鬧脾氣</span>';
   h = Math.round(islHunPetGet(rec));
-  if(!islPartyHasPet(rec.k)) return '';
+  if(!islPartyHasPid(rec.id)) return '';   /* ★ v1.470.0 比個體(同種另一隻不在隊上就不會餓) */
   return '<span class="isl-pethun ' + islHunStage(h).c + '">🍖' + h + '%</span>';
 }
 function islPetHunBadge(k){
@@ -34112,6 +34581,7 @@ function islShopDailyEntries(){
   if(T.deco){ d = islDecoDef(T.deco); out.push({ id: 'dd_' + d.id, n: d.n, e: d.e, daily: 1, price: { shell: db.decoPrice(d.id) }, give: { kind: 'deco', deco: d.id }, d: '🪴 今日裝飾(😊+' + (d.comfort || 0) + (d.out ? '・只能擺戶外' : '') + '):' + (d.d || '') }); }
   try{ var _trD = db.TREASURE, _trS = (_trD && islTrUnlocked()) ? islTrState() : null; if(_trS && (_trS.q >= 1 || islTrHasCompass())) out.push({ id: 'trmap', n: '藏寶圖', e: '🗺', daily: 1, price: { shell: _trD.mapPrice }, give: { kind: 'tmap' }, d: '🧭 買了馬上生效:大地圖會標出「今天」哪幾區一定有寶藏(🟤 普通/🟣 稀有,含前幾天還沒挖的)。每天 1 張,不打折。' }); }catch(_trE){}   /* ★ v1.399.0 */
   try{ if(islShopMfToday()) out.push({ id: 'mfruit', n: ISL_PI.MF.n, e: ISL_PI.MF.e, daily: 1, price: { shell: ISL_PI.MF.shopPrice }, give: { kind: 'mfruit' }, d: '✨ 阿獺偶爾才拿得到的稀有果實!給一隻夥伴吃,牠指定的一項能力(體/攻/防/速)成長率升 1 階。到 🏕 營地 → 🏡 夥伴小屋 使用。今天限購 1 顆。' }); }catch(_mf){}   /* ★ v1.469.0 極低機率上架 */
+  if(islPxBookShown()) out.push({ id: 'pxbook', n: ISL_PX.BOOK.n, e: ISL_PX.BOOK.e, price: { shell: islPxBookPrice() }, give: { kind: 'pxbook' }, d: '🐾 常駐商品:讓一隻夥伴忘掉 1 招天生的技能,改學牠那一種還沒學的另一招(自己選)。到夥伴卡按「📘 換技能」使用。(持有 ' + (ISL.pxBook | 0) + ' 本' + (islSkEff('pxBook') > 0 ? '・👑 萬獸之王 8 折' : '') + ')' });   /* ★ v1.472.0 第 3 輪 📘 寵物技能訓練書(500 貝幣,萬獸之王 400;不限購買次數) */
   if(db.SHOP.bossWake && islShopWakeShown()){ out.push({ id: 'bosswake', n: islItemDef('boss_wake').n, e: islItemDef('boss_wake').e, daily: 1, price: { shell: db.SHOP.bossWake.shell || 100 }, give: { kind: 'bosswake' }, d: '🔔 搖響它,沉睡中的地圖頭目會馬上醒來,可以再挑戰一次(到頭目巢穴使用)。每天限購 ' + (db.SHOP.bossWake.limit || 1) + ' 個。' }); }   /* ★ v1.375.0 */
   return out;
 }
@@ -34490,6 +34960,7 @@ window.islShopOpen = function(tab){
         ISL.shop.mfDay = ISL.day; ISL.mfruit = (ISL.mfruit | 0) + 1;
         try{ islLog(ISL_PI.MF.e + ' 向阿獺買了神秘果實', null); }catch(_mfl){}
       }
+      if(def.give.kind === 'pxbook'){ ISL.pxBook = (ISL.pxBook | 0) + qN; try{ islLog(ISL_PX.BOOK.e + ' 向阿獺買了' + ISL_PX.BOOK.n + ' ×' + qN, null); }catch(_pxl){} }   /* ★ v1.472.0 */
       if(def.give.kind === 'petgear'){ if(!ISL.petGear) ISL.petGear = { bag: [], eq: {}, seq: 0 }; ISL.petGear.seq = (ISL.petGear.seq || 0) + 1; ISL.petGear.bag.push({ u: ISL.petGear.seq, id: def.give.gear, q: 1 }); }   /* ★ v1.333.0 今日夥伴裝備(★ 品質),放進夥伴裝備背包 */
       /* 先給再扣:物品包放不下就整批進倉庫 */
       if(def.give.item){ var totN = (def.give.n || 1) * qN, put = islBagAdd(def.give.item, def.give.q || 1, totN); if(put < totN) islStoreAdd(def.give.item, def.give.q || 1, totN - put); }
@@ -35434,7 +35905,8 @@ var ISL_SK_SUM = {
   chargeGuard:['蓄力時受傷','%',-1], chargeAutoP:['自動蓄力機率','%'], braceMul:['反刺傷害','%'], vsBleedP:['對流血目標傷害','%'], braceCut:['架槍時受傷','%',-1],
   bounceMul:['彈射傷害','%'], bounceStunP:['彈射擊暈','%'], xpBackP:['多賺熟練機率','%'], bounceKillHeal:['彈射擊倒回復','%'],
   focusMax:['專注上限',''], focusCrit:['專注每層暴擊','%'], brkMax:['破甲上限',''], brkDef:['破甲每層防禦','%',-1], chargeMax:['蓄力上限',''],
-  hitsAdd:['每回合段數',''], actAdd:['絕招 SP 恢復加快',''], bounceAdd:['彈射段數',''], brkOpen:['首擊破甲層數','']
+  hitsAdd:['每回合段數',''], actAdd:['絕招 SP 恢復加快',''], bounceAdd:['彈射段數',''], brkOpen:['首擊破甲層數',''],
+  pxDupP:['夥伴重複遭遇','%'], pxGrSR:['新夥伴 SR 機率','%'], pxGrSSR:['新夥伴 SSR 機率','%'], pxInhP:['放生經驗傳承','%'], pxUpP:['頭目升品級機率','%'], pxResoP:['每隻 SR 以上夥伴→寵物四維','%'], pxBook:['技能訓練書 8 折','']
 };
 function islSkSumGroup(){ return { order: [], v: {}, abil: [] }; }
 function islSkSumAdd(g, n){
@@ -35843,7 +36315,7 @@ function islPetTal(u, key){
   var db = islDB(), p;
   if(!u || u.t !== 'pet' || u.down) return 0;
   p = db.PETS[u.k];
-  return (p && p.tal && p.tal[key]) || 0;
+  return ((p && p.tal && p.tal[key]) || 0) + (u.rec ? islPxTal(u.rec, key) : 0);   /* ★ v1.472.0 + 這一隻天生帶的 2 個專屬新天賦(吃品級) */
 }
 /* ══ ★ v1.331.0 🐾 夥伴專用裝備:效果讀取的單一出口(企畫書「統一走 islPetGearEff」)══
    islPetGearInst(k)      → 寵物鍵 k 目前穿戴的裝備實體 {u,id,q}(沒穿=null)
@@ -35882,9 +36354,9 @@ function islPartyTal(key){
   for(i = 0; i < ISL.party.length; i++){
     slot = ISL.party[i];
     if(!slot || slot.t !== 'pet') continue;
-    p = db.PETS[slot.k]; if(!p || !p.tal) continue;
+    p = db.PETS[slot.k]; if(!p) continue;
     if(islPartySlotRec(slot) && islPartySlotRec(slot).rest === ISL.day) continue;   /* 今天休息中的不算 */
-    n += p.tal[key] || 0;
+    n += ((p.tal && p.tal[key]) || 0) + islPxTal(islPartySlotRec(slot), key);   /* ★ v1.472.0 專屬新天賦 */
   }
   return n;
 }
@@ -35902,7 +36374,7 @@ function islPetStats(k, lv, bond, recIn){
   var _pm = islPiMul(rec), _pk = rec ? rec.id : k, _psA = 1 + islPetPsV(rec, 'atk') / 100, _psD = 1 + islPetPsV(rec, 'def') / 100, _psS = 1 + islPetPsV(rec, 'spd') / 100;
   /* ★ v1.192.0 老師需求「寵物升級時提升當前HP的3%」— 累積加成存在 rec.hpBonus(見 islPetLevelHpBonus),這裡併進 hp 計算的同一個括號,跟 bond 加成一起乘;找不到存檔(理論上不會發生,防禦性寫法)就當 0。 */
   /* ★ v1.317.0 🐾 馴獸專精星域:寵物四維%與技能冷卻 −N 的唯一出口(夥伴圖鑑/詳情卡/戰鬥單位全部讀這裡,顯示=實作)。好友借用角色不走這支,不受影響。 */
-  var _tH = 1 + islSkEff('petHpP') / 100, _tA = 1 + islSkEff('petAtkP') / 100, _tD = 1 + islSkEff('petDefP') / 100, _tS = 1 + islSkEff('petSpdP') / 100;
+  var _rsP = islPxResoP(), _tH = 1 + (islSkEff('petHpP') + _rsP) / 100, _tA = 1 + (islSkEff('petAtkP') + _rsP) / 100, _tD = 1 + (islSkEff('petDefP') + _rsP) / 100, _tS = 1 + (islSkEff('petSpdP') + _rsP) / 100;   /* ★ v1.472.0 🎶 萬獸共鳴改成「隊上每 1 隻 SR 以上 +1%(最多 +3%)」 */
   /* ★ v1.331.0 🐾 夥伴裝備的四維(hpP/atkP/defP 乘算、spdAdd/defAdd 平加、cdCut 冷卻)也併在這個唯一出口,圖鑑/詳情卡/戰鬥單位同一份數字 */
   var _gH = 1 + islPetGearEffK(_pk, 'hpP') / 100, _gA = 1 + islPetGearEffK(_pk, 'atkP') / 100, _gD = 1 + islPetGearEffK(_pk, 'defP') / 100;
   return { hp: Math.max(1, Math.round((p.b.hp * _pm.st + p.g.hp * g * (db.BT.PET_HP_G_MUL || 1) * _pm.gwH +(rec ? (rec.hpBonus || 0) : 0)) * mul * _tH * _gH)),   /* ★ v1.445.0 寵物每級 HP 成長 ×PET_HP_G_MUL(老師「我們的HP量太高」) */
@@ -35997,6 +36469,12 @@ var ISL_PI = {
   },
   PS_ORDER: ['hasty', 'cold', 'shy', 'gentle', 'brave'],
   OUT_MAX: 3,      /* 不在編組、勾「出來逛」最多 3 隻 */
+  /* ★ v1.470.0 第 2 輪(設計書第 7/8/10 節,老師裁定 E/F/G/H/I):
+     max = 同一種營地最多 2 隻;p = 已擁有的種類採集類活動成功時再遇到的機率 %(同種一天最多 1 次);legendP = 傳說夥伴 %;
+     shell = 放生回饋貝幣(依品級);inherit = 放生時經驗傳承 %;up = 打倒 1 隻頭目、撐到戰鬥結束的升階機率 %。NPC 4 位(how:'npc')永遠唯一、不能放生。 */
+  DUP: { max: 2, p: 6, legendP: 2, shell: { N: 20, R: 40, SR: 80, SSR: 150 }, inherit: 30, up: 10 },
+  /* 放生時島上日誌附的一句自然教育小語(隨機) */
+  REL_SAY: ['野生動物最好的家是大自然。', '謝謝你陪我這段路,我會在森林裡好好長大。', '看見野生動物,保持距離、不打擾,就是最溫柔的愛護。', '每一種動物在大自然裡都有自己的工作。', '讓動物回到牠的家,生態才會健康。'],
   NAME_MAX: 4,     /* 名字 1~4 個字 */
   /* 命名字庫:只放老師可以先審過的安全字(沒有鍵盤,只能點字卡) */
   CHARS: [
@@ -36008,6 +36486,473 @@ var ISL_PI = {
   /* 組合黑名單(名字裡出現就請學生換一個字);只有老師改程式能動 */
   BLOCK: ['大奶', '奶大', '奶球', '胖妹', '胖妞', '胖姐', '黑妞', '黑妹', '黑仔', '黑哥', '黑皮', '皮皮哥']
 };
+/* ══ ★ v1.472.0 🐾 寵物個體化第 3 輪(設計書第 5/9/11 節,老師裁定 D/L/M/N):專屬天賦池/技能池 ══
+   每一種 4 天賦 + 4 技能,每一隻加入時隨機帶 2 天賦(rec.tl)+ 2 技能(rec.sk),一開始就自帶、不靠升級。
+   ⚠ 只用遊戲裡「既有的效果鍵」:天賦 tal 走 islPetTal 單一出口(數值吃品級 ISL_PI.GR[].tl;結尾 P 的鍵才放大,Dur/Cap/Mul/旗標不放大);
+     技能 fx 走 islBtPetCmd(不吃品級),啟動時登記進 db.PET_CMDS(鍵名 x_ 開頭),戰鬥/特效/學舌都認得。
+   d 裡的 {鍵} 會換成這一隻實際的數值(顯示=實作)。本輪先做本島 19 種;外島 12 種(sea_db)下一次補,沒有池子的種類 tl/sk 先空著,補上池子後讀檔自動補抽。
+   GCD = 放完任何一招,其他招至少要等到「下下回合」(=原本最短冷卻 2):3 招輪著用最多每 2 回合放一次,原本的專屬指令不會變弱。 */
+var ISL_PX = {
+  GCD: 2,
+  BOOK: { e: '📘', n: '寵物技能訓練書', price: 500, kingPrice: 400 },
+  NOSCALE: { poisonOnHitDur: 1, markDur: 1, lostHpCutCap: 1, atkStackCapP: 1, spdDmgCap: 1 },
+  T: {
+    /* 🕊 海鷗小白 */
+    gu_t1: { n: '乘風翱翔', d: '被攻擊時 {selfDodgeP}% 機率閃開', tal: { selfDodgeP: 10 } },
+    gu_t2: { n: '海風眷顧', d: '每回合開始全隊恢復 {tickHealAllP}% 最大體力', tal: { tickHealAllP: 3 } },
+    gu_t3: { n: '漁港老手', d: '自己的治療效果 +{healOutP}%', tal: { healOutP: 10 } },
+    gu_t4: { n: '鷗群守望', d: '被魔物盯上的機率 −{aggroCutP}%', tal: { aggroCutP: 20 } },
+    /* 🐻 台灣黑熊 */
+    be_t1: { n: '厚實毛皮', d: '被打時反彈 {thornP}% 傷害給攻擊者', tal: { thornP: 15 } },
+    be_t2: { n: '冬眠體質', d: '每回合開始恢復自己 {selfRegenP}% 最大體力', tal: { selfRegenP: 5 } },
+    be_t3: { n: '熊掌威嚇', d: '自己技能的暈眩機率 +{stunAddP}%', tal: { stunAddP: 15 } },
+    be_t4: { n: '胸前月牙', d: '自己每少 10% 體力,受到的傷害再減 {lostHpCutP}%(最多 30%)', tal: { lostHpCutP: 3, lostHpCutCap: 30 } },
+    /* 🦌 梅花鹿 */
+    de_t1: { n: '機警雙耳', d: '被攻擊時 {selfDodgeP}% 機率閃開', tal: { selfDodgeP: 10 } },
+    de_t2: { n: '鹿角守護', d: '被打時反彈 {thornP}% 傷害給攻擊者', tal: { thornP: 10 } },
+    de_t3: { n: '嫩芽滋養', d: '自己的治療效果 +{healOutP}%', tal: { healOutP: 10 } },
+    de_t4: { n: '躲進草叢', d: '被魔物盯上的機率 −{aggroCutP}%', tal: { aggroCutP: 15 } },
+    /* 🦉 領角鴞 */
+    ow_t1: { n: '夜之獵者', d: '洞窟、地下層與夜晚,全隊攻擊 +{darkAtkP}%', tal: { darkAtkP: 6 } },
+    ow_t2: { n: '無聲羽翼', d: '被攻擊時 {selfDodgeP}% 機率閃開', tal: { selfDodgeP: 10 } },
+    ow_t3: { n: '鋸齒飛羽', d: '普通攻擊暴擊率 +{critP}%', tal: { critP: 10 } },
+    ow_t4: { n: '精準夜視', d: '目標體力低於一半時,自己造成的傷害 +{lowHpAtkP}%', tal: { lowHpAtkP: 20 } },
+    /* 🐆 石虎 */
+    lc_t1: { n: '潛伏', d: '在隊友中第一個出手時,攻擊 +{firstDmgP}%', tal: { firstDmgP: 25 } },
+    lc_t2: { n: '敏銳利爪', d: '普通攻擊暴擊率 +{critP}%', tal: { critP: 10 } },
+    lc_t3: { n: '敏捷身手', d: '被攻擊時 {selfDodgeP}% 機率閃開', tal: { selfDodgeP: 8 } },
+    lc_t4: { n: '夜行潛蹤', d: '被魔物盯上的機率 −{aggroCutP}%', tal: { aggroCutP: 20 } },
+    /* 🐦 台灣藍鵲 */
+    bm_t1: { n: '長尾山娘', d: '普通攻擊暴擊率 +{critP}%', tal: { critP: 8 } },
+    bm_t2: { n: '護巢警戒', d: '被打時反彈 {thornP}% 傷害給攻擊者', tal: { thornP: 15 } },
+    bm_t3: { n: '銳眼', d: '目標體力低於一半時,自己造成的傷害 +{lowHpAtkP}%', tal: { lowHpAtkP: 15 } },
+    bm_t4: { n: '家族同心', d: '被攻擊時 {selfDodgeP}% 機率閃開', tal: { selfDodgeP: 8 } },
+    /* 🦅 大冠鷲 */
+    ea_t1: { n: '盤旋鷹眼', d: '目標體力低於一半時,自己造成的傷害 +{lowHpAtkP}%', tal: { lowHpAtkP: 15 } },
+    ea_t2: { n: '猛禽利爪', d: '攻擊時無視目標 {pierceP}% 的防禦', tal: { pierceP: 15 } },
+    ea_t3: { n: '上升氣流', d: '被攻擊時 {selfDodgeP}% 機率閃開', tal: { selfDodgeP: 8 } },
+    ea_t4: { n: '高空先手', d: '在隊友中第一個出手時,攻擊 +{firstDmgP}%', tal: { firstDmgP: 20 } },
+    /* 🦔 穿山甲 */
+    pa_t1: { n: '鱗片反刺', d: '被打時反彈 {thornP}% 傷害給攻擊者', tal: { thornP: 20 } },
+    pa_t2: { n: '蟻窩大餐', d: '每回合開始恢復自己 {selfRegenP}% 最大體力', tal: { selfRegenP: 5 } },
+    pa_t3: { n: '捲球防禦', d: '自己每少 10% 體力,受到的傷害再減 {lostHpCutP}%(最多 30%)', tal: { lostHpCutP: 3, lostHpCutCap: 30 } },
+    pa_t4: { n: '堅韌鱗甲', d: '自己放的護盾量 +{shieldP}%', tal: { shieldP: 15 } },
+    /* 🐢 綠蠵龜 */
+    tu_t1: { n: '洋流護航', d: '自己放的護盾量 +{shieldP}%', tal: { shieldP: 15 } },
+    tu_t2: { n: '海草饗宴', d: '每回合開始全隊恢復 {tickHealAllP}% 最大體力', tal: { tickHealAllP: 3 } },
+    tu_t3: { n: '硬殼反擊', d: '被打時反彈 {thornP}% 傷害給攻擊者', tal: { thornP: 15 } },
+    tu_t4: { n: '守護幼龜', d: '替隊友擋下攻擊的機率 +{coverAddP}%', tal: { coverAddP: 10 } },
+    /* 🦀 椰子蟹 */
+    cc_t1: { n: '巨螯夾擊', d: '普通攻擊暴擊率 +{critP}%', tal: { critP: 10 } },
+    cc_t2: { n: '堅硬甲殼', d: '自己每少 10% 體力,受到的傷害再減 {lostHpCutP}%(最多 30%)', tal: { lostHpCutP: 3, lostHpCutCap: 30 } },
+    cc_t3: { n: '洞穴守衛', d: '替隊友擋下攻擊的機率 +{coverAddP}%', tal: { coverAddP: 12 } },
+    cc_t4: { n: '夜間覓食', d: '洞窟、地下層與夜晚,全隊攻擊 +{darkAtkP}%', tal: { darkAtkP: 5 } },
+    /* 🐸 莫氏樹蛙 */
+    tf_t1: { n: '吸盤抓握', d: '被攻擊時 {selfDodgeP}% 機率閃開', tal: { selfDodgeP: 8 } },
+    tf_t2: { n: '啾啾合唱', d: '每回合開始全隊恢復 {tickHealAllP}% 最大體力', tal: { tickHealAllP: 3 } },
+    tf_t3: { n: '溪畔滋潤', d: '自己的治療效果 +{healOutP}%', tal: { healOutP: 12 } },
+    tf_t4: { n: '黏液護膚', d: '自己體力低於一半時,治療效果再 +{lowHealP}%', tal: { lowHealP: 20 } },
+    /* ✨ 螢火蟲 */
+    ff_t1: { n: '冷光閃爍', d: '洞窟、地下層與夜晚,全隊迴避率 +{darkDodgeP}%', tal: { darkDodgeP: 6 } },
+    ff_t2: { n: '夜空指引', d: '每回合開始全隊恢復 {tickHealAllP}% 最大體力', tal: { tickHealAllP: 3 } },
+    ff_t3: { n: '乾淨水源', d: '自己的治療效果 +{healOutP}%', tal: { healOutP: 10 } },
+    ff_t4: { n: '微光守護', d: '自己放的護盾量 +{shieldP}%', tal: { shieldP: 15 } },
+    /* 🐟 櫻花鉤吻鮭 */
+    sa_t1: { n: '冰河孑遺', d: '每回合開始恢復自己 {selfRegenP}% 最大體力', tal: { selfRegenP: 5 } },
+    sa_t2: { n: '溪流洄游', d: '自己的治療效果 +{healOutP}%', tal: { healOutP: 10 } },
+    sa_t3: { n: '逆流而上', d: '速度每比目標快 1 點,自己造成的傷害 +{spdDmgP}%(最多 +30%)', tal: { spdDmgP: 2, spdDmgCap: 30 } },
+    sa_t4: { n: '國寶魚', d: '被魔物盯上的機率 −{aggroCutP}%', tal: { aggroCutP: 20 } },
+    /* 🐒 台灣獼猴 */
+    mq_t1: { n: '靈巧雙手', d: '自己技能的暈眩機率 +{stunAddP}%', tal: { stunAddP: 10 } },
+    mq_t2: { n: '猴群呼應', d: '每回合開始自己攻擊 +{atkStackP}%,最多疊到 +15%', tal: { atkStackP: 3, atkStackCapP: 15 } },
+    mq_t3: { n: '樹上眺望', d: '被攻擊時 {selfDodgeP}% 機率閃開', tal: { selfDodgeP: 10 } },
+    mq_t4: { n: '搶食高手', d: '普通攻擊暴擊率 +{critP}%', tal: { critP: 10 } },
+    /* 🥄 黑面琵鷺 */
+    sb_t1: { n: '濕地漫步', d: '被攻擊時 {selfDodgeP}% 機率閃開', tal: { selfDodgeP: 8 } },
+    sb_t2: { n: '候鳥耐力', d: '每回合開始恢復自己 {selfRegenP}% 最大體力', tal: { selfRegenP: 4 } },
+    sb_t3: { n: '扁嘴探水', d: '目標體力低於一半時,自己造成的傷害 +{lowHpAtkP}%', tal: { lowHpAtkP: 15 } },
+    sb_t4: { n: '群聚過冬', d: '被魔物盯上的機率 −{aggroCutP}%', tal: { aggroCutP: 15 } },
+    /* 🥁 五色鳥 */
+    bb_t1: { n: '彩羽炫目', d: '造成傷害時 {blindOnHitP}% 機率讓目標失明 1 回合', tal: { blindOnHitP: 10 } },
+    bb_t2: { n: '啄木耐力', d: '每回合開始恢復自己 {selfRegenP}% 最大體力', tal: { selfRegenP: 4 } },
+    bb_t3: { n: '樹洞守護', d: '被打時反彈 {thornP}% 傷害給攻擊者', tal: { thornP: 10 } },
+    bb_t4: { n: '森林鼓手', d: '每回合開始自己攻擊 +{atkStackP}%,最多疊到 +10%', tal: { atkStackP: 2, atkStackCapP: 10 } },
+    /* 🐆 台灣雲豹(傳說) */
+    cl_t1: { n: '雲紋隱身', d: '被攻擊時 {selfDodgeP}% 機率閃開', tal: { selfDodgeP: 10 } },
+    cl_t2: { n: '山林王者', d: '目標體力低於一半時,自己造成的傷害 +{lowHpAtkP}%', tal: { lowHpAtkP: 20 } },
+    cl_t3: { n: '長尾平衡', d: '普通攻擊暴擊率 +{critP}%', tal: { critP: 10 } },
+    cl_t4: { n: '樹冠獵手', d: '在隊友中第一個出手時,攻擊 +{firstDmgP}%', tal: { firstDmgP: 20 } },
+    /* 💙 藍環章魚(傳說) */
+    br_t1: { n: '墨汁掩護', d: '被攻擊時 {selfDodgeP}% 機率閃開', tal: { selfDodgeP: 10 } },
+    br_t2: { n: '八腕靈活', d: '自己技能的暈眩機率 +{stunAddP}%', tal: { stunAddP: 15 } },
+    br_t3: { n: '劇毒強化', d: '普通攻擊讓目標中毒時,每回合再多扣 {poisonOnHitDmgP}% 最大體力', tal: { poisonOnHitDmgP: 3 } },
+    br_t4: { n: '伺機而動', d: '目標體力低於一半時,自己造成的傷害 +{lowHpAtkP}%', tal: { lowHpAtkP: 15 } },
+    /* 🦋 寬尾鳳蝶(傳說) */
+    sw_t1: { n: '鱗粉閃耀', d: '造成傷害時 {blindOnHitP}% 機率讓目標失明 1 回合', tal: { blindOnHitP: 10 } },
+    sw_t2: { n: '蜜源滋養', d: '自己的治療效果 +{healOutP}%', tal: { healOutP: 10 } },
+    sw_t3: { n: '輕盈飛舞', d: '被攻擊時 {selfDodgeP}% 機率閃開', tal: { selfDodgeP: 10 } },
+    sw_t4: { n: '檫樹之靈', d: '每回合開始全隊恢復 {tickHealAllP}% 最大體力', tal: { tickHealAllP: 3 } },
+    /* ══ ★ v1.473.0 外島 12 種(第 3 輪之二;池子表 claude/荒島寵物個體化_第3輪之二_外島專屬池.md)══ */
+    /* 🐧 皇帝企鵝(外島・v1.473.0) */
+    ep_t1: { n: '厚厚脂肪', d: '自己受到的傷害再減 {cutP}%', tal: { cutP: 8 } },
+    ep_t2: { n: '輪流站外圈', d: '替隊友擋下攻擊的機率 +{coverAddP}%', tal: { coverAddP: 12 } },
+    ep_t3: { n: '腳背孵蛋', d: '自己放的護盾量 +{shieldP}%', tal: { shieldP: 15 } },
+    ep_t4: { n: '擠在一起', d: '全隊每有 1 位活著的成員,全隊受到的傷害再減 {huddleP}%', tal: { huddleP: 2 } },
+    /* 🦉 雪鴞(外島・v1.473.0) */
+    so_t1: { n: '無聲飛羽', d: '被攻擊時 {selfDodgeP}% 機率閃開', tal: { selfDodgeP: 10 } },
+    so_t2: { n: '白晝獵手', d: '普通攻擊暴擊率 +{critP}%', tal: { critP: 10 } },
+    so_t3: { n: '苔原俯瞰', d: '目標體力低於一半時,自己造成的傷害 +{lowHpAtkP}%', tal: { lowHpAtkP: 20 } },
+    so_t4: { n: '旅鼠突襲', d: '在隊友中第一個出手時,攻擊 +{firstDmgP}%', tal: { firstDmgP: 20 } },
+    /* 🦊 北極狐(外島・v1.473.0) */
+    af_t1: { n: '大尾巴被子', d: '每回合開始恢復自己 {selfRegenP}% 最大體力', tal: { selfRegenP: 4 } },
+    af_t2: { n: '雪下聆聽', d: '普通攻擊暴擊率 +{critP}%', tal: { critP: 8 } },
+    af_t3: { n: '換季保護色', d: '被魔物盯上的機率 −{aggroCutP}%', tal: { aggroCutP: 20 } },
+    af_t4: { n: '一躍撲雪', d: '自己技能的暈眩機率 +{stunAddP}%', tal: { stunAddP: 10 } },
+    /* 🦫 水豚(外島・v1.473.0) */
+    cp_t1: { n: '溫和脾氣', d: '只要在場,敵方全體造成的傷害再 −{auraDmgDownP}%', tal: { auraDmgDownP: 5 } },
+    cp_t2: { n: '泡水降溫', d: '每回合開始全隊恢復 {tickHealAllP}% 最大體力', tal: { tickHealAllP: 3 } },
+    cp_t3: { n: '鳥兒搭便車', d: '自己的治療效果 +{healOutP}%', tal: { healOutP: 10 } },
+    cp_t4: { n: '群居互助', d: '自己放的護盾量 +{shieldP}%', tal: { shieldP: 15 } },
+    /* 🦜 金剛鸚鵡(外島・v1.473.0) */
+    mc_t1: { n: '兩前兩後腳趾', d: '被攻擊時 {selfDodgeP}% 機率閃開', tal: { selfDodgeP: 10 } },
+    mc_t2: { n: '響亮叫聲', d: '自己技能的暈眩機率 +{stunAddP}%', tal: { stunAddP: 10 } },
+    mc_t3: { n: '樹冠高處', d: '被魔物盯上的機率 −{aggroCutP}%', tal: { aggroCutP: 15 } },
+    mc_t4: { n: '堅果大嘴', d: '攻擊時無視目標 {pierceP}% 的防禦', tal: { pierceP: 15 } },
+    /* 🐆 美洲豹(外島・v1.473.0) */
+    jg_t1: { n: '玫瑰斑紋', d: '被攻擊時 {selfDodgeP}% 機率閃開', tal: { selfDodgeP: 8 } },
+    jg_t2: { n: '埋伏獵人', d: '在隊友中第一個出手時,攻擊 +{firstDmgP}%', tal: { firstDmgP: 25 } },
+    jg_t3: { n: '黃昏夜行', d: '洞窟、地下層與夜晚,全隊攻擊 +{darkAtkP}%', tal: { darkAtkP: 6 } },
+    jg_t4: { n: '頂級掠食者', d: '目標體力低於一半時,自己造成的傷害 +{lowHpAtkP}%', tal: { lowHpAtkP: 20 } },
+    /* 🐦 海鸚(外島・v1.473.0) */
+    pf_t1: { n: '彩色大嘴', d: '造成傷害時 {blindOnHitP}% 機率讓目標失明 1 回合', tal: { blindOnHitP: 8 } },
+    pf_t2: { n: '水中飛行', d: '被攻擊時 {selfDodgeP}% 機率閃開', tal: { selfDodgeP: 10 } },
+    pf_t3: { n: '懸崖洞巢', d: '被魔物盯上的機率 −{aggroCutP}%', tal: { aggroCutP: 20 } },
+    pf_t4: { n: '漁獲豐收', d: '自己的治療效果 +{healOutP}%', tal: { healOutP: 12 } },
+    /* 🐢 加拉巴哥象龜(外島・v1.473.0) */
+    tt_t1: { n: '慢慢新陳代謝', d: '每回合開始恢復自己 {selfRegenP}% 最大體力', tal: { selfRegenP: 5 } },
+    tt_t2: { n: '馬鞍形龜殼', d: '自己每少 10% 體力,受到的傷害再減 {lostHpCutP}%(最多 30%)', tal: { lostHpCutP: 3, lostHpCutCap: 30 } },
+    tt_t3: { n: '百歲守護', d: '替隊友擋下攻擊的機率 +{coverAddP}%', tal: { coverAddP: 12 } },
+    tt_t4: { n: '泥巴鎧甲', d: '自己受到的傷害再減 {cutP}%', tal: { cutP: 6 } },
+    /* 🪶 信天翁(外島・v1.473.0) */
+    al_t1: { n: '三公尺翼展', d: '在隊友中第一個出手時,攻擊 +{firstDmgP}%', tal: { firstDmgP: 20 } },
+    al_t2: { n: '管狀鼻排鹽', d: '每回合開始恢復自己 {selfRegenP}% 最大體力', tal: { selfRegenP: 3 } },
+    al_t3: { n: '海上漂泊', d: '速度每比目標快 1 點,自己造成的傷害 +{spdDmgP}%(最多 +30%)', tal: { spdDmgP: 2, spdDmgCap: 30 } },
+    al_t4: { n: '迎風爬升', d: '普通攻擊暴擊率 +{critP}%', tal: { critP: 10 } },
+    /* 🐟 雨傘旗魚(外島・v1.473.0) */
+    sf_t1: { n: '劍狀長嘴', d: '攻擊時無視目標 {pierceP}% 的防禦', tal: { pierceP: 20 } },
+    sf_t2: { n: '變色身體', d: '被攻擊時 {selfDodgeP}% 機率閃開', tal: { selfDodgeP: 10 } },
+    sf_t3: { n: '瞬間爆發', d: '在隊友中第一個出手時,攻擊 +{firstDmgP}%', tal: { firstDmgP: 20 } },
+    sf_t4: { n: '獵食本能', d: '普通攻擊暴擊率 +{critP}%', tal: { critP: 10 } },
+    /* 🦦 海獺(外島・v1.473.0) */
+    ot_t1: { n: '牽手漂浮', d: '替隊友擋下攻擊的機率 +{coverAddP}%', tal: { coverAddP: 10 } },
+    ot_t2: { n: '超濃密毛皮', d: '自己受到的傷害再減 {cutP}%', tal: { cutP: 6 } },
+    ot_t3: { n: '腋下小口袋', d: '自己的治療效果 +{healOutP}%', tal: { healOutP: 12 } },
+    ot_t4: { n: '海藻森林', d: '每回合開始全隊恢復 {tickHealAllP}% 最大體力', tal: { tickHealAllP: 3 } },
+    /* 🛡 大王具足蟲(外島・v1.473.0) */
+    ip_t1: { n: '深海耐餓', d: '每回合開始恢復自己 {selfRegenP}% 最大體力', tal: { selfRegenP: 4 } },
+    ip_t2: { n: '十四隻腳', d: '被打時反彈 {thornP}% 傷害給攻擊者', tal: { thornP: 15 } },
+    ip_t3: { n: '重疊甲殼', d: '自己放的護盾量 +{shieldP}%', tal: { shieldP: 15 } },
+    ip_t4: { n: '深海黑暗', d: '洞窟、地下層與夜晚,全隊迴避率 +{darkDodgeP}%', tal: { darkDodgeP: 6 } }
+  },
+  S: {
+    x_gu_s1: { n: '鷗群盤旋', e: '🕊', cd: 4, fx: { hitDownP: 20, dur: 2 }, d: '敵方全體命中 −20%,持續 2 回合' },
+    x_gu_s2: { n: '銜貝急救', e: '🐚', cd: 3, fx: { heal: 35 }, d: '恢復體力最低的一位 35% 最大體力' },
+    x_gu_s3: { n: '浪花護幕', e: '🌊', cd: 4, fx: { shield: 10 }, d: '給全隊一層護盾,各吸收 10% 最大體力的傷害' },
+    x_gu_s4: { n: '海風鳴叫', e: '💨', cd: 4, fx: { spdUpP: 20, dur: 2 }, d: '全隊速度 +20%,持續 2 回合' },
+    x_be_s1: { n: '熊掌重擊', e: '🐾', cd: 4, fx: { mul: 1.6, stunP: 30, stun: 1 }, d: '160% 傷害,30% 機率讓目標暈眩 1 回合' },
+    x_be_s2: { n: '低吼震懾', e: '😤', cd: 4, fx: { dmgDownP: 20, dur: 1 }, d: '敵方全體這一回合造成的傷害 −20%' },
+    x_be_s3: { n: '蜂蜜補給', e: '🍯', cd: 5, fx: { healAll: 15 }, d: '全隊恢復 15% 最大體力' },
+    x_be_s4: { n: '鎮守山林', e: '⛰', cd: 4, fx: { defUpP: 25, dur: 2 }, d: '全隊防禦 +25%,持續 2 回合' },
+    x_de_s1: { n: '鹿鳴呼喚', e: '🦌', cd: 4, fx: { healAll: 20 }, d: '全隊恢復 20% 最大體力' },
+    x_de_s2: { n: '鹿角頂撞', e: '🦌', cd: 3, fx: { mul: 1.4, stunP: 25, stun: 1 }, d: '140% 傷害,25% 機率讓目標暈眩 1 回合' },
+    x_de_s3: { n: '草原清風', e: '🍃', cd: 4, fx: { cure: 1, regenAll: 8, dur: 2 }, d: '解除 1 個不良狀態,全隊接下來 2 回合每回合恢復 8%' },
+    x_de_s4: { n: '群鹿守望', e: '👀', cd: 5, fx: { hitDownP: 15, spdUpP: 15, dur: 2 }, d: '敵方命中 −15%、全隊速度 +15%,持續 2 回合' },
+    x_ow_s1: { n: '月夜連啄', e: '🌙', cd: 4, fx: { hits: 3, mul: 0.55 }, d: '連啄 3 下,每下 55% 傷害' },
+    x_ow_s2: { n: '鴞眼凝視', e: '👁', cd: 3, fx: { mul: 1.0, stunP: 30, stun: 1 }, d: '100% 傷害,30% 機率讓目標暈眩 1 回合' },
+    x_ow_s3: { n: '夜幕降臨', e: '🌑', cd: 4, fx: { hitDownP: 20, dur: 2 }, d: '敵方全體命中 −20%,持續 2 回合' },
+    x_ow_s4: { n: '獵物鎖定', e: '🎯', cd: 3, fx: { mul: 1.5, critAdd: 40 }, d: '150% 傷害,這一擊暴擊率 +40%' },
+    x_lc_s1: { n: '草叢伏擊', e: '🌿', cd: 3, fx: { mul: 1.2, stunP: 40, stun: 1 }, d: '120% 傷害,40% 機率讓目標暈眩 1 回合' },
+    x_lc_s2: { n: '夜影連撲', e: '🌙', cd: 5, fx: { hits: 3, mul: 0.6, randHits: 1 }, d: '連撲 3 下,每下 60% 傷害,每下隨機打一隻敵人' },
+    x_lc_s3: { n: '撕咬', e: '🦷', cd: 3, fx: { mul: 1.0, poisonP: 100, poisonDmgP: 5, poisonDur: 2 }, d: '100% 傷害,並讓目標中毒 2 回合(每回合 −5% 最大體力)' },
+    x_lc_s4: { n: '貓步警戒', e: '🐾', cd: 4, fx: { spdUpP: 20, dur: 2 }, d: '全隊速度 +20%,持續 2 回合' },
+    x_bm_s1: { n: '俯衝驅趕', e: '🪶', cd: 3, fx: { mul: 1.5 }, d: '150% 傷害' },
+    x_bm_s2: { n: '群聲鼓譟', e: '📢', cd: 4, fx: { all: 1, mul: 0.5, dmgDownP: 15, dur: 1 }, d: '敵方全體各受 50% 傷害,這一回合造成的傷害 −15%' },
+    x_bm_s3: { n: '家族接力', e: '🤝', cd: 4, fx: { atkUpP: 15, dur: 2 }, d: '全隊攻擊 +15%,持續 2 回合' },
+    x_bm_s4: { n: '果實分享', e: '🫐', cd: 4, fx: { heal: 25 }, d: '恢復體力最低的一位 25% 最大體力' },
+    x_ea_s1: { n: '盤旋俯擊', e: '🦅', cd: 4, fx: { all: 1, mul: 0.8 }, d: '撲向敵方全體,每隻各受 80% 傷害' },
+    x_ea_s2: { n: '鷹爪擒拿', e: '🦶', cd: 4, fx: { mul: 1.3, stunP: 35, stun: 1 }, d: '130% 傷害,35% 機率讓目標暈眩 1 回合' },
+    x_ea_s3: { n: '長鳴震懾', e: '📣', cd: 4, fx: { hitDownP: 20, dur: 2 }, d: '敵方全體命中 −20%,持續 2 回合' },
+    x_ea_s4: { n: '破空一擊', e: '⚡', cd: 5, fx: { mul: 2.6, sure: 1 }, d: '260% 傷害,一定打中、不會浮動' },
+    x_pa_s1: { n: '鱗甲衝撞', e: '🦔', cd: 3, fx: { mul: 1.2, stunP: 30, stun: 1 }, d: '120% 傷害,30% 機率讓目標暈眩 1 回合' },
+    x_pa_s2: { n: '掘土藏身', e: '🕳', cd: 4, fx: { shield: 12 }, d: '給全隊一層護盾,各吸收 12% 最大體力的傷害' },
+    x_pa_s3: { n: '舔食蟻群', e: '🐜', cd: 4, fx: { all: 1, mul: 0.6 }, d: '敵方全體各受 60% 傷害' },
+    x_pa_s4: { n: '捲成一顆球', e: '⚪', cd: 4, fx: { taunt: 1, cut: 40, dur: 1 }, d: '這一回合敵方全體只能攻擊自己,自身減傷 40%' },
+    x_tu_s1: { n: '潮汐護盾', e: '🌊', cd: 5, fx: { shield: 8, regenAll: 5, dur: 2 }, d: '全隊護盾 8%,接下來 2 回合每回合再恢復 5%' },
+    x_tu_s2: { n: '海浪拍擊', e: '🌊', cd: 4, fx: { all: 1, mul: 0.5, spdDownP: 20, dur: 2 }, d: '敵方全體各受 50% 傷害,速度 −20% 持續 2 回合' },
+    x_tu_s3: { n: '深海潛息', e: '🫧', cd: 4, fx: { cure: 1, healAll: 12 }, d: '解除 1 個不良狀態,全隊恢復 12% 最大體力' },
+    x_tu_s4: { n: '龜甲衝鋒', e: '🐢', cd: 3, fx: { mul: 1.3, stunP: 25, stun: 1 }, d: '130% 傷害,25% 機率讓目標暈眩 1 回合' },
+    x_cc_s1: { n: '剝殼巨螯', e: '🥥', cd: 3, fx: { mul: 1.6 }, d: '160% 傷害' },
+    x_cc_s2: { n: '甲殼壁壘', e: '🛡', cd: 4, fx: { defUpP: 25, dur: 2 }, d: '全隊防禦 +25%,持續 2 回合' },
+    x_cc_s3: { n: '螯鉗威嚇', e: '🦀', cd: 4, fx: { dmgDownP: 20, dur: 1 }, d: '敵方全體這一回合造成的傷害 −20%' },
+    x_cc_s4: { n: '椰林大餐', e: '🌴', cd: 5, fx: { healAll: 12 }, d: '全隊恢復 12% 最大體力' },
+    x_tf_s1: { n: '蝌蚪變身', e: '🐸', cd: 4, fx: { healAll: 22 }, d: '全隊恢復 22% 最大體力' },
+    x_tf_s2: { n: '露珠彈射', e: '💧', cd: 3, fx: { mul: 1.0, hitDownP: 15, dur: 2 }, d: '100% 傷害,並讓敵方命中 −15% 持續 2 回合' },
+    x_tf_s3: { n: '雨夜合唱', e: '🎶', cd: 5, fx: { regenAll: 8, spdUpP: 15, dur: 3 }, d: '全隊接下來 3 回合每回合恢復 8%,速度 +15%' },
+    x_tf_s4: { n: '溪水洗滌', e: '🚿', cd: 4, fx: { cureAll: 1, heal: 20 }, d: '解除全部不良狀態,並恢復體力最低的一位 20%' },
+    x_ff_s1: { n: '閃光眩目', e: '💡', cd: 4, fx: { hitDownP: 25, dur: 1 }, d: '敵方全體命中 −25%,持續 1 回合' },
+    x_ff_s2: { n: '螢光護幕', e: '🛡', cd: 4, fx: { shield: 10 }, d: '給全隊一層護盾,各吸收 10% 最大體力的傷害' },
+    x_ff_s3: { n: '點點星光', e: '⭐', cd: 3, fx: { heal: 35 }, d: '恢復體力最低的一位 35% 最大體力' },
+    x_ff_s4: { n: '求偶之光', e: '💛', cd: 4, fx: { atkUpP: 15, dur: 2 }, d: '全隊攻擊 +15%,持續 2 回合' },
+    x_sa_s1: { n: '七家灣清流', e: '🏞', cd: 5, fx: { regenAll: 10, dur: 3 }, d: '全隊接下來 3 回合每回合恢復 10%' },
+    x_sa_s2: { n: '躍出水面', e: '🐟', cd: 3, fx: { mul: 1.3, sure: 1 }, d: '130% 傷害,一定打中、不會浮動' },
+    x_sa_s3: { n: '櫻花雨', e: '🌸', cd: 4, fx: { healAll: 18, cure: 1 }, d: '全隊恢復 18% 最大體力,並解除 1 個不良狀態' },
+    x_sa_s4: { n: '魚群守護', e: '🐠', cd: 5, fx: { shield: 8, spdUpP: 15, dur: 2 }, d: '全隊護盾 8%,速度 +15% 持續 2 回合' },
+    x_mq_s1: { n: '連環投石', e: '🪨', cd: 4, fx: { hits: 3, mul: 0.5, randHits: 1, stunP: 15, stun: 1 }, d: '丟 3 顆石頭,每顆 50% 傷害、隨機打一隻,各有 15% 機率暈眩' },
+    x_mq_s2: { n: '吱吱警報', e: '📢', cd: 4, fx: { spdUpP: 20, dur: 2 }, d: '全隊速度 +20%,持續 2 回合' },
+    x_mq_s3: { n: '搖樹落果', e: '🌳', cd: 5, fx: { all: 1, mul: 0.5, stunP: 20, stun: 1 }, d: '敵方全體各受 50% 傷害,各有 20% 機率暈眩 1 回合' },
+    x_mq_s4: { n: '鬼臉挑釁', e: '😜', cd: 3, fx: { hitDownP: 20, dur: 2 }, d: '敵方全體命中 −20%,持續 2 回合' },
+    x_sb_s1: { n: '振翅揚沙', e: '🌪', cd: 4, fx: { hitDownP: 20, dur: 2 }, d: '敵方全體命中 −20%,持續 2 回合' },
+    x_sb_s2: { n: '扁嘴夾擊', e: '🥄', cd: 4, fx: { mul: 1.2, sleepP: 40, sleepDur: 2 }, d: '120% 傷害,40% 機率讓目標睡著(最多 2 回合,挨打會醒)' },
+    x_sb_s3: { n: '七股飛舞', e: '🕊', cd: 5, fx: { spdUpP: 20, defUpP: 10, dur: 2 }, d: '全隊速度 +20%、防禦 +10%,持續 2 回合' },
+    x_sb_s4: { n: '涉水掃蕩', e: '💦', cd: 4, fx: { all: 1, mul: 0.6, spdDownP: 20, dur: 2 }, d: '敵方全體各受 60% 傷害,速度 −20% 持續 2 回合' },
+    x_bb_s1: { n: '篤篤篤', e: '🪵', cd: 4, fx: { hits: 3, mul: 0.5 }, d: '連啄 3 下,每下 50% 傷害' },
+    x_bb_s2: { n: '樹洞藏身', e: '🕳', cd: 4, fx: { shield: 8 }, d: '給全隊一層護盾,各吸收 8% 最大體力的傷害' },
+    x_bb_s3: { n: '鳴聲擾敵', e: '🎵', cd: 4, fx: { dmgDownP: 15, dur: 1 }, d: '敵方全體這一回合造成的傷害 −15%' },
+    x_bb_s4: { n: '果實補給', e: '🍒', cd: 4, fx: { heal: 28 }, d: '恢復體力最低的一位 28% 最大體力' },
+    x_cl_s1: { n: '雲豹咆哮', e: '🐆', cd: 4, fx: { hitDownP: 20, dur: 2 }, d: '敵方全體命中 −20%,持續 2 回合' },
+    x_cl_s2: { n: '雙爪連擊', e: '🐾', cd: 3, fx: { hits: 2, mul: 1.0 }, d: '連續兩爪,每爪 100% 傷害' },
+    x_cl_s3: { n: '樹梢突襲', e: '🌲', cd: 4, fx: { mul: 2.0, critAdd: 30 }, d: '200% 傷害,這一擊暴擊率 +30%' },
+    x_cl_s4: { n: '迅影', e: '💨', cd: 4, fx: { spdUpP: 25, dur: 2 }, d: '全隊速度 +25%,持續 2 回合' },
+    x_br_s1: { n: '八腕纏繞', e: '🐙', cd: 4, fx: { mul: 0.8, stunP: 40, stun: 1 }, d: '80% 傷害,40% 機率讓目標暈眩 1 回合' },
+    x_br_s2: { n: '墨汁噴射', e: '🖤', cd: 4, fx: { hitDownP: 25, dur: 2 }, d: '敵方全體命中 −25%,持續 2 回合' },
+    x_br_s3: { n: '毒液擴散', e: '☠', cd: 5, fx: { all: 1, poisonP: 60, poisonDmgP: 5, poisonDur: 2 }, d: '敵方全體各有 60% 機率中毒 2 回合(每回合 −5% 最大體力)' },
+    x_br_s4: { n: '迅速噴水', e: '💦', cd: 3, fx: { mul: 1.6 }, d: '160% 傷害' },
+    x_sw_s1: { n: '迷蝶翩翩', e: '🦋', cd: 5, fx: { all: 1, mul: 0.4, sleepP: 35, sleepDur: 2 }, d: '敵方全體各受 40% 傷害,各有 35% 機率睡著(最多 2 回合)' },
+    x_sw_s2: { n: '花粉治癒', e: '🌼', cd: 4, fx: { healAll: 18 }, d: '全隊恢復 18% 最大體力' },
+    x_sw_s3: { n: '蝶影幻象', e: '✨', cd: 4, fx: { hitDownP: 20, dur: 2 }, d: '敵方全體命中 −20%,持續 2 回合' },
+    x_sw_s4: { n: '羽化之光', e: '🌟', cd: 5, fx: { cureAll: 1, shield: 6 }, d: '解除全部不良狀態,並給全隊 6% 護盾' },
+    /* ══ ★ v1.473.0 外島 12 種(冰凍 freezeP/破甲 armBrkP/處決 execP 走既有 islSeaCmdOnHit;招牌機制不進池)══ */
+    /* 🐧 皇帝企鵝(外島・v1.473.0) */
+    x_ep_s1: { n: '肚皮滑行', e: '🛷', cd: 3, fx: { mul: 1.4, stunP: 25, stun: 1 }, d: '140% 傷害,25% 機率讓目標暈眩 1 回合' },
+    x_ep_s2: { n: '冰原護牆', e: '🧊', cd: 4, fx: { shield: 12 }, d: '給全隊一層護盾,各吸收 12% 最大體力的傷害' },
+    x_ep_s3: { n: '企鵝列隊', e: '🐧', cd: 4, fx: { defUpP: 25, dur: 2 }, d: '全隊防禦 +25%,持續 2 回合' },
+    x_ep_s4: { n: '擋住寒風', e: '🌬', cd: 4, fx: { dmgDownP: 20 }, d: '敵方全體這一回合造成的傷害 −20%' },
+    /* 🦉 雪鴞(外島・v1.473.0) */
+    x_so_s1: { n: '冰原俯衝', e: '❄', cd: 3, fx: { mul: 1.5, freezeP: 25, freezeDur: 1 }, d: '150% 傷害,25% 機率讓目標冰凍 1 回合' },
+    x_so_s2: { n: '旅鼠鎖定', e: '🎯', cd: 3, fx: { mul: 1.5, critAdd: 40 }, d: '150% 傷害,這一擊暴擊率 +40%' },
+    x_so_s3: { n: '雪幕', e: '🌨', cd: 4, fx: { hitDownP: 20, dur: 2 }, d: '敵方全體命中 −20%,持續 2 回合' },
+    x_so_s4: { n: '轉頭 270 度', e: '🦉', cd: 4, fx: { mul: 2, execP: 15 }, d: '200% 傷害;打完目標體力低於 15% 就直接擊倒(頭目改成追加傷害)' },
+    /* 🦊 北極狐(外島・v1.473.0) */
+    x_af_s1: { n: '冰霧吐息', e: '🧊', cd: 4, fx: { mul: 0.5, all: 1, freezeP: 25, freezeDur: 1 }, d: '敵方全體各受 50% 傷害,各有 25% 機率冰凍 1 回合' },
+    x_af_s2: { n: '聽聲撲擊', e: '👂', cd: 3, fx: { mul: 1.3, sure: 1 }, d: '130% 傷害,一定打中、不會浮動' },
+    x_af_s3: { n: '狐尾掃雪', e: '🦊', cd: 4, fx: { mul: 0.6, all: 1, spdDownP: 20, dur: 2 }, d: '敵方全體各受 60% 傷害,速度 −20% 持續 2 回合' },
+    x_af_s4: { n: '雪原疾行', e: '🌨', cd: 4, fx: { spdUpP: 20, dur: 2 }, d: '全隊速度 +20%,持續 2 回合' },
+    /* 🦫 水豚(外島・v1.473.0) */
+    x_cp_s1: { n: '泥巴浴', e: '♨', cd: 4, fx: { healAll: 18, cure: 1 }, d: '全隊恢復 18% 最大體力,並解除 1 個不良狀態' },
+    x_cp_s2: { n: '啃草磨牙', e: '🌿', cd: 3, fx: { heal: 30 }, d: '恢復體力最低的一位 30% 最大體力' },
+    x_cp_s3: { n: '水邊午睡', e: '🫧', cd: 5, fx: { regenAll: 8, dur: 3 }, d: '全隊接下來 3 回合每回合恢復 8%' },
+    x_cp_s4: { n: '鳥友報信', e: '🐦', cd: 4, fx: { dmgDownP: 20 }, d: '敵方全體這一回合造成的傷害 −20%' },
+    /* 🦜 金剛鸚鵡(外島・v1.473.0) */
+    x_mc_s1: { n: '咬碎硬殼', e: '🥜', cd: 3, fx: { mul: 1.4, armBrkP: 25, armBrkDur: 2 }, d: '140% 傷害,並讓目標防禦 −25% 持續 2 回合' },
+    x_mc_s2: { n: '震耳尖叫', e: '📢', cd: 4, fx: { mul: 0.5, all: 1, dmgDownP: 15 }, d: '敵方全體各受 50% 傷害,這一回合造成的傷害 −15%' },
+    x_mc_s3: { n: '繽紛羽毛', e: '🌈', cd: 4, fx: { hitDownP: 20, dur: 2 }, d: '敵方全體命中 −20%,持續 2 回合' },
+    x_mc_s4: { n: '學人說話', e: '🗣', cd: 4, fx: { skillSeal: 1, dur: 1 }, d: '敵方全體 1 回合不能用技能(只能普通攻擊)' },
+    /* 🐆 美洲豹(外島・v1.473.0) */
+    x_jg_s1: { n: '雨林潛行', e: '🌿', cd: 3, fx: { mul: 1.3, stunP: 35, stun: 1 }, d: '130% 傷害,35% 機率讓目標暈眩 1 回合' },
+    x_jg_s2: { n: '猛然撲擊', e: '🐾', cd: 4, fx: { mul: 2, critAdd: 30 }, d: '200% 傷害,這一擊暴擊率 +30%' },
+    x_jg_s3: { n: '游泳追擊', e: '🌊', cd: 3, fx: { mul: 1.6, sure: 1 }, d: '160% 傷害,一定打中、不會浮動' },
+    x_jg_s4: { n: '黑豹低吼', e: '🖤', cd: 4, fx: { dmgDownP: 20 }, d: '敵方全體這一回合造成的傷害 −20%' },
+    /* 🐦 海鸚(外島・v1.473.0) */
+    x_pf_s1: { n: '叼魚餵食', e: '🐟', cd: 3, fx: { heal: 30 }, d: '恢復體力最低的一位 30% 最大體力' },
+    x_pf_s2: { n: '懸崖洞穴', e: '🪨', cd: 4, fx: { shield: 10 }, d: '給全隊一層護盾,各吸收 10% 最大體力的傷害' },
+    x_pf_s3: { n: '急拍翅膀', e: '🦺', cd: 4, fx: { spdUpP: 20, dur: 2 }, d: '全隊速度 +20%,持續 2 回合' },
+    x_pf_s4: { n: '趁夜返巢', e: '🌙', cd: 5, fx: { regenAll: 8, dur: 3 }, d: '全隊接下來 3 回合每回合恢復 8%' },
+    /* 🐢 加拉巴哥象龜(外島・v1.473.0) */
+    x_tt_s1: { n: '仙人掌大餐', e: '🌵', cd: 4, fx: { healAll: 12, cure: 1 }, d: '全隊恢復 12% 最大體力,並解除 1 個不良狀態' },
+    x_tt_s2: { n: '重甲衝撞', e: '🐢', cd: 3, fx: { mul: 1.3, stunP: 25, stun: 1 }, d: '130% 傷害,25% 機率讓目標暈眩 1 回合' },
+    x_tt_s3: { n: '泡泥巴坑', e: '🟫', cd: 4, fx: { defUpP: 25, dur: 2 }, d: '全隊防禦 +25%,持續 2 回合' },
+    x_tt_s4: { n: '島嶼堡壘', e: '🏝', cd: 5, fx: { shield: 8, defUpP: 15, dur: 2 }, d: '全隊護盾 8%,防禦 +15% 持續 2 回合' },
+    /* 🪶 信天翁(外島・v1.473.0) */
+    x_al_s1: { n: '順風滑下', e: '🌬', cd: 3, fx: { mul: 1.5, sure: 1 }, d: '150% 傷害,一定打中、不會浮動' },
+    x_al_s2: { n: '風暴迴旋', e: '🌀', cd: 4, fx: { mul: 0.8, all: 1 }, d: '敵方全體各受 80% 傷害' },
+    x_al_s3: { n: '掠過浪尖', e: '🌊', cd: 4, fx: { hits: 3, mul: 0.6, randHits: 1 }, d: '掠擊 3 下,每下 60% 傷害,每下隨機打一隻敵人' },
+    x_al_s4: { n: '長途領航', e: '🧭', cd: 4, fx: { spdUpP: 25, dur: 2 }, d: '全隊速度 +25%,持續 2 回合' },
+    /* 🐟 雨傘旗魚(外島・v1.473.0) */
+    x_sf_s1: { n: '長嘴揮擊', e: '🗡', cd: 3, fx: { hits: 2, mul: 0.8 }, d: '左右揮 2 下,每下 80% 傷害' },
+    x_sf_s2: { n: '趕攏魚群', e: '🐟', cd: 4, fx: { mul: 0.7, all: 1, spdDownP: 20, dur: 2 }, d: '敵方全體各受 70% 傷害,速度 −20% 持續 2 回合' },
+    x_sf_s3: { n: '收起背鰭', e: '⚡', cd: 4, fx: { spdUpP: 25, dur: 2 }, d: '全隊速度 +25%,持續 2 回合' },
+    x_sf_s4: { n: '迎頭衝撞', e: '💥', cd: 5, fx: { mul: 2.6, sure: 1 }, d: '260% 傷害,一定打中、不會浮動' },
+    /* 🦦 海獺(外島・v1.473.0) */
+    x_ot_s1: { n: '石頭敲敲', e: '🪨', cd: 3, fx: { mul: 1.3, stunP: 30, stun: 1 }, d: '130% 傷害,30% 機率讓目標暈眩 1 回合' },
+    x_ot_s2: { n: '裹海藻睡覺', e: '🌿', cd: 5, fx: { regenAll: 10, dur: 3 }, d: '全隊接下來 3 回合每回合恢復 10%' },
+    x_ot_s3: { n: '梳理毛皮', e: '🫧', cd: 4, fx: { cureAll: 1, heal: 20 }, d: '解除全部不良狀態,並恢復體力最低的一位 20%' },
+    x_ot_s4: { n: '圍成一圈', e: '🤝', cd: 4, fx: { healAll: 20 }, d: '全隊恢復 20% 最大體力' },
+    /* 🛡 大王具足蟲(外島・v1.473.0) */
+    x_ip_s1: { n: '翻身衝撞', e: '🌀', cd: 3, fx: { mul: 1.3, stunP: 25, stun: 1 }, d: '130% 傷害,25% 機率讓目標暈眩 1 回合' },
+    x_ip_s2: { n: '鎧甲架起', e: '🛡', cd: 4, fx: { defUpP: 25, dur: 2 }, d: '全隊防禦 +25%,持續 2 回合' },
+    x_ip_s3: { n: '深海黑幕', e: '🌑', cd: 4, fx: { hitDownP: 20, dur: 2 }, d: '敵方全體命中 −20%,持續 2 回合' },
+    x_ip_s4: { n: '引開注意', e: '🎯', cd: 4, fx: { taunt: 1, cut: 40, dur: 1 }, d: '這一回合敵方全體只能攻擊自己,自身減傷 40%' }
+  },
+  /* 種類 → 池子(縮寫前綴) */
+  POOL: { gull: 'gu', bear: 'be', deer: 'de', owl: 'ow', leopardcat: 'lc', bluemagpie: 'bm', eagle: 'ea', pangolin: 'pa', turtle: 'tu', coconutcrab: 'cc',
+          treefrog: 'tf', firefly: 'ff', salmon: 'sa', macaque: 'mq', spoonbill: 'sb', barbet: 'bb', cloudleopard: 'cl', bluering: 'br', swallowtail: 'sw',
+          /* ★ v1.473.0 外島 12 種 */
+          empenguin: 'ep', snowyowl: 'so', arcticfox: 'af', capybara: 'cp', macaw: 'mc', jaguar: 'jg', puffin: 'pf', tortoise: 'tt', albatross: 'al', sailfish: 'sf', seaotter: 'ot', isopod: 'ip' }
+};
+/* 某種類的專屬池 { t:[4 個天賦 id], s:[4 招技能 id] };沒有池子回 null */
+function islPxPool(k){
+  var pre = ISL_PX.POOL[k], t = [], s = [], i;
+  if(!pre) return null;
+  for(i = 1; i <= 4; i++){ if(ISL_PX.T[pre + '_t' + i]) t.push(pre + '_t' + i); if(ISL_PX.S['x_' + pre + '_s' + i]) s.push('x_' + pre + '_s' + i); }
+  return { t: t, s: s };
+}
+/* 從 arr 抽 n 個不重複 */
+function islPxPick(arr, n, rnd){ var a = arr.slice(), out = [], j; while(a.length && out.length < n){ j = Math.floor(rnd() * a.length); out.push(a.splice(j, 1)[0]); } return out; }
+/* 補抽/清理一隻的 tl/sk:只留池子裡有的,不足 2 個就從剩下的補(舊存檔、外島補池後都走這裡) */
+function islPxFill(rec, rnd){
+  var P = islPxPool(rec && rec.k), keep, i, rest;
+  if(!rec) return;
+  if(!(rec.tl instanceof Array)) rec.tl = [];
+  if(!(rec.sk instanceof Array)) rec.sk = [];
+  if(!P) return;
+  keep = []; for(i = 0; i < rec.tl.length; i++){ if(P.t.indexOf(rec.tl[i]) >= 0 && keep.indexOf(rec.tl[i]) < 0) keep.push(rec.tl[i]); } rec.tl = keep.slice(0, 2);
+  keep = []; for(i = 0; i < rec.sk.length; i++){ if(P.s.indexOf(rec.sk[i]) >= 0 && keep.indexOf(rec.sk[i]) < 0) keep.push(rec.sk[i]); } rec.sk = keep.slice(0, 2);
+  if(rec.tl.length < 2){ rest = []; for(i = 0; i < P.t.length; i++){ if(rec.tl.indexOf(P.t[i]) < 0) rest.push(P.t[i]); } rec.tl = rec.tl.concat(islPxPick(rest, 2 - rec.tl.length, rnd)); }
+  if(rec.sk.length < 2){ rest = []; for(i = 0; i < P.s.length; i++){ if(rec.sk.indexOf(P.s[i]) < 0) rest.push(P.s[i]); } rec.sk = rec.sk.concat(islPxPick(rest, 2 - rec.sk.length, rnd)); }
+}
+/* 天賦數值:品級倍率(結尾 P 的鍵才放大) */
+function islPxTalV(rec, id, key){
+  var T = ISL_PX.T[id], v, G;
+  if(!T || !T.tal || typeof T.tal[key] !== 'number') return 0;
+  v = T.tal[key];
+  if(/P$/.test(key) && !ISL_PX.NOSCALE[key]){ G = ISL_PI.GR[(rec && rec.gr) || 'R'] || ISL_PI.GR.R; v = Math.max(1, Math.round(v * G.tl)); }   /* 整數比較好懂(小學生) */
+  return v;
+}
+/* 這一隻天生帶的新天賦某個鍵的總和(Cap 類取最大不相加) */
+function islPxTal(rec, key){
+  var i, v = 0, x;
+  if(!rec || !(rec.tl instanceof Array)) return 0;
+  for(i = 0; i < rec.tl.length; i++){ x = islPxTalV(rec, rec.tl[i], key); if(/Cap$|CapP$/.test(key)) v = Math.max(v, x); else v += x; }
+  return v;
+}
+/* 天賦說明(把 {鍵} 換成這一隻的實際數值) */
+function islPxTalD(rec, id){
+  var T = ISL_PX.T[id];
+  if(!T) return '';
+  return T.d.replace(/\{(\w+)\}/g, function(_m, k){ return String(islPxTalV(rec, id, k)); });
+}
+/* 專屬新天賦逐條(html;prefix 接在原天賦後面) */
+function islPxTalLines(rec, pre){
+  var i, h = '';
+  if(!rec || !(rec.tl instanceof Array)) return '';
+  for(i = 0; i < rec.tl.length; i++){ if(ISL_PX.T[rec.tl[i]]) h += '<br>' + (pre || '') + '✨ <b>' + islEsc(ISL_PX.T[rec.tl[i]].n) + '</b>:' + islEsc(islPxTalD(rec, rec.tl[i])); }
+  return h;
+}
+/* 專屬新技能逐條(html) */
+function islPxSkLines(rec){
+  var i, h = '', c;
+  if(!rec || !(rec.sk instanceof Array)) return '';
+  for(i = 0; i < rec.sk.length; i++){ c = ISL_PX.S[rec.sk[i]]; if(c) h += '<br>' + c.e + ' <b>' + islEsc(c.n) + '</b>(冷卻 ' + c.cd + '):' + islEsc(c.d); }
+  return h;
+}
+/* 戰鬥中 3 招清單(含冷卻狀態) */
+function islBtCmdListHtml(u){
+  var L = islBtCmdKeys(u), i, c, cd, h = '<p>技能:';
+  for(i = 0; i < L.length; i++){
+    c = islPxCmd(L[i]); if(!c) continue; cd = islBtCdOf(u, L[i]);
+    h += (i ? '<br>' : '') + c.e + ' <b>' + islEsc(c.n) + '</b>' + (i ? '' : '(專屬)') + (cd > 0 ? '<span style="color:#ffb3b3"> ⏳ ' + cd + ' 回合</span>' : '<span style="color:#9be49b"> ✔ 可用</span>') + '<br><span style="font-size:16px;opacity:.92">' + islEsc(c.d) + '</span>';
+  }
+  return h + '</p>';
+}
+/* ══ ★ v1.472.0 📘 寵物技能訓練書(設計書第 9 節,裁定 M:自己選)══
+   只能換「天生帶的 2 招」,原本的專屬指令不能換;從這一種專屬池裡還沒學的招挑一招;扣 1 本;戰鬥中不能用。 */
+function islPxBookCan(rec){
+  var P = rec && islPxPool(rec.k), i, n = 0;
+  if(!P || !rec.sk || !rec.sk.length) return false;
+  for(i = 0; i < P.s.length; i++){ if(rec.sk.indexOf(P.s[i]) < 0) n++; }
+  return n > 0;
+}
+function islPxBookShown(){ var i, L = (ISL && ISL.pets) || []; for(i = 0; i < L.length; i++){ if(islPxBookCan(L[i])) return true; } return false; }
+function islPxSkCard(k, tag){ var c = ISL_PX.S[k]; return c ? '<div class="isl-pxbk-c"><b>' + c.e + ' ' + islEsc(c.n) + '</b>' + (tag ? '<i>' + tag + '</i>' : '') + '<span>冷卻 ' + c.cd + ' 回合・' + islEsc(c.d) + '</span></div>' : ''; }
+window.islPxBookOpen = function(pid, after){
+  var rec = islPetSave(pid), P, i, h, btns = [], nm;
+  var back = function(){ if(after) after(); };
+  if(!rec || !islPxBookCan(rec)){ toast('這位夥伴沒有可以換的技能'); back(); return; }
+  if(_islBt && !_islBt.over){ toast('戰鬥中不能用訓練書'); return; }
+  if((ISL.pxBook | 0) <= 0){ toast('你沒有' + ISL_PX.BOOK.n + ',到阿獺雜貨鋪買(' + islPxBookPrice() + ' 貝幣)'); back(); return; }
+  nm = islEsc(islPetNm(rec));
+  h = '<h3>' + ISL_PX.BOOK.e + ' 換技能(1/2):要忘掉哪一招?</h3><p>' + nm + ' 天生的技能有這 2 招(原本的專屬指令不能換)。你有 ' + (ISL.pxBook | 0) + ' 本訓練書。</p><div class="isl-pxbk">';
+  for(i = 0; i < rec.sk.length; i++){ h += islPxSkCard(rec.sk[i], '第 ' + (i + 1) + ' 招'); btns.push({ t: '忘掉「' + ISL_PX.S[rec.sk[i]].n + '」', cls: 'gold', cb: (function(old){ return function(){ islPxBookLearn(pid, old, after); }; })(rec.sk[i]) }); }
+  h += '</div>';
+  btns.push({ t: '取消', cls: 'ghost', cb: back });
+  islModal(h, btns);
+};
+window.islPxBookLearn = function(pid, old, after){
+  var rec = islPetSave(pid), P = rec && islPxPool(rec.k), i, h, btns = [];
+  var back = function(){ if(after) after(); };
+  if(!rec || !P){ back(); return; }
+  h = '<h3>' + ISL_PX.BOOK.e + ' 換技能(2/2):要學哪一招?</h3><p>忘掉「' + islEsc(ISL_PX.S[old].n) + '」,改學下面其中一招:</p><div class="isl-pxbk">';
+  for(i = 0; i < P.s.length; i++){
+    if(rec.sk.indexOf(P.s[i]) >= 0) continue;
+    h += islPxSkCard(P.s[i], '還沒學');
+    btns.push({ t: '學會「' + ISL_PX.S[P.s[i]].n + '」', cls: 'gold', cb: (function(nw){ return function(){
+      var r2 = islPetSave(pid), ix;
+      if(!r2 || (ISL.pxBook | 0) <= 0) return;
+      ix = r2.sk.indexOf(old); if(ix < 0 || r2.sk.indexOf(nw) >= 0) return;
+      r2.sk[ix] = nw; ISL.pxBook = (ISL.pxBook | 0) - 1;
+      playSfx('sfx-levelup', 0.45);
+      try{ islLog(ISL_PX.BOOK.e + ' ' + islPetNm(r2) + ' 忘掉了「' + ISL_PX.S[old].n + '」,學會了「' + ISL_PX.S[nw].n + '」!', null); }catch(_l){}
+      islSave('pxbook');
+      islModal('<h3>' + ISL_PX.BOOK.e + ' 學會了!</h3><p>' + islEsc(islPetNm(r2)) + ' 學會了 <b>' + ISL_PX.S[nw].e + ' ' + islEsc(ISL_PX.S[nw].n) + '</b>,下一場戰鬥就能用。</p>', [{ t: '好', cls: 'gold', cb: back }]);
+    }; })(P.s[i]) });
+  }
+  h += '</div>';
+  btns.push({ t: '上一步', cls: 'ghost', cb: function(){ islPxBookOpen(pid, after); } });
+  islModal(h, btns);
+};
+/* 技能定義(新技能先找 ISL_PX.S,再找 db.PET_CMDS) */
+function islPxCmd(key){ var db = islDB(); return ISL_PX.S[key] || (db && db.PET_CMDS && db.PET_CMDS[key]) || null; }
+/* 一次性:新技能登記進 db.PET_CMDS;星盤馴獸星域改效果(設計書第 11 節,只改效果、不動節點) */
+function islPxInit(db){
+  var k, i, n, P;
+  if(!db || db._pxInit) return;
+  db._pxInit = 1;
+  if(db.PET_CMDS){ for(k in ISL_PX.S){ if(ISL_PX.S.hasOwnProperty(k) && !db.PET_CMDS[k]) db.PET_CMDS[k] = ISL_PX.S[k]; } }
+  P = {
+    SK_CORE_LUCK:  { eff: { pxDupP: 2 }, add: ';🐾 已經擁有的夥伴再遇到的機率 6% → 8%' },
+    SK_CORE_BEAST: { eff: { pxGrSR: 3, pxGrSSR: 1 }, add: ';🎲 新夥伴抽品級時 SR +3%、SSR +1%' },
+    SK_BEAST_1:    { eff: { pxInhP: 20 }, add: ';🍃 放生時的經驗傳承 30% → 50%' },
+    SK_BEAST_KEY:  { eff: { pxUpP: 3 }, add: ';⬆ 打倒頭目升品級機率 +3%(10% → 13%)' },
+    SK_BEAST_L5:   { eff: { pxResoP: 1 }, zero: ['petHpP', 'petAtkP', 'petDefP', 'petSpdP'], d: '隊上每有 1 隻 SR 以上的夥伴,全體寵物最大體力/攻擊/防禦/速度 +1%(最多 +3%);🍖 夥伴吃東西的飽足感 +20%' },
+    SK_BEAST_M:    { eff: { pxUpP: 5, pxBook: 1 }, add: ';⬆ 升品級機率再 +5%(全部點滿最高 18%);📘 技能訓練書打 8 折(400 貝幣)' }
+  };
+  for(i = 0; db.SK_NODES && i < db.SK_NODES.length; i++){
+    n = db.SK_NODES[i]; if(!P[n.id]) continue;
+    if(!n.eff) n.eff = {};
+    for(k in P[n.id].eff){ if(P[n.id].eff.hasOwnProperty(k)) n.eff[k] = (n.eff[k] || 0) + P[n.id].eff[k]; }
+    if(P[n.id].zero){ for(k = 0; k < P[n.id].zero.length; k++) n.eff[P[n.id].zero[k]] = 0; }
+    if(P[n.id].d) n.d = P[n.id].d; else if(P[n.id].add) n.d = String(n.d || '') + P[n.id].add;
+  }
+}
+/* 星盤加成後的第 2 輪數字 */
+function islPxDupP(){ return ISL_PI.DUP.p + islSkEff('pxDupP'); }
+function islPxInhP(){ return ISL_PI.DUP.inherit + islSkEff('pxInhP'); }
+function islPxUpP(){ return ISL_PI.DUP.up + islSkEff('pxUpP'); }
+function islPxBookPrice(){ return islSkEff('pxBook') > 0 ? ISL_PX.BOOK.kingPrice : ISL_PX.BOOK.price; }
+/* 品級抽籤(馴獸之心:SR +3、SSR +1,從 N 扣) */
+function islPiGrRoll(rnd){
+  var sr = islSkEff('pxGrSR'), ssr = islSkEff('pxGrSSR'), T = {}, k;
+  for(k in ISL_PI.GR){ if(ISL_PI.GR.hasOwnProperty(k)) T[k] = { p: ISL_PI.GR[k].p }; }
+  T.SR.p += sr; T.SSR.p += ssr; T.N.p = Math.max(0, T.N.p - sr - ssr);
+  return islPiRoll(T, ISL_PI.GR_ORDER, rnd);
+}
+/* 萬獸共鳴:隊上 SR 以上的夥伴數(最多 3)×1% */
+function islPxResoP(){
+  var i, n = 0, rec;
+  if(!(islSkEff('pxResoP') > 0) || !ISL || !ISL.party) return 0;
+  for(i = 0; i < ISL.party.length; i++){ rec = islPartySlotRec(ISL.party[i]); if(rec && (rec.gr === 'SR' || rec.gr === 'SSR')) n++; }
+  return Math.min(3, n) * islSkEff('pxResoP');
+}
 function islPiRoll(tbl, order, rnd){
   var tot = 0, i, r;
   for(i = 0; i < order.length; i++) tot += tbl[order[i]].p;
@@ -36037,8 +36982,9 @@ function islPiNextId(d){
 /* 補齊一隻夥伴的個體欄位。old=true ⇒ 舊存檔轉換(R/C、個性依固定種子);old=false ⇒ 新夥伴(全部隨機) */
 function islPiFill(rec, d, old){
   var rnd = old ? islRng(islHash(String((d && d.uid) || '') + '|' + rec.k + '|pi1')) : Math.random;
+  var _pxNew = !old && !(rec.id && typeof rec.id === 'string');   /* ★ v1.472.0 新加入的夥伴(還沒有編號)才全隨機抽天賦技能 */
   if(!rec.id || typeof rec.id !== 'string') rec.id = islPiNextId(d);
-  if(!ISL_PI.GR[rec.gr]) rec.gr = old ? 'R' : islPiRoll(ISL_PI.GR, ISL_PI.GR_ORDER, rnd);
+  if(!ISL_PI.GR[rec.gr]) rec.gr = old ? 'R' : islPiGrRoll(rnd);   /* ★ v1.472.0 馴獸之心:SR +3%、SSR +1% */
   if(!ISL_PI.GW[rec.gw]) rec.gw = old ? 'C' : islPiRoll(ISL_PI.GW, ISL_PI.GW_ORDER, rnd);
   /* ★ v1.469.0 成長率拆成四項 gws {hp,atk,def,spd}(老師 19:35 神秘果實「提升指定能力成長率」→ 選「拆成四項」):
      加入時抽到的那個字母 = 四項的起點;rec.gw 改成「四項平均」的總評(排序/徽章用),由 islPiGwSync 算 */
@@ -36050,6 +36996,8 @@ function islPiFill(rec, d, old){
   rec.out = !!rec.out;
   if(!(rec.tl instanceof Array)) rec.tl = [];   /* 第 3 輪:專屬天賦池抽 2 */
   if(!(rec.sk instanceof Array)) rec.sk = [];   /* 第 3 輪:專屬技能池抽 2 */
+  /* ★ v1.472.0 第 3 輪:舊存檔(裁定 C)用「uid|個體 id」固定種子補抽,每次讀檔結果一樣;新夥伴全隨機。沒有池子的種類(外島)先空著 */
+  islPxFill(rec, _pxNew ? Math.random : islRng(islHash(String((d && d.uid) || '') + '|' + rec.id + '|px1')));
   return rec;
 }
 /* 名字(沒取名 = 種類名) */
@@ -36103,7 +37051,7 @@ function islBtMakeAllies(){
       out.push({ side: 'a' + out.length, t: 'pet', k: k, pid: rec.id, ps: rec.ps, gr: rec.gr, n: islPetNm(rec),   /* ★ v1.468.0 個體:pid/個性/品級/名字 */ e: pd.e, type: pd.type,
         row: db.PET_TYPES[pd.type] ? db.PET_TYPES[pd.type].row : 2,
         lv: rec.lv, hpMax: ps.hp, hp: islPetHpNow(rec, ps.hp),   /* ★ v1.454.0 老師「夥伴有跨場的血量,每場戰鬥都繼承上一場」 */ atk: ps.atk, def: ps.def, spd: ps.spd,
-        cmd: pd.cmd, cd: 0, cdCut: ps.cdCut, shield: 0, stun: 0, down: false, rec: rec, gauge: Math.min(100, Math.max(0, islSkEff('petGaugeStart'))) });   /* ★ v1.317.0 馴獸專精 petGaugeStart:開戰計量先有 N% */   /* ★ v1.258.0 gauge=技能計量(0~100,每個角色行動 +25) */
+        cmd: pd.cmd, cd: 0, xcmds: islPxSkOf(rec), xcd: {}, cdCut: ps.cdCut, shield: 0, stun: 0, down: false, rec: rec, gauge: Math.min(100, Math.max(0, islSkEff('petGaugeStart'))) });   /* ★ v1.317.0 馴獸專精 petGaugeStart:開戰計量先有 N% */   /* ★ v1.258.0 gauge=技能計量(0~100,每個角色行動 +25) */
     } else if(slot.t === 'friend'){
       /* ★ 老師裁定 3:借用版好友角色不可更改任何屬性或裝備,也不會升級。
          這裡只讀 friendCache 的唯讀快照(P3 的編組頁會在選定當下重抓一次),
@@ -36198,7 +37146,7 @@ function islBtHurtUnit(u, dmg){
   if(u.shield > 0){ a = Math.min(u.shield, dmg); u.shield -= a; dmg -= a; shieldAmt += a; }
   _islHurtInfo = { raw: raw, pct: pct, shield: shieldAmt, final: dmg };
   u.hp = Math.max(0, u.hp - dmg);
-  if(dmg > 0 && u.t === 'pet' && !u.down && islPetTal(u, 'cdCutOnHit')){ u.cd = Math.max(0, (u.cd || 0) - islPetTal(u, 'cdCutOnHit')); }   /* ★ v1.321.0 天賦 cdCutOnHit(五色鳥 鑿洞連擊):自己受到傷害時,技能冷卻縮短 N 回合 */
+  if(dmg > 0 && u.t === 'pet' && !u.down && islPetTal(u, 'cdCutOnHit')){ islBtCdDown(u, islPetTal(u, 'cdCutOnHit'));   /* ★ v1.472.0 3 招一起縮 */ }   /* ★ v1.321.0 天賦 cdCutOnHit(五色鳥 鑿洞連擊):自己受到傷害時,技能冷卻縮短 N 回合 */
   if(dmg > 0 && u.t === 'pet' && !u.down && u.hp > 0 && islPetTal(u, 'hitRallyP')) islBtSpoonRally(u);   /* ★ v1.340.0 群棲警戒(黑面琵鷺):受傷當下判定,這一下被打倒就不觸發 */
   if(u.hp <= 0 && !u.down && u.t === 'pet' && !u._guts && islSkEff('petGuts')){ u._guts = true; u.hp = 1; islBtFloat(u.side, '🐾 撐住了!', 'heal'); islBtLog('🌟 羈絆守護!' + islEsc(u.n) + ' 咬牙撐住,保留 1 點體力。'); }   /* ★ v1.317.0 馴獸專精關鍵節點 petGuts:每隻寵物每場第一次被打倒時保留 1 點(u 是每場重建的戰鬥單位,_guts 旗標天然每場重置) */
   if(u.hp <= 0 && !u.down && u.t === 'pet' && !u._gGuts && islPetGearEff(u, 'gutsOnce')){ u._gGuts = true; u.hp = 1; islBtFloat(u.side, '🌋 撐住了!', 'heal'); islBtLog('🌋 熔心勇氣徽章發光!' + islEsc(u.n) + ' 咬牙撐住,保留 1 點體力。'); }   /* ★ v1.331.0 夥伴裝備 gutsOnce:每場第一次被擊倒保留 1 體力;與馴獸專精 petGuts 各自獨立一次(u 每場重建,旗標天然每場重置) */
@@ -36959,7 +37907,7 @@ function islBtSpoonRally(u){
   if(Math.random() * 100 >= p) return;
   spd = islPetTal(u, 'hitRallySpdP') || 50; cut = islPetTal(u, 'hitRallyCd') || 1;
   B.buff = B.buff || {}; B.buff.spdTalP = { v: spd, t: 2 };
-  for(i = 0; i < B.allies.length; i++){ a = B.allies[i]; if(a && !a.down && (a.cd || 0) > 0){ a.cd = Math.max(0, a.cd - cut); n++; } }
+  for(i = 0; i < B.allies.length; i++){ a = B.allies[i]; if(a && !a.down && a.cmd && islBtCmdKeys(a).length > islBtCmdReadyKeys(a).length){ islBtCdDown(a, cut); n++; }   /* ★ v1.472.0 3 招一起縮 */ }
   try{ islBtFloat(u.side, '🥄 警戒!', 'heal'); islBtLog('🥄 ' + islEsc(u.n) + ' 受驚拍翅發出警戒——全隊速度 +' + spd + '%(1 回合)' + (n ? ',技能冷卻 −' + cut : '') + '!'); }catch(_sr){}
 }
 /* ══ ★ v1.261.0(2026-09-18・老師看圖四項)戰鬥畫面輔助函式 ══════════════════════════════
@@ -37275,10 +38223,13 @@ function islBtUnitPreview(side){
       if(u.t === 'pet'){
         p = db.PETS[u.k]; cmd = db.PET_CMDS[p.cmd];
         var _g = Math.min(100, u.gauge || 0), _rdy = islBtGaugeReady(u);   /* ★ v1.258.0 技能計量與可施展判定 */
-        h = '<div style="text-align:center">' + islPetPicHtml(u.k, 96) + '</div><h3>' + u.e + ' ' + islEsc(u.n) + ' Lv' + u.lv + '</h3><p>' + (db.PET_TYPES[p.type] ? db.PET_TYPES[p.type].e + db.PET_TYPES[p.type].n : '') + '</p><p>❤️ ' + Math.max(0, u.hp) + '/' + u.hpMax + '　⚔ ' + u.atk + '　🛡 ' + u.def + '　💨 ' + islNum1(u.spd) + (u.shield > 0 ? '　🛡+' + u.shield : '') + (u.down ? '　💤 倒下' : '') + '</p><p>技能:' + cmd.e + ' <b>' + islEsc(cmd.n) + '</b><br><span style="font-size:16px;opacity:.92">' + islEsc(cmd.d) + '</span></p>' +
-            '<p>⚡ 技能計量 <b style="color:' + (_rdy ? '#ff6a4d' : '#ffd166') + '">' + _g + '%</b>' + (u.cd > 0 ? '　⏳ 冷卻中,還要 ' + u.cd + ' 回合' : (_rdy ? '　🔥 可以施展!' : '　(每個角色行動 +25%)')) + '</p><p>天賦:' + islEsc(p.talent) + '</p>';
-        if(_rdy && !B.over){   /* ★ v1.258.0 手動插隊施放:計量滿+冷卻好才給「施展!」鈕,不論自動或手動模式都能插隊 */
-          islModal(h, [{ t: cmd.e + ' 施展!', cls: 'gold', cb: (function(sd){ return function(){ islBtManualCast(sd); }; })(side) }, { t: '關閉', cls: 'ghost' }]);
+        h = '<div style="text-align:center">' + islPetPicHtml(u.k, 96) + '</div><h3>' + u.e + ' ' + islEsc(u.n) + ' Lv' + u.lv + '</h3><p>' + (db.PET_TYPES[p.type] ? db.PET_TYPES[p.type].e + db.PET_TYPES[p.type].n : '') + '</p><p>❤️ ' + Math.max(0, u.hp) + '/' + u.hpMax + '　⚔ ' + u.atk + '　🛡 ' + u.def + '　💨 ' + islNum1(u.spd) + (u.shield > 0 ? '　🛡+' + u.shield : '') + (u.down ? '　💤 倒下' : '') + '</p>' + islBtCmdListHtml(u) +
+            '<p>⚡ 技能計量 <b style="color:' + (_rdy ? '#ff6a4d' : '#ffd166') + '">' + _g + '%</b>' + (!islBtCmdAnyReady(u) ? '　⏳ 3 招都在冷卻中' : (_rdy ? '　🔥 可以施展!選一招' : '　(每個角色行動 +25%)')) + '</p><p>天賦:' + islEsc(p.talent) + islPxTalLines(u.rec, ' ') + '</p>';
+        if(_rdy && !B.over){   /* ★ v1.258.0 手動插隊施放:計量滿+冷卻好才給「施展!」鈕,不論自動或手動模式都能插隊;★ v1.472.0 每一招冷卻好的各一顆鈕(3 招選單) */
+          var _btns = [], _rk = islBtCmdReadyKeys(u), _ri, _rc;
+          for(_ri = 0; _ri < _rk.length; _ri++){ _rc = islPxCmd(_rk[_ri]); _btns.push({ t: _rc.e + ' ' + _rc.n, cls: 'gold', cb: (function(sd, kk){ return function(){ islBtManualCast(sd, kk); }; })(side, _rk[_ri]) }); }
+          _btns.push({ t: '關閉', cls: 'ghost' });
+          islModal(h, _btns);
           playSfx('sfx-tap', 0.25);
           return;
         }
@@ -37379,9 +38330,9 @@ function islBtSpUse(k){
   q.onclick = function(ev){ var t = ev.target, ix, v; while(t && t !== q && !(t.getAttribute && t.getAttribute('data-ry'))) t = t.parentNode; if(!t || t === q) return;
     ix = parseInt(t.getAttribute('data-ry'), 10); v = B.allies[ix];
     if(ix >= 0 && v && !v.down && islBtSpCan('rally')){
-      B.spG -= islBtSpCost('rally'); B.rallyUsed = true; v.gauge = 100; v.cd = Math.max(0, (v.cd || 0) - 1);
+      B.spG -= islBtSpCost('rally'); B.rallyUsed = true; v.gauge = 100; islBtCdDown(v, 1);   /* ★ v1.472.0 3 招一起縮 */
       playSfx('sfx-confirm', 0.4); try{ islBtFloat(v.side, '📣 集滿!', 'heal'); }catch(_rf){}
-      islBtLog('💠📣 你號令 ' + islEsc(v.n) + '!技能計量集滿' + ((v.cd || 0) > 0 ? '(冷卻還剩 ' + v.cd + ' 回合)' : ',輪到牠時就會放招') + '。');
+      islBtLog('💠📣 你號令 ' + islEsc(v.n) + '!技能計量集滿' + ((v.cmd ? !islBtCmdAnyReady(v) : (v.cd || 0) > 0) ? '(技能都還在冷卻)' : ',輪到牠時就會放招') + '。');
       try{ islBtGaugePaint(); }catch(_gp){} islBtSpUpdate();
     } else playSfx('sfx-tap', 0.25);
     islBtItemGiveBack();   /* 號令不算主角行動:收面板、把行動權還給玩家 */
@@ -37561,7 +38512,7 @@ function islBtSelfRegenTick(){   /* ★ v1.243.0 老師「綠蠵龜天賦:每回
     was = u.hp; u.hp = Math.min(u.hpMax, u.hp + Math.max(1, Math.round(u.hpMax * pct * islBtHealRecv(u) / 100))); heal = u.hp - was;
     if(heal <= 0) continue;
     try{ islBtFloat(u.side, '+' + heal, 'heal'); islBtHealParticles(u.side); }catch(_sr){}
-    islBtLog('🐢 ' + islEsc(u.n) + ' 自我修復 ❤️+' + heal + '。');
+    islBtLog((u.k === 'turtle' ? '🐢 ' : u.e + ' ') + islEsc(u.n) + ' 自我修復 ❤️+' + heal + '。');
   }
 }
 function islBtPartyTalTick(){   /* ★ v1.243.0 老師「梅花鹿天賦:每回合自動解除隊友1個不利狀態,並恢復全隊8%HP」— 新增天賦鍵 tickCure1(有=每回合嘗試解一個不利狀態,沿用既有 f.cure 同一套 islAilHas/islAilCure 出口,跟 D.PET_CMDS 的 cure/cureAll 是同一套機制只是頻率改成每回合)與 tickHealAllP(全隊治療,加總後套用,跟 islBtRegenTick 的 buff 版持續回復是不同資料來源、可以共存) */
@@ -37571,7 +38522,7 @@ function islBtPartyTalTick(){   /* ★ v1.243.0 老師「梅花鹿天賦:每回�
   if(pct > 0){
     if(ISL.hp > 0 && ISL.hp < ISL.hpMax){ was = ISL.hp; ISL.hp = Math.min(ISL.hpMax, ISL.hp + Math.max(1, Math.round(ISL.hpMax * pct / 100))); islBtFloat('p', '+' + (ISL.hp - was), 'heal'); islBtHealParticles('p'); }
     for(i = 0; i < B.allies.length; i++){ if(B.allies[i].down || B.allies[i].hp >= B.allies[i].hpMax) continue; was = B.allies[i].hp; B.allies[i].hp = Math.min(B.allies[i].hpMax, B.allies[i].hp + Math.max(1, Math.round(B.allies[i].hpMax * pct / 100))); islBtFloat(B.allies[i].side, '+' + (B.allies[i].hp - was), 'heal'); islBtHealParticles(B.allies[i].side); }
-    islBtHp(); islBtLog('🦌 百草知識:全隊 +' + pct + '% 體力。');
+    islBtHp(); islBtLog('🌿 夥伴的天賦:全隊 +' + pct + '% 體力。');   /* ★ v1.472.0 不只梅花鹿,專屬天賦也會每回合補全隊 */
   }
   for(i = 0; i < B.allies.length; i++){ if(islPetTal(B.allies[i], 'tickCure1')){
     _ord = islDB().STATUS_ORDER || [];
@@ -37600,7 +38551,7 @@ function islBtPlayerTurn(){
   B.turn++;
   /* ★ v1.164.0 新的一輪:隊友回合重新開放、全隊增益/敵方減益各扣 1 回合、夥伴指令冷卻各扣 1 */
   B.allyDone = false; B.swapHalf = false; B.ftUse = false; if(B.p.brace > 0) B.p.brace--;   /* ★ v1.261.0 ftUse 保險歸零 */   /* ★ v1.229.0 B5 架槍撐到你下一回合 */ islBtTickBuffs(); islBtRegenTick(); islBtTalHealTick();   /* ★ v1.241.0 海鷗小白「銜草療傷」每回合自動治療 */ islBtSelfRegenTick(); islBtPartyTalTick();   /* ★ v1.243.0 綠蠵龜「每回合自癒」+ 梅花鹿「每回合解狀態+全隊回血」 */ B.heroTgt = null;   /* ★ v1.228.0 換武器半回合只算當回合 */ if(B.witCd > 0) B.witCd--; if(islBtStatusTick()) return;   /* ★ v1.226.0 智取冷卻/燒燙傷/減速 */   /* ★ v1.213.0 老師「技能清單稽核:補齊持續恢復HP」— 跟 buff 倒數同一個地方結算,每回合開頭觸發一次 */
-  for(i = 0; i < B.allies.length; i++){ if(B.allies[i].cd > 0) B.allies[i].cd--; }
+  for(i = 0; i < B.allies.length; i++){ if(B.allies[i].cmd) islBtCdDown(B.allies[i], 1); else if(B.allies[i].cd > 0) B.allies[i].cd--; }   /* ★ v1.472.0 寵物 3 招各自 −1 */
   B.rallyUsed = false;   /* ★ v1.447.0 📣 號令夥伴每回合 1 次 */
   if((B.skCd || 0) > 0) B.skCd--;   /* ★ v1.445.0 絕招冷卻跟夥伴指令一樣每輪 −1 */
   islAccTurnRegen();   /* ★ v1.386.0 🌳 古樹年輪:每回合開始恢復 N% 最大體力(暈眩中也照回) */
@@ -38333,7 +39284,37 @@ function islBtGaugeStage(g){ return g >= 100 ? 'g4' : (g > 50 ? 'g3' : (g > 25 ?
    戰鬥中的即時縮減(五色鳥 cdCutOnHit、黑面琵鷺 hitRallyCd 等「受擊/警戒」天賦)是各寵物的專屬機制,不受這個下限約束。
    夥伴詳情卡(islPetCardOpen)也讀這支,顯示=實作。 */
 function islPetCmdCd(base, cut){ var b = Math.max(1, base | 0 || 1); return Math.max(Math.ceil(b / 2), b - (cut | 0), 1); }
-function islBtGaugeReady(u){ return !!(u && !u.down && (u.gauge || 0) >= 100 && (u.cmd ? u.cd <= 0 : islBtFriendSkLeft(u) > 0)); }   /* ★ v1.385.0 好友隊友(沒有 cmd、有 fsk)也有計量:還有沒用過的技能就算可施展 */
+function islBtGaugeReady(u){ return !!(u && !u.down && (u.gauge || 0) >= 100 && (u.cmd ? islBtCmdAnyReady(u) : islBtFriendSkLeft(u) > 0)); }   /* ★ v1.472.0 3 招任一招冷卻好就算 */
+/* ══ ★ v1.472.0 🐾 寵物 3 招(原本的專屬指令 u.cmd + 天生帶的 2 招 u.xcmds),每招各自冷卻 ══
+   原本那招的冷卻仍存在 u.cd(先手判定、圖示等舊程式照讀);新的 2 招存在 u.xcd[鍵]。
+   計量共用一條:放任何一招計量歸零;放完後其他招至少等 ISL_PX.GCD 回合(公共冷卻),原本的專屬指令頻率不會比以前低。 */
+function islPxSkOf(rec){ var o = [], i; if(rec && rec.sk instanceof Array){ for(i = 0; i < rec.sk.length; i++){ if(ISL_PX.S[rec.sk[i]]) o.push(rec.sk[i]); } } return o; }
+function islBtCmdKeys(u){ return u && u.cmd ? [u.cmd].concat(u.xcmds || []) : []; }
+function islBtCdOf(u, k){ return k === u.cmd ? (u.cd || 0) : ((u.xcd && u.xcd[k]) || 0); }
+function islBtCdSet(u, k, v){ if(k === u.cmd) u.cd = v; else { if(!u.xcd) u.xcd = {}; u.xcd[k] = v; } }
+function islBtCdDown(u, n){ var i, L = islBtCmdKeys(u); for(i = 0; i < L.length; i++){ if(islBtCdOf(u, L[i]) > 0) islBtCdSet(u, L[i], Math.max(0, islBtCdOf(u, L[i]) - n)); } }
+function islBtCmdReadyKeys(u){ var i, L = islBtCmdKeys(u), o = []; for(i = 0; i < L.length; i++){ if(islPxCmd(L[i]) && islBtCdOf(u, L[i]) <= 0) o.push(L[i]); } return o; }
+function islBtCmdAnyReady(u){ return islBtCmdReadyKeys(u).length > 0; }
+function islBtCmdUse(u, k){
+  var i, L = islBtCmdKeys(u), c = islPxCmd(k);
+  islBtCdSet(u, k, islPetCmdCd(c ? c.cd : 2, u.cdCut));
+  for(i = 0; i < L.length; i++){ if(L[i] !== k && islBtCdOf(u, L[i]) < ISL_PX.GCD) islBtCdSet(u, L[i], ISL_PX.GCD); }
+  if(!u.xlast) u.xlast = {}; u.xlast[k] = (_islBt && _islBt.turn) | 0;   /* 自動輪流用:記住這一招哪一回合放的 */
+  u.gauge = 0;
+}
+/* 自動施放挑哪一招:冷卻好、這時候值得放(治療招有人需要/象龜無敵值得)的裡面,挑「最久沒放」的(輪流用,招牌的專屬指令不會被冷落);都沒放過時原本那招優先。
+   ⚠ 第一版挑「原始冷卻最長」測出來石虎的二段攻擊(冷卻 2)幾乎永遠輪不到,改成輪流。 */
+function islBtCmdPick(u){
+  var L = islBtCmdReadyKeys(u), i, c, best = null, bl = 1e9, t;
+  for(i = 0; i < L.length; i++){
+    c = islPxCmd(L[i]); if(!c || !c.fx) continue;
+    if(islBtIsHealCmd(c) && !islBtHealNeeded(c)) continue;
+    if(c.fx.invuln && islSeaOn() && !islSeaInvulnWorth()) continue;
+    t = (u.xlast && typeof u.xlast[L[i]] === 'number') ? u.xlast[L[i]] : -1 - (L[i] === u.cmd ? 1 : 0);
+    if(t < bl){ bl = t; best = L[i]; }
+  }
+  return best;
+}   /* ★ v1.385.0 好友隊友(沒有 cmd、有 fsk)也有計量:還有沒用過的技能就算可施展 */
 function islBtGaugeTick(){
   var B = _islBt, i, u, _fb = islDB().FRIEND_BT || {};
   if(!B || B.over) return;
@@ -38350,7 +39331,7 @@ function islBtGaugePaint(){
   for(i = 0; i < B.allies.length; i++){
     u = B.allies[i]; if(!u.cmd && !(u.fsk && u.fsk.length)) continue;   /* ★ v1.385.0 好友隊友有技能才有計量條 */
     el = $('isl-bt-gau-' + u.side);
-    if(el){ el.className = 'gau ' + islBtGaugeStage(u.gauge || 0) + ((u.cd > 0 || (!u.cmd && !islBtFriendSkLeft(u))) ? ' oncd' : '');   /* 好友技能全部用完 → 灰色 */ if(el.firstChild) el.firstChild.style.width = Math.min(100, u.gauge || 0) + '%'; }
+    if(el){ el.className = 'gau ' + islBtGaugeStage(u.gauge || 0) + (((u.cmd && !islBtCmdAnyReady(u)) || (!u.cmd && !islBtFriendSkLeft(u))) ? ' oncd' : '');   /* ★ v1.472.0 3 招都在冷卻才灰 */   /* 好友技能全部用完 → 灰色 */ if(el.firstChild) el.firstChild.style.width = Math.min(100, u.gauge || 0) + '%'; }
     rd = islBtGaugeReady(u);
     if(rd && !u._grdy){ try{ playSfx('sfx-summon-reveal', 0.28); }catch(_gs){} }   /* 剛充滿的那一刻輕輕提示一聲(不重複播) */
     u._grdy = rd;
@@ -38359,15 +39340,16 @@ function islBtGaugePaint(){
   }
 }
 /* ✋ 手動插隊施放:從 islBtUnitPreview 的「施展!」鈕進來,不佔主角的行動權 */
-function islBtManualCast(side){
-  var B = _islBt, db = islDB(), u = null, i, cmd;
+function islBtManualCast(side, key){
+  var B = _islBt, u = null, i, cmd;
   if(!B || B.over) return;
   for(i = 0; i < B.allies.length; i++){ if(B.allies[i].side === side){ u = B.allies[i]; break; } }
   if(!u || !islBtGaugeReady(u)) return;
   if(B.busy){ try{ toast('⏳ 等目前的動作結束,再點一次施展'); }catch(_tb){} return; }
-  cmd = db.PET_CMDS[u.cmd]; if(!cmd) return;
+  if(!key || islBtCdOf(u, key) > 0) key = islBtCmdReadyKeys(u)[0];   /* ★ v1.472.0 選單點的那一招;沒指定就用第一招可以放的 */
+  cmd = key ? islPxCmd(key) : null; if(!cmd) return;
   B.busy = true; islBtActs(false);
-  u.cd = islPetCmdCd(cmd.cd, u.cdCut); u.gauge = 0; islBtGaugePaint();   /* ★ v1.376.0 冷卻縮減最多縮短一半(islPetCmdCd) */
+  islBtCmdUse(u, key); islBtGaugePaint();   /* ★ v1.472.0 這一招進冷卻、其他招公共冷卻;★ v1.376.0 冷卻縮減最多縮短一半(islPetCmdCd) */
   B.ftUse = true;   /* ★ v1.261.0 手動插隊施放 → 單體治療/復活吃支援目標;結束(或下一輪開頭)歸零 */
   islBtPetCmd(u, cmd, function(){ if(_islBt){ _islBt.ftUse = false; } if(_islBt && !_islBt.over){ _islBt.busy = false; islBtActs(true); islBtHp(); } });
 }
@@ -39056,7 +40038,7 @@ function islBtMonAct(m, next){
       /* ★ v1.167.0 天賦 thornP(椰子蟹 硬殼反震):被打中就反彈一部分傷害給對方 */
       if(islPetTal(u, 'thornP') && m.hp > 0){
         var _th = Math.max(1, Math.round(dmg * islPetTal(u, 'thornP') / 100));
-        m.hp = Math.max(0, m.hp - _th); islBtFloat(m.side, '−' + _th, ''); islBtLog('🦀 硬殼反震!' + islEsc(m.n) + ' 自己撞得 −' + _th + '。');
+        m.hp = Math.max(0, m.hp - _th); islBtFloat(m.side, '−' + _th, ''); islBtLog((u.k === 'coconutcrab' ? '🦀 硬殼反震!' : u.e + ' ' + islEsc(u.n) + ' 反擊!') + islEsc(m.n) + ' 自己撞得 −' + _th + '。');   /* ★ v1.472.0 別的夥伴的專屬天賦也會反彈 */
         if(m.hp <= 0){ islBtHp(); islBtOnMonDown(m, next); return; }
       }
     }
@@ -39240,7 +40222,8 @@ function islBtAllyAct(u, next){
   if(u.stun > 0){ u.stun--; islBtSetState(u.side, 'stun', 0); islBtFx(u.side, 'dizzy', 140); islBtLog('😵 ' + islEsc(u.n) + ' 暈眩中,動不了!'); setTimeout(function(){ if(_islBt && !_islBt.over){ if(u.stun <= 0) islBtSetState(u.side, 'idle', 0); next(); } }, 1000); return; }
   if(u.restT > 0){ u.restT--; islBtSetState(u.side, 'def', 900); islBtLog('🐢 ' + islEsc(u.n) + ' 還縮在殼裡休息,這回合不能行動。'); setTimeout(function(){ if(_islBt && !_islBt.over){ islBtSetState(u.side, 'idle', 0); next(); } }, 900); return; }   /* ★ v1.384.0 象龜縮進殼裡的代價 */
   if(u.t === 'friend'){ var _fs = islBtFriendSkPick(u); if(_fs){ islBtFriendSkCast(u, _fs, next); return; } islBtAllyBasic(u, next); return; }   /* ★ v1.385.0 好友隊友:計量滿就自動挑一招(不吃手動模式),否則普攻 */
-  useCmd = !!(cmd && cmd.fx && u.cd <= 0 && (u.gauge || 0) >= 100 && !islBtPetManual());   /* ★ v1.258.0 老師需求①:自動施放要「冷卻好+計量滿 100」;✋ 手動模式輪到自己一律只普攻,施放交給玩家點寵物插隊 */
+  useCmd = !!(cmd && (u.gauge || 0) >= 100 && !islBtPetManual());
+  if(useCmd){ var _pk2 = islBtCmdPick(u); if(_pk2){ islBtCmdUse(u, _pk2); islBtGaugePaint(); islBtPetCmd(u, islPxCmd(_pk2), next); return; } useCmd = false; }   /* ★ v1.472.0 3 招自動挑一招(islBtCmdPick 已含治療需要/象龜無敵判斷);下面舊判斷保留但不會再進 */   /* ★ v1.258.0 老師需求①:自動施放要「冷卻好+計量滿 100」;✋ 手動模式輪到自己一律只普攻,施放交給玩家點寵物插隊 */
   if(useCmd && islBtIsHealCmd(cmd)) useCmd = islBtHealNeeded(cmd);
   if(useCmd && cmd.fx.invuln && islSeaOn()) useCmd = islSeaInvulnWorth();   /* ★ v1.384.0 象龜無敵:有頭目預告/蓄大絕招或有人半血以下才放(不然計量/冷卻保留) */   /* ★ v1.325.0 治療型寵物自動施展技能智能行動:見 islBtHealNeeded 說明,沒人需要治療/復活/解除狀態時這回合先不放,改普攻,計量/冷卻都保留到真正需要的時候 */
   if(useCmd){ u.cd = islPetCmdCd(cmd.cd, u.cdCut); u.gauge = 0; islBtGaugePaint(); islBtPetCmd(u, cmd, next); return; }
@@ -39710,9 +40693,8 @@ function islSeaFoxDodge(u, by){
   var p = (u && u.side !== 'p') ? islPetTal(u, 'selfDodgeP') : 0;
   if(!p || Math.random() * 100 >= p) return false;
   if(islPetTal(u, 'dodgeCrit')) u.foxCrit = true;
-  try{ playSfx('sfx-evade', 0.45); islBtFloat(u.side, '❄ 閃開!', 'block'); }catch(_f){}
-  islBtLog('🦊 ' + islEsc(u.n) + ' 白色的毛跟雪地融成一片,' + islEsc(by || '') + ' 撲了個空!' + (u.foxCrit ? '下一擊必定暴擊!' : ''));
-  return true;
+  try{ playSfx('sfx-evade', 0.45); islBtFloat(u.side, u.k === 'arcticfox' ? '❄ 閃開!' : '💨 閃開!', 'block'); }catch(_f){}
+  islBtLog(u.k === 'arcticfox' ? '🦊 ' + islEsc(u.n) + ' 白色的毛跟雪地融成一片,' + islEsc(by || '') + ' 撲了個空!' + (u.foxCrit ? '下一擊必定暴擊!' : '') : '💨 ' + islEsc(u.n) + ' 靈巧地閃開了,' + islEsc(by || '') + ' 撲了個空!');   /* ★ v1.472.0 專屬天賦「閃開」共用這支 */  return true;
 }
 function islSeaFoxCritUse(u){ if(u && u.foxCrit){ u.foxCrit = false; return true; } return false; }
 /* 寵物普攻命中後(雪鴞鎖定) */
@@ -40143,7 +41125,7 @@ var ISL_SEA_STFX = {
 function islSeaBtEnd(){
   var B = _islBt, i, u;
   if(!B) return;
-  for(i = 0; i < B.allies.length; i++){ u = B.allies[i]; if(u._gone > 0){ u._gone = 0; u.down = false; u.hp = Math.max(1, u._goneHp || 1); } }
+  for(i = 0; i < B.allies.length; i++){ u = B.allies[i]; if(u._gone > 0){ u._gone = 0; u.down = false; u.hp = Math.max(1, u._goneHp || 1); u._wasGone = 1; } }   /* ★ v1.470.0 _wasGone:戰鬥結束時不在場上 ⇒ 不算「撐到最後」(頭目升階不擲) */
   islSeaDarkUi(false);
   islSeaQteClose();
 }
@@ -40382,7 +41364,8 @@ function islPetsGainAfterWin(mons, lost){
   if(!B) return '';
   var bossLv = 0;   /* ★ v1.375.0 老師「荒島的 boss 戰給寵物的經驗值太少了」— 根因:舊版只認 k==='guardian'(遺跡守墓石像),地圖頭目(山豬王/飛蝗之王…,身上掛 m.boss)與出海島主全被當成普通小怪,每場只拿 win(6)×隻數;改成「守墓石像 或 m.boss」都算頭目,且頭目經驗只算一份(不再 ×隻數,召喚的幫手不重複計),隨頭目等級成長:PET_XP.boss + PET_XP.bossPerLv × 頭目等級 */
   var bossMul = 1;   /* ★ v1.386.0 頭目經驗按頭目 HP 比例放大(islBossRewardMul,與主角同一個倍率;守墓石像沒有掛 m.boss,維持 1) */
-  for(i = 0; i < mons.length; i++){ if(mons[i].k === 'guardian' || mons[i].boss){ boss = true; if((mons[i].lv | 0) > bossLv) bossLv = mons[i].lv | 0; if(mons[i].boss) bossMul = Math.max(bossMul, islBossRewardMul(mons[i].boss)); } }
+  var bossN = 0;   /* ★ v1.470.0 這場打倒幾隻頭目(升階擲幾次) */
+  for(i = 0; i < mons.length; i++){ if(mons[i].k === 'guardian' || mons[i].boss){ boss = true; bossN++; if((mons[i].lv | 0) > bossLv) bossLv = mons[i].lv | 0; if(mons[i].boss) bossMul = Math.max(bossMul, islBossRewardMul(mons[i].boss)); } }
   var _advSame = 0;   /* ★ v1.380.0 與主角同一份冒險經驗(islAdvXpOf + islAdvGain 裡的劇情分支 advXpP 加成) */
   try{ _advSame = Math.round(islAdvXpOf(mons, lost ? ((db.ADV || {}).lose || 0.2) : 1) * (1 + islRouteEff('advXpP') / 100)); }catch(_ax){ _advSame = (lost ? db.PET_XP.lose : db.PET_XP.win) * mons.length; }
   if(mons.length && _advSame < 1) _advSame = 1;
@@ -40408,6 +41391,18 @@ function islPetsGainAfterWin(mons, lost){
        升級這件事本身完全靜音;比照玩家技能升級(islSkillGain 的 sfx-statup)補一聲 islSfx('levelUp')。 */
     if(up) try{ islSfx('levelUp'); }catch(_pl){}
     txt.push(u.e + islEsc(u.n) + ' EXP+' + gain + (up ? '　🎉 升到 Lv' + rec.lv + '!' : ''));
+    /* ★ v1.470.0 ⬆ 打倒頭目升階(設計書第 10 節):上場、撐到戰鬥結束(沒倒下、沒被旋風吹走)的夥伴,每打倒 1 隻頭目擲一次 ISL_PI.DUP.up%,
+       N→R→SR→SSR;數值都由品級現算(islPetStats),存檔只改 gr,不會重複疊加。 */
+    if(!lost && bossN && !u.down && u.hp > 0 && !u._wasGone){
+      var _g0 = rec.gr, _r;
+      for(_r = 0; _r < bossN; _r++){ if(Math.random() * 100 < islPxUpP()) islPetGrUp(rec); }
+      if(rec.gr !== _g0){
+        u.gr = rec.gr;
+        txt.push('<span class="isl-pgrup">⬆ ' + u.e + islEsc(u.n) + ' 升階了!' + islPetGrHtml({ gr: _g0 }) + ' → ' + islPetGrHtml(rec) + '(能力重新計算)</span>');
+        try{ islLog('⬆ ' + u.e + islPetNm(rec) + ' 打倒頭目後升階:' + _g0 + ' → ' + rec.gr, 'bt_pet_' + rec.k + '_idle'); }catch(_gl){}
+        try{ islSfx('levelUp'); playSfx('sfx-fanfare', 0.45); }catch(_gs){}
+      }
+    }
   }
   return txt.length ? '🐾 ' + txt.join('<br>🐾 ') : '';
 }
@@ -40654,13 +41649,13 @@ function islLegendZn(z){ var d = islDB().zone(z); return d ? d.e + d.n : z; }
 function islLegendCamAllShot(){ var C = islDB().LEGEND.camera, i; for(i = 0; i < C.zones.length; i++){ if(!ISL.legend.shot[C.zones[i]]) return false; } return true; }
 function islLegendTreeGrown(){ var B = islDB().LEGEND.butterfly, t = ISL.legend.tree; return !!(t && ISL.day - t.day >= B.growDays); }
 /* 阿獺商店的檫樹苗:打倒山谷頭目、還沒買過/種過、寬尾鳳蝶還沒加入時才上架 */
-function islLegendTreeShopOk(){ var L = islDB().LEGEND; return !!(L && ISL.legend && islLegendOn() && islLegendBossKilled(L.butterfly.treeBoss) && !ISL.legend.sapling && !ISL.legend.tree && !islPetHas(L.butterfly.pet)); }
+function islLegendTreeShopOk(){ var L = islDB().LEGEND; return !!(L && ISL.legend && islLegendOn() && islLegendBossKilled(L.butterfly.treeBoss) && !ISL.legend.sapling && !ISL.legend.tree && !islPetEver(L.butterfly.pet)); }
 /* 換日判定(islNewDay 在 ISL.day+1 之後呼叫;wxOld = 剛過完那一天的天氣)。回傳要顯示在醒來畫面的日報字串 */
 function islLegendDaily(wxOld){
   var L = islDB().LEGEND, G = ISL.legend, notes = [], C, B, z, i, p, got;
   if(!L || !G) return '';
   C = L.camera;
-  if(!islPetHas(C.pet)){
+  if(!islPetEver(C.pet)){   /* ★ v1.470.0 傳說夥伴「擁有過」就算調查完成(放生後不會重跑任務;再遇到走 2% 重複遭遇) */
     for(i = 0; i < C.zones.length; i++){
       z = C.zones[i]; if(!G.cam[z] || G.shot[z]) continue;
       p = islLegendWet(wxOld) ? C.pRain : C.p;
@@ -40669,7 +41664,7 @@ function islLegendDaily(wxOld){
     if(got && islLegendCamAllShot()) notes.push('🐆 三區都拍到了!下一個雨天到懸崖區看看');
   }
   B = L.butterfly;
-  if(!islPetHas(B.pet) && G.tree){
+  if(!islPetEver(B.pet) && G.tree){
     if(G.fly && G.fly.st === 1 && G.chaseDay !== ISL.day - 1){ G.fly = null; notes.push('🐛 昨天沒有趕走天敵,幼蟲被吃掉了……要重新等寬尾鳳蝶來產卵'); }
     else if(G.fly && G.fly.st < 3 && ISL.day - G.fly.day >= B.stageDays){ G.fly.st++; G.fly.day = ISL.day; notes.push(B.stages[G.fly.st].e + ' 檫樹上的' + B.stages[G.fly.st - 1].n + '變成' + B.stages[G.fly.st].n + '了!' + (G.fly.st === 1 ? '記得每天趕走天敵' : (G.fly.st === 3 ? '快去營地看看!' : ''))); if(G.fly.st === 3) try{ islLog('🦋 寬尾鳳蝶羽化了', null); }catch(_l2){} }
     else if(!G.fly && islLegendTreeGrown()){
@@ -40684,7 +41679,7 @@ function islLegendZoneEnter(z){
   var L = islDB().LEGEND, G = ISL && ISL.legend, C;
   if(!L || !G || !islLegendOn()) return;
   C = L.camera;
-  if(z !== C.meetZone || islPetHas(C.pet) || !islLegendCamAllShot() || !islLegendWet(islWeather())) return;
+  if(z !== C.meetZone || islPetEver(C.pet) || !islLegendCamAllShot() || !islLegendWet(islWeather())) return;
   if(G.meet[C.pet] === ISL.day) return;
   G.meet[C.pet] = ISL.day;
   setTimeout(function(){ try{ islLegendMeet(C.pet, '雨霧裡,一道雲朵花紋的身影從樹梢無聲地跳下來——是自動相機拍到的那隻台灣雲豹!'); }catch(_m){} }, 1600);
@@ -40694,7 +41689,7 @@ function islLegendTideRoll(){
   var L = islDB().LEGEND, G = ISL && ISL.legend, T;
   if(!L || !G || !islLegendOn()) return false;
   T = L.tidepool;
-  if(_IS.zone !== T.zone || islPetHas(T.pet) || !ISL.puzzles[T.puzzle] || !islLegendBossKilled(T.boss)) return false;
+  if(_IS.zone !== T.zone || islPetEver(T.pet) || !ISL.puzzles[T.puzzle] || !islLegendBossKilled(T.boss)) return false;
   if(G.rockDay === ISL.day) return false;
   G.rockDay = ISL.day;
   if(Math.random() * 100 >= T.p) return false;
@@ -40717,7 +41712,7 @@ function islLegendTideOpen(){
 /* 傳說夥伴遭遇(三條任務共用):還沒送過禮 → 送禮;送過 → 直接問答(問答規則見 islPetQuizStart 的 legend 分支) */
 function islLegendMeet(k, lead){
   var db = islDB(), p = db.PETS[k], fd, have;
-  if(!p || islPetHas(k)) return;
+  if(!p || islPetEver(k)) return;
   playSfx('sfx-summon-reveal', 0.4);
   if(!ISL.petFriend[k]){
     fd = islItemDef(p.food); have = islHave(p.food) >= 1;
@@ -40733,7 +41728,7 @@ function islLegendMeet(k, lead){
 /* 今天可以從調查面板直接找牠答題嗎(遭遇過/羽化了,而且今天沒被嚇跑、沒考過) */
 function islLegendCanMeet(k){
   var db = islDB(), L = db.LEGEND, G = ISL.legend;
-  if(islPetHas(k)) return false;
+  if(islPetEver(k)) return false;
   if(k === L.butterfly.pet) return !!(G.fly && G.fly.st === 3);
   if(G.gone[k] === ISL.day) return false;
   return typeof G.meet[k] === 'number' && G.meet[k] > 0;   /* 遇過一次之後,就能隨時從面板回去找牠(不必再賭一次機率;學生常常答題中途關掉) */
@@ -40742,7 +41737,7 @@ function islLegendAfterJoin(k){ var L = islDB().LEGEND; if(k === L.butterfly.pet
 function islLegendNeedsYou(){
   var L = islDB().LEGEND, G = ISL && ISL.legend;
   if(!L || !G) return false;
-  if(G.fly && G.fly.st === 1 && G.chaseDay !== ISL.day && !islPetHas(L.butterfly.pet)) return true;
+  if(G.fly && G.fly.st === 1 && G.chaseDay !== ISL.day && !islPetEver(L.butterfly.pet)) return true;
   if(G.camOwn > 0 && ISL.techs[L.camera.tech]){ var _cz, _ci; for(_ci = 0; _ci < L.camera.zones.length; _ci++){ _cz = L.camera.zones[_ci]; if(!G.cam[_cz] && ISL.zones[_cz] && ISL.zones[_cz].unlocked) return true; } }   /* 手上有相機「而且還有地方可以架」才提醒 */
   if(G.sapling && !G.tree) return true;
   return islLegendCanMeet(L.camera.pet) || islLegendCanMeet(L.tidepool.pet) || islLegendCanMeet(L.butterfly.pet);
@@ -40757,7 +41752,7 @@ window.islLegendOpen = function(){
   }
   h += '<p style="font-size:15px;opacity:.85;margin:0 0 6px">三條科學調查任務,進度會存在雲端,換裝置也不會重來。傳說夥伴的問答是 <b>10 題答對 9 題</b>,沒過不扣東西,明天可以再試。</p><div class="isl-cards sm">';
   /* 📷 雲豹 */
-  C = L.camera; done = islPetHas(C.pet);
+  C = L.camera; done = islPetEver(C.pet);
   h += '<div class="isl-card' + (done ? ' on' : '') + '"><div class="ci">' + islPetPicHtml(C.pet, 96) + '</div><div class="cn">' + C.e + ' ' + islEsc(C.n) + (done ? ' ✅' : '') + '</div><div class="cd">' + islEsc(C.d) + '<br><i style="opacity:.75">' + islEsc(C.sci) + '</i></div>';
   if(!done){
     if(!ISL.techs[C.tech]){ h += '<div class="cc" style="color:#ff7b7b">先研究科技「' + ((db.tech(C.tech) || {}).e || '') + islEsc((db.tech(C.tech) || {}).n || C.tech) + '」才會做自動相機</div>'; }
@@ -40776,7 +41771,7 @@ window.islLegendOpen = function(){
   }
   h += '</div>';
   /* 🪣 藍環章魚 */
-  T = L.tidepool; done = islPetHas(T.pet);
+  T = L.tidepool; done = islPetEver(T.pet);
   h += '<div class="isl-card' + (done ? ' on' : '') + '"><div class="ci">' + islPetPicHtml(T.pet, 96) + '</div><div class="cn">' + T.e + ' ' + islEsc(T.n) + (done ? ' ✅' : '') + '</div><div class="cd">' + islEsc(T.d) + '<br><i style="opacity:.75">' + islEsc(T.sci) + '</i></div>';
   if(!done){
     var _pzD = db.PUZZLES && db.PUZZLES[T.puzzle], _bD = db.bossByZone ? db.bossByZone(T.boss) : null;
@@ -40787,7 +41782,7 @@ window.islLegendOpen = function(){
   }
   h += '</div>';
   /* 🌱 寬尾鳳蝶 */
-  B = L.butterfly; done = islPetHas(B.pet);
+  B = L.butterfly; done = islPetEver(B.pet);
   h += '<div class="isl-card' + (done ? ' on' : '') + '"><div class="ci">' + islPetPicHtml(B.pet, 96) + '</div><div class="cn">' + B.e + ' ' + islEsc(B.n) + (done ? ' ✅' : '') + '</div><div class="cd">' + islEsc(B.d) + '<br><i style="opacity:.75">' + islEsc(B.sci) + '</i></div>';
   if(!done){
     var _vb = db.bossByZone ? db.bossByZone(B.treeBoss) : null;
