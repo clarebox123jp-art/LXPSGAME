@@ -2000,7 +2000,25 @@ window._avatarIsUnlocked = function(cat, id){
   if(gmLocked && typeof window._isAdminUser === 'function' && window._isAdminUser()) return true;
   var card = window._avatarLocalCard || {};
   var un = card.unlock || [];
-  return un.indexOf(gmKey) >= 0;
+  if(un.indexOf(gmKey) >= 0) return true;
+  /* ★ v5.460.0 老師裁定「甲」(2026-11-27):日式和服(outfit:2)舊版從未發出(判定寫在不含八岐大蛇的區塊內),
+   *   已有「斬龍勇者」獎章(jp_boss_yamata = 打倒過八岐大蛇,不分難度)的玩家一律補發。
+   *   這裡先回 true,再用 setTimeout 正式入帳(避免在選單渲染迴圈裡重畫);入帳失敗下次判定會再補。 */
+  if(gmKey === 'outfit:2'){
+    try{
+      if(window._gUserId && typeof _medals !== 'undefined' && _medals && _medals.jp_boss_yamata
+         && typeof window._avatarGrantUnlock === 'function'){
+        if(!window._avKimonoRetroT){
+          window._avKimonoRetroT = setTimeout(function(){
+            window._avKimonoRetroT = 0;
+            try{ var _ad = window._avatarGrantUnlock(['outfit:2']); if(_ad && _ad.length) console.log('[v5.460.0] 斬龍勇者獎章補發日式和服'); }catch(_eg){}
+          }, 0);
+        }
+        return true;
+      }
+    }catch(_eK){}
+  }
+  return false;
 };
 
 /* ════════════════════════════════════════════════════════════════════════

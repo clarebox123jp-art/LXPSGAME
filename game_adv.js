@@ -25923,22 +25923,8 @@ async function advStartWinSequence() {
           }
         }
       }
-      // ★★ v4.79.0 老師指示(2026-07-22)— 日本關卡最終 BOSS「八岐大蛇」以「我很會」難度通關
-      //   → 解鎖造型工房的「日式和服」(一款四體型通用·key=outfit:2·寫 avatarCard.unlock 帳本)。
-      //   不限戰鬥評價、不限是否已收服該 BOSS;冪等(已解鎖不重複提示)。
-      try{
-        var _jpDiff = (typeof _advPlayerDifficulty !== 'undefined') ? _advPlayerDifficulty : '';
-        if(_mainBoss === '八岐大蛇' && _jpDiff && _jpDiff.indexOf('我很會') >= 0
-           && typeof window._avatarGrantUnlock === 'function'){
-          var _kimono = window._avatarGrantUnlock(['outfit:2']);
-          if(_kimono && _kimono.length){
-            try{ log('👘 八岐大蛇伏誅！造型工房解鎖【日式和服】(四種體型都能穿)'); }catch(_){}
-            setTimeout(function(){
-              try{ _showInGameToast('👘 造型工房解鎖新套裝：日式和服！快去「👤 主角造型」換上吧', '#ffd86b', 5500); }catch(_){}
-            }, 2000);
-          }
-        }
-      }catch(_eKim){ console.warn('[日本和服解鎖]', _eKim); }
+      // ★ v5.460.0 — 八岐大蛇「我很會」解鎖日式和服的判定搬到這個區塊外面(見下方 _jpBossE 之後),
+      //   原本放在這裡永遠跑不到:外層條件 JAPAN_BOSS_HEROES 只有 大天狗/酒吞童子/玉藻前 三隻,沒有八岐大蛇。
       // 沒解鎖到英雄(非 S 評價 / 已擁有該 BOSS / 沒中 15%)→ 劇情視窗告知獲得 SSR 碎片
       if(!_jpHeroUnlocked){
         setTimeout(function(){
@@ -25949,6 +25935,28 @@ async function advStartWinSequence() {
       }
     }
   }catch(_jpBossE){ console.warn('[日本 BOSS 解鎖] 失敗:', _jpBossE); }
+  // ★★ v4.79.0 老師指示(2026-07-22)— 日本關卡最終 BOSS「八岐大蛇」以「我很會」難度通關
+  //   → 解鎖造型工房的「日式和服」(一款四體型通用·key=outfit:2·寫 avatarCard.unlock 帳本)。
+  //   不限戰鬥評價、不限是否已收服該 BOSS;冪等(已解鎖不重複提示)。
+  // ★ v5.460.0(2026-11-27 學生反應「用我很會挑戰通過日本八岐大蛇,沒有解鎖主角的日本和服」)—
+  //   v4.79.0 把這段寫在 `JAPAN_BOSS_HEROES.has(_mainBoss)` 區塊裡,但該集合只有三妖怪、不含八岐大蛇 ⇒ 從上線起沒有人解鎖成功。
+  //   改成獨立判定(仍限日本關、主 BOSS=八岐大蛇、難度含「我很會」);同時記下 _medalStats.jpYamataHard,之後有需要可查。
+  try{
+    var _jpDiff = (typeof _advPlayerDifficulty !== 'undefined') ? _advPlayerDifficulty : '';
+    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'japan'
+       && _mainBoss === '八岐大蛇' && _jpDiff && String(_jpDiff).indexOf('我很會') >= 0){
+      try{ if(typeof _medalStats !== 'undefined' && _medalStats){ _medalStats.jpYamataHard = (_medalStats.jpYamataHard || 0) + 1; } }catch(_){}
+      if(typeof window._avatarGrantUnlock === 'function'){
+        var _kimono = window._avatarGrantUnlock(['outfit:2']);
+        if(_kimono && _kimono.length){
+          try{ log('👘 八岐大蛇伏誅！造型工房解鎖【日式和服】(四種體型都能穿)'); }catch(_){}
+          setTimeout(function(){
+            try{ _showInGameToast('👘 造型工房解鎖新套裝：日式和服！快去「👤 主角造型」換上吧', '#ffd86b', 5500); }catch(_){}
+          }, 2000);
+        }
+      }
+    }
+  }catch(_eKim){ console.warn('[日本和服解鎖]', _eKim); }
   // ★★★ v3.15.0 — 埃及雙王(法老王/埃及豔后)收服:S 評價時「各自獨立」15% 機率加入
   //   雙王戰必須同時擊殺才會勝利,故到此處兩王皆已倒下,兩隻皆可獨立判定。
   try{
