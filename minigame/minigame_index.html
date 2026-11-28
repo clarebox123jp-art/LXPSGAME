@@ -5140,7 +5140,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 #isl-def-light{position:absolute;left:50%;top:50%;width:300px;height:300px;margin:-150px;border-radius:50%;background:radial-gradient(circle,rgba(255,200,100,.35),transparent 70%);pointer-events:none;}
 #isl-def-top{position:absolute;left:10px;top:8px;right:10px;display:flex;gap:10px;font-size:17px;font-weight:700;text-shadow:0 1px 3px #000;z-index:3;}
 #isl-def-top .grow{flex:1;}
-#isl-def-tools{position:absolute;left:0;right:0;bottom:12px;display:flex;justify-content:center;gap:10px;z-index:4;}
+#isl-def-tools{position:absolute;left:0;right:0;bottom:12px;display:flex;justify-content:center;gap:10px;z-index:30;pointer-events:none;}#isl-def-tools button{pointer-events:auto;position:relative;z-index:30;}   /* ★ v1.475.0 武器列置頂(z-index 30 > 寵物 6/7 > 好友 3),整列只有按鈕本身吃點擊,按鈕旁的空白不擋寵物/魔物 */
 #isl-def-tools button{width:84px;height:84px;border-radius:20px;border:4px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);color:#fff;font-size:34px;line-height:1;display:flex;flex-direction:column;align-items:center;justify-content:center;}
 #isl-def-tools button small{font-size:13px;margin-top:3px;}
 #isl-preload{position:absolute;inset:0;z-index:60;background:rgba(6,12,20,.92);display:flex;align-items:center;justify-content:center;}#isl-preload .box{width:min(420px,86%);text-align:center;color:#fff;}#isl-preload .t{font-size:22px;font-weight:900;margin-bottom:10px;}#isl-preload .bar{height:12px;background:rgba(255,255,255,.15);border-radius:999px;overflow:hidden;}#isl-preload .bar div{height:100%;width:0;background:#5fb3d9;transition:width .25s;}#isl-preload .s{font-size:14px;opacity:.8;margin-top:8px;}   /* ★ v1.105.0 */
@@ -8068,7 +8068,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 (function(){
 'use strict';
 
-var MG_VER = 'v1.474.0';   /* ★ v1.474.0(2026-11-28 07:51・老師「荒島家具互動的調整位置,增加自由旋轉(順/逆時針一次 30 度)躺下時的角度,自動儲存角度和左右高低位置,下次和相同方向的家具互動時以調整後的角度位置來躺」)— 互動操作列躺下多「角度 ↺ ↻ ⟲」,位置/角度改存 ISL.actAdj(同種家具+同方向共用,小木屋另記;舊 deco.ax/ay 為退路);程式搜尋 v1.474.0。island_db 零改動 */   void 'v1.473.0';   /* ★ v1.473.0(2026-11-27 22:00・老師「繼續 外島 12 種夥伴的專屬天賦和技能」;池子表 claude/荒島寵物個體化_第3輪之二_外島專屬池.md)— ISL_PX.T/S/POOL 補外島 12 種(各 4 天賦+4 技能,只用既有效果鍵,冰凍/破甲/處決走 islSeaCmdOnHit;招牌機制不進池);舊外島夥伴讀檔 islPxFill 固定種子自動補抽;說明頁 ISL_PET_NEWS_V 3→4(即將推出→外島 NEW 卡)。 */
+var MG_VER = 'v1.475.0';   /* ★ v1.475.0(2026-11-28 09:25・老師「《荒島的夜襲》手機模式右下角的寵物蓋住橡膠手套的選項,無法使用。把下方武器按鈕置於最頂,不要被好友或寵物蓋住」)— #isl-def-tools z-index 4→30(寵物 6/7、好友 3、閃紅光 8)、整列 pointer-events:none 只讓按鈕吃點擊;寵物開場位置/拖曳上限改避開武器列(islDefToolTop)。只改本檔+sw,island_db 不動 */ void 'v1.474.0';   /* ★ v1.474.0(2026-11-28 07:51・老師「荒島家具互動的調整位置,增加自由旋轉(順/逆時針一次 30 度)躺下時的角度,自動儲存角度和左右高低位置,下次和相同方向的家具互動時以調整後的角度位置來躺」)— 互動操作列躺下多「角度 ↺ ↻ ⟲」,位置/角度改存 ISL.actAdj(同種家具+同方向共用,小木屋另記;舊 deco.ax/ay 為退路);程式搜尋 v1.474.0。island_db 零改動 */   void 'v1.473.0';   /* ★ v1.473.0(2026-11-27 22:00・老師「繼續 外島 12 種夥伴的專屬天賦和技能」;池子表 claude/荒島寵物個體化_第3輪之二_外島專屬池.md)— ISL_PX.T/S/POOL 補外島 12 種(各 4 天賦+4 技能,只用既有效果鍵,冰凍/破甲/處決走 islSeaCmdOnHit;招牌機制不進池);舊外島夥伴讀檔 islPxFill 固定種子自動補抽;說明頁 ISL_PET_NEWS_V 3→4(即將推出→外島 NEW 卡)。 */
 void 'v1.472.0';   /* ★ v1.472.0(2026-11-27 21:10・老師「寵物個體化第 3 輪」;設計書 claude/荒島寵物個體化_設計書.md 第 5/9/11 節,裁定 D/L/M/N)— ①本島 19 種專屬池 ISL_PX(各 4 天賦+4 技能,每隻隨機帶 2+2;舊存檔用 uid|id 固定種子補抽;外島 12 種下一次)②天賦走 islPetTal/islPartyTal 單一出口(+islPxTal,數值吃品級)③戰鬥 3 招:u.xcmds/u.xcd,每招各自冷卻+公共冷卻 2,自動 islBtCmdPick、手動預覽視窗每招一顆鈕④📘 訓練書 ISL.pxBook(阿獺常駐 500/萬獸之王 400,夥伴卡「換技能」自選)⑤星盤馴獸星域 islPxInit 只改效果與說明(幸運 8%/馴獸之心 SR+3 SSR+1/心有靈犀 傳承 50%/羈絆守護 升階+3/萬獸共鳴 每隻 SR+ +1% 最多 3/萬獸之王 升階+5 訓練書 8 折)⑥說明頁 ISL_PET_NEWS_V 2→3;反彈/自我修復/每回合補全隊/閃開 四條戰鬥紀錄改成通用文字。 */
 void 'v1.471.0';   /* ★ v1.471.0(2026-11-27 21:01・老師「遇到寵物如果身上剛好沒有攜帶食物,寵物現在會留在原地等待(用寵物在營地的角色圖即可),最多等到主角睡覺之前都可以來招募。主角睡覺後寵物就會離去等下次再遇。」)— 一般遭遇(islPetEncounterOpen)與重複遭遇(islPetDupOpen)沒食物 ⇒ islPetWaitAdd 登記 ISL.petWait(種類/區/日/座標/重複時先抽好的那一隻),場景畫營地同款角色圖+「🍽 等你帶○○來」泡泡(islPetWaitPaint,進場景時畫);主角走近 <100px 自動再開遭遇視窗(islTick 移動時 islPetWaitNear;走開 >150px 才再觸發);送出食物 islPetWaitDel;睡覺換日 islNewDay → islPetWaitClear(日誌「等不到你,回到森林裡了」)。等待的那一隻跨重讀檔編號被占用 ⇒ islPetGet 重新給號。含 v1.470.0(寵物個體化第 2 輪,尚未上傳)。island_db 零改動。 */
 void 'v1.470.0';   /* ★ v1.470.0(2026-11-27 20:35・老師「寵物個體化第 2 輪」;設計書 claude/荒島寵物個體化_設計書.md 第 7/8/10 節)— ①重複遭遇:這一區沒有沒收服的夥伴時,已擁有的種類採集類活動成功 6% 再遇到(同種一天 1 次,ISL.petDupDay),🌈 傳說擁有過後在原調查區 2%;以前答過題 ⇒ 送喜歡的食物就加入(裁定 E);NPC 4 位唯一;阿獺換購的在夥伴卡「🦦 再換一隻」。②營地空間提示「還能再收留幾隻(n/2)」+ 先看新來這一隻(islPetMiniHtml)。③滿 2 隻 ⇒ 三選一 islPetDupChoose(放生一隻舊的換新的/放棄新的,食物不退)。④🍃 放生 islPetReleaseOpen:裝備卸回、離開編組/出來逛,回饋貝幣 N20/R40/SR80/SSR150 + 1 份最愛食物,經驗傳承 30% 自選對象(可給三選一的新來的),離別禮 🍇 islPetReleaseFruitP,SR 以上再確認,日誌附自然教育小語;放生最後一隻可以,圖鑑保留(petDex),之後再遇到送食物就回來;傳說任務改看 islPetEver。⑤⬆ 打倒頭目升階:撐到戰鬥結束(沒倒下、沒被旋風吹走 _wasGone)的夥伴每隻頭目 10%(islPetsGainAfterWin)。⑥同種 2 隻前置:islPetCount 改「幾種」、islPetIndN 個體數、選隊友一隻一張卡(同格換同種另一隻 OK)、圖鑑 ×2/🍃、物品包餵食/飽足標籤/夜襲守衛改個體、章節外島夥伴數只算種類。⑦📢 說明頁 ISL_PET_NEWS_V 1→2(三張 NEW 卡)。island_db 零改動。 */
@@ -30942,8 +30942,13 @@ function islTowerForecast(){
    寵物第一次定住魔物就開始計 3 秒,到時進入暈眩 5 秒(放開所有被定住的魔物、圈圈消失、魔物照常跨過),再 5 秒後回到 ready。
    長按 300ms 進入拖曳(移動 <8px 且沒長按視為誤觸,不會干擾 #isl-def 的點魔物/選工具);拖曳時停止阻擋判定。 */
 var ISL_DEFPET = { MAX:3, R:75, BLOCK_MS:3000, STUN_MS:5000, TICK:120, HOLD_MS:300 };
+/* ★ v1.475.0 武器列上緣 y(#isl-def 座標):寵物開場位置與拖曳都不進這一區,手機橫放時寵物不會再蓋住橡膠手套 */
+function islDefToolTop(){
+  var d = $('isl-def'), t = $('isl-def-tools'), h = d ? (d.clientHeight || 500) : 500, y = t ? t.offsetTop : 0;
+  return (y > 40 && y < h) ? y : h - 110;
+}
 function islDefPetsInit(){
-  var D = _islDef, d = $('isl-def'), pool = [], i, j, k, el, w = d.clientWidth || 800, h = d.clientHeight || 500, ang, r = 150, db = islDB();
+  var D = _islDef, d = $('isl-def'), pool = [], i, j, k, el, w = d.clientWidth || 800, h = d.clientHeight || 500, ang, r = 150, db = islDB(), yMax = islDefToolTop() - 46, py;
   D.pets = []; D.petT = null;
   for(i = 0; i < (ISL.pets || []).length; i++){ if(db.PETS[ISL.pets[i].k]) pool.push(ISL.pets[i]); }   /* ★ v1.470.0 池子改放個體(同種 2 隻各自有名字) */
   for(i = pool.length - 1; i > 0; i--){ j = Math.floor(Math.random() * (i + 1)); k = pool[i]; pool[i] = pool[j]; pool[j] = k; }
@@ -30952,9 +30957,10 @@ function islDefPetsInit(){
     ang = Math.PI / 2 + i * (Math.PI * 2 / 3) - 0.7;
     el = document.createElement('div'); el.className = 'isl-defpet'; el.setAttribute('data-pet', pool[i].k);
     el.innerHTML = '<div class="ring"></div>' + islPetPicHtml(pool[i].k, 64) + '<span class="zz">💫</span><span class="pn">' + islEsc(islPetNm(pool[i])) + '</span>';
-    el.style.left = (w / 2 + Math.cos(ang) * r) + 'px'; el.style.top = (h / 2 + Math.sin(ang) * r) + 'px';
+    py = Math.max(40, Math.min(yMax, h / 2 + Math.sin(ang) * r));
+    el.style.left = (w / 2 + Math.cos(ang) * r) + 'px'; el.style.top = py + 'px';
     d.appendChild(el);
-    D.pets.push({ k: pool[i].k, el: el, x: w / 2 + Math.cos(ang) * r, y: h / 2 + Math.sin(ang) * r, state: 'ready', until: 0, held: [], drag: null });
+    D.pets.push({ k: pool[i].k, el: el, x: w / 2 + Math.cos(ang) * r, y: py, state: 'ready', until: 0, held: [], drag: null });
     islDefPetBindDrag(D.pets[i]);
   }
   if(D.pets.length){ D.petT = setInterval(islDefPetsTick, ISL_DEFPET.TICK); toast('🐾 ' + D.pets.length + ' 隻夥伴來幫忙守營火!長按拖曳可以布防'); }
@@ -31003,7 +31009,7 @@ function islDefPetBindDrag(pt){
   var el = pt.el, press = null, d = $('isl-def');
   function pos(ev){ var t = ev.touches && ev.touches.length ? ev.touches[0] : (ev.changedTouches && ev.changedTouches.length ? ev.changedTouches[0] : ev), r = d.getBoundingClientRect(), k = islZk(); return { x: (t.clientX - r.left) / k, y: (t.clientY - r.top) / k }; }
   function down(ev){ var p = pos(ev); press = { x: p.x, y: p.y, t: Date.now(), tm: setTimeout(function(){ if(!press) return; pt.drag = true; islDefPetReleaseAll(pt); if(pt.state === 'block'){ pt.state = 'ready'; pt.el.classList.remove('block'); } el.classList.add('drag'); playSfx('sfx-tap', 0.25); }, ISL_DEFPET.HOLD_MS) }; ev.stopPropagation(); }
-  function move(ev){ if(!press) return; var p = pos(ev); if(!pt.drag){ if(Math.abs(p.x - press.x) > 8 || Math.abs(p.y - press.y) > 8){ clearTimeout(press.tm); press = null; } return; } pt.x = Math.max(24, Math.min((d.clientWidth || 800) - 24, p.x)); pt.y = Math.max(24, Math.min((d.clientHeight || 500) - 24, p.y)); el.style.left = pt.x + 'px'; el.style.top = pt.y + 'px'; ev.preventDefault(); ev.stopPropagation(); }
+  function move(ev){ if(!press) return; var p = pos(ev); if(!pt.drag){ if(Math.abs(p.x - press.x) > 8 || Math.abs(p.y - press.y) > 8){ clearTimeout(press.tm); press = null; } return; } pt.x = Math.max(24, Math.min((d.clientWidth || 800) - 24, p.x)); pt.y = Math.max(24, Math.min(islDefToolTop() - 46, p.y)); el.style.left = pt.x + 'px'; el.style.top = pt.y + 'px'; ev.preventDefault(); ev.stopPropagation(); }
   function up(ev){ if(press && press.tm) clearTimeout(press.tm); press = null; if(pt.drag){ pt.drag = null; el.classList.remove('drag'); } if(ev) ev.stopPropagation(); }
   el.addEventListener('touchstart', function(ev){ down(ev); ev.preventDefault(); }, { passive:false });
   el.addEventListener('touchmove', move, { passive:false });
