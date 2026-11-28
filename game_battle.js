@@ -19574,7 +19574,14 @@ window._BURST_VIDEO_DB = window._BURST_VIDEO_DB || {
   '阿蘇火山龍王': { url: _BV_RAW('阿蘇火山龍王動畫.mp4') },
   '熔岩巨人':     { url: _BV_RAW('熔岩巨人動畫.mp4') },
   '窮奇':         { url: _BV_RAW('窮奇動畫.mp4') },
-  '超鬼神王':     { url: _BV_RAW('超鬼神王動畫.mp4') }
+  '超鬼神王':     { url: _BV_RAW('超鬼神王動畫.mp4') },
+  // ★ v5.470.0(2026-11-28)— SSR 爆發動畫補完計畫第 4 批(科技):科技生化人/電腦老師/網路駭客/科學發明家/武器精靈。
+  //   皆招募英雄、無 BOSS 版 ⇒ 不帶 bossSide;新檔名不需 bump _BV_ASSET_VER。
+  '科技生化人': { url: _BV_RAW('科技生化人動畫.mp4') },
+  '電腦老師':   { url: _BV_RAW('電腦老師動畫.mp4') },
+  '網路駭客':   { url: _BV_RAW('網路駭客動畫.mp4') },
+  '科學發明家': { url: _BV_RAW('科學發明家動畫.mp4') },
+  '武器精靈':   { url: _BV_RAW('武器精靈動畫.mp4') }
 };
 window._SKILL_VIDEO_DB = window._SKILL_VIDEO_DB || {
   // 英雄名 → 特定技能+條件才播(魔劍姬僅在爆發「魔尊覺醒」再行動狀態下的 0 消耗 S1)
