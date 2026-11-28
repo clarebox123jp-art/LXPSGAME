@@ -7921,6 +7921,96 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
   .isl-pjoin .pj-sec .hd{ font-size:12px !important; }
   .isl-pjoin .pj-foot{ font-size:11px !important; margin-top:5px !important; padding:3px 10px !important; }
 }
+/* ── ★ v1.476.0 營地左側:縮放條 #isl-camp-zoom / ↩ 取消修改 #isl-camp-undo / 🐾 隨身夥伴 #isl-camp-petlist / 營地造景 🔒 上鎖 ──
+   三平台(鐵律〇之二):PC 預設 → iPad(#island-root.ipad)→ 手機橫式 @media 放本段最後。
+   上下位置由 JS islCampLeftLayout 依實際高度排(寫 top !important),這裡只管左邊距、大小、字級。
+   容器不用 display:…!important(會蓋掉 .hidden);小木屋裡(#isl-camp.in-cabin)全部收起。全站 button min-height:64px ⇒ 這裡的鈕一律 min-height:0。 */
+#isl-camp-zoom{ position:absolute; left:12px; top:12px; z-index:9; display:flex; align-items:center; gap:6px; padding:4px 8px; box-sizing:border-box; border-radius:12px; border:2px solid #7cc4e8; background:rgba(22,74,112,.92); box-shadow:0 3px 0 #0e3348,0 4px 10px rgba(0,0,0,.4); color:#fff; touch-action:none; }
+#isl-camp-zoom .zb{ min-height:0; min-width:0; width:30px; height:30px; padding:0; margin:0; border-radius:8px; border:2px solid rgba(255,255,255,.6); background:rgba(255,255,255,.14); color:#fff; font-size:20px; font-weight:900; line-height:1; cursor:pointer; }
+#isl-camp-zoom input[type=range]{ width:112px; height:24px; margin:0; accent-color:#ffd166; cursor:pointer; touch-action:none; }
+#isl-camp-zoom .zp{ min-width:3.2em; font-size:14px; font-weight:900; text-align:right; text-shadow:0 1px 2px rgba(0,0,0,.6); }
+#isl-camp-undo{ position:absolute; left:12px; top:58px; z-index:9; min-height:0; font-size:15px; font-weight:900; padding:6px 12px; border-radius:12px; border:2px solid #ffb86b; background:rgba(120,58,12,.94); color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.6); box-shadow:0 3px 0 #4a2306,0 4px 10px rgba(0,0,0,.4); cursor:pointer; line-height:1.2; white-space:nowrap; }
+#isl-camp-undo .un{ display:inline-block; margin-left:6px; min-width:1.4em; padding:0 5px; border-radius:999px; background:#fff; color:#7a3a0c; font-size:12px; line-height:1.4; text-shadow:none; }
+#isl-camp-petlist{ position:absolute; left:12px; top:100px; z-index:9; width:104px; display:flex; flex-direction:column; gap:6px; padding:6px; box-sizing:border-box; background:rgba(10,24,36,.78); border:2px solid rgba(124,196,232,.75); border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,.4); }
+#isl-camp-petlist .pt{ font-size:13px; font-weight:900; color:#9be7ff; text-align:center; line-height:1.2; }
+#isl-camp-petlist .pi{ position:relative; min-height:0; min-width:0; margin:0; display:flex; flex-direction:column; align-items:center; gap:2px; padding:4px 2px 5px; border-radius:10px; background:rgba(255,255,255,.12); border:2px solid rgba(255,255,255,.35); color:#fff; cursor:pointer; }
+#isl-camp-petlist .pi.hungry{ border-color:#ff9f7b; background:rgba(255,120,80,.22); animation:islPlHun 1.1s ease-in-out infinite alternate; }
+@keyframes islPlHun{ from{ box-shadow:0 0 0 rgba(255,159,123,0); } to{ box-shadow:0 0 10px rgba(255,159,123,.9); } }
+#isl-camp-petlist .pi.g-SSR{ border-color:#ffd166; } #isl-camp-petlist .pi.g-SR{ border-color:#c58fff; }
+#isl-camp-petlist .pc{ display:block; width:56px; height:56px; pointer-events:none; }
+#isl-camp-petlist .pc img, #isl-camp-petlist .pc .isl-noimg{ width:100% !important; height:100% !important; object-fit:contain; }
+#isl-camp-petlist .pn{ font-size:13px; font-weight:700; line-height:1.2; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; pointer-events:none; }
+#isl-camp-petlist .mk{ position:absolute; right:-4px; top:-4px; width:26px; height:26px; border-radius:50%; background:#fff; border:2px solid #ff6b6b; font-size:15px; line-height:22px; text-align:center; box-shadow:0 2px 6px rgba(0,0,0,.45); pointer-events:none; animation:islNewPulse .8s ease-in-out infinite alternate; }
+#isl-camp-petlist .mk.sulk{ border-color:#c58fff; }
+#isl-camp-petlist .dw{ position:absolute; left:2px; top:0; font-size:14px; pointer-events:none; }
+#isl-camp-petlist.row{ width:auto; flex-direction:row; align-items:center; }
+#isl-camp-petlist.row .pt{ display:none; }
+#isl-camp-petlist.row .pn{ display:none; }
+#isl-camp-petlist.row .pi{ flex:0 0 auto; }
+#isl-camp-petlist.cmp{ gap:4px; padding:4px; }
+#isl-camp-petlist.cmp .pt{ display:none; }
+#isl-camp-petlist.cmp .pc{ width:40px; height:40px; }
+#isl-camp-petlist.cmp .pn{ font-size:11px; }
+#isl-camp.in-cabin #isl-camp-zoom, #isl-camp.in-cabin #isl-camp-undo, #isl-camp.in-cabin #isl-camp-petlist{ display:none; }
+#isl-modal .isl-cpq{ display:flex; align-items:center; gap:16px; text-align:left; }
+#isl-modal .isl-cpq .pic{ flex:0 0 auto; width:130px; height:130px; display:flex; align-items:center; justify-content:center; }
+#isl-modal .isl-cpq .pic img{ width:100% !important; height:100% !important; object-fit:contain; }
+#isl-modal .isl-cpq .inf{ flex:1 1 auto; min-width:0; }
+#isl-modal .isl-cpq h3{ margin:0 0 4px; }
+#isl-modal .isl-cpq h3 .sub{ font-size:15px; opacity:.75; }
+#isl-modal .isl-cpq .isl-pethp-row{ text-align:left; }
+#isl-modal .isl-cpq .ln{ font-size:16px; margin:4px 0; }
+#isl-modal .isl-cpq .ln.warn{ color:#ffb86b; font-weight:700; }
+#isl-modal .isl-lockbar{ display:flex; align-items:center; flex-wrap:wrap; gap:8px 10px; margin:0 0 8px; padding:8px 10px; border-radius:12px; background:rgba(124,196,232,.12); border:1px solid rgba(124,196,232,.45); }
+#isl-modal .isl-lockbar .lt{ flex:1 1 auto; font-size:16px; }
+#isl-modal .isl-lockbar .isl-btn{ min-height:0; font-size:16px; padding:6px 14px; margin:0; }
+#isl-modal .isl-fixrow{ flex-wrap:wrap; }
+#isl-modal .isl-fixrow .fn{ flex:1 1 30%; }
+#isl-modal .isl-fixrow .isl-btn{ min-height:0; margin:0; }
+#isl-modal .isl-fixrow .isl-lockbtn{ background:rgba(255,255,255,.12); border:2px solid rgba(255,255,255,.45); color:#fff; }
+#isl-modal .isl-fixrow .isl-lockbtn.on{ background:#3f7f4f; border-color:#7bed9f; color:#fff; }
+#isl-modal .isl-fixrow .isl-btn[disabled]{ opacity:.45; }
+#isl-modal .isl-locknote{ font-size:15px; color:#9be7ff; margin:4px 0; }
+#island-root.ipad #isl-camp-zoom{ left:14px; top:14px; gap:8px; padding:5px 10px; }
+#island-root.ipad #isl-camp-zoom .zb{ width:36px; height:36px; font-size:24px; }
+#island-root.ipad #isl-camp-zoom input[type=range]{ width:92px; height:30px; }   /* iPad 有 1.3 倍縮放:整條不可伸到正上方「前往大地圖」出口標籤 */
+#island-root.ipad #isl-camp-zoom .zp{ font-size:16px; }
+#island-root.ipad #isl-camp-undo{ left:14px; font-size:17px; padding:7px 14px; }
+#island-root.ipad #isl-camp-petlist{ left:14px; width:124px; }
+#island-root.ipad #isl-camp-petlist .pc{ width:68px; height:68px; }
+#island-root.ipad #isl-camp-petlist .pt, #island-root.ipad #isl-camp-petlist .pn{ font-size:15px; }
+#island-root.ipad #isl-camp-petlist.cmp .pc{ width:48px; height:48px; }
+#island-root.ipad #isl-camp-petlist.cmp .pn{ font-size:12px; }
+#island-root.ipad #isl-camp-petlist.row{ width:auto; }
+#island-root.ipad #isl-camp-petlist.row .pc{ width:52px; height:52px; }
+#island-root.ipad #isl-modal .isl-lockbar .lt{ font-size:18px; }
+#island-root.ipad #isl-modal .isl-lockbar .isl-btn{ font-size:18px; }
+#island-root.ipad #isl-modal .isl-cpq .ln{ font-size:18px; }
+@media (orientation:landscape) and (max-height:520px){
+  #isl-camp-zoom, #island-root.ipad #isl-camp-zoom{ left:8px; top:8px; gap:3px; padding:2px 5px; border-width:1.5px; border-radius:9px; }
+  #isl-camp-zoom .zb, #island-root.ipad #isl-camp-zoom .zb{ width:22px; height:22px; font-size:14px; border-width:1.5px; border-radius:6px; }
+  #isl-camp-zoom input[type=range], #island-root.ipad #isl-camp-zoom input[type=range]{ width:64px; height:18px; }
+  #isl-camp-zoom .zp, #island-root.ipad #isl-camp-zoom .zp{ font-size:10px; min-width:2.8em; }
+  #isl-camp-undo, #island-root.ipad #isl-camp-undo{ left:8px; font-size:12px; padding:3px 8px; border-width:2px; border-radius:9px; }
+  #isl-camp-undo .un{ font-size:10px; }
+  #isl-camp-petlist, #island-root.ipad #isl-camp-petlist{ left:8px; width:56px; gap:3px; padding:3px; border-width:1.5px; border-radius:10px; }
+  #isl-camp-petlist .pt, #island-root.ipad #isl-camp-petlist .pt{ font-size:9px; }
+  #isl-camp-petlist .pc, #island-root.ipad #isl-camp-petlist .pc{ width:34px; height:34px; }
+  #isl-camp-petlist .pi, #island-root.ipad #isl-camp-petlist .pi{ padding:2px 1px 3px; border-width:1.5px; border-radius:8px; }
+  #isl-camp-petlist .pn, #island-root.ipad #isl-camp-petlist .pn{ font-size:9px; }
+  #isl-camp-petlist .mk{ width:18px; height:18px; font-size:10px; line-height:15px; border-width:1.5px; right:-3px; top:-3px; }
+  #isl-camp-petlist.row, #island-root.ipad #isl-camp-petlist.row{ width:auto; }
+  #isl-camp-petlist.row .pc, #island-root.ipad #isl-camp-petlist.row .pc, #isl-camp-petlist.cmp .pc, #island-root.ipad #isl-camp-petlist.cmp .pc{ width:30px; height:30px; }
+  #isl-camp-petlist.cmp .pn, #island-root.ipad #isl-camp-petlist.cmp .pn{ font-size:8px; }
+  #isl-modal .isl-cpq{ gap:10px; }
+  #isl-modal .isl-cpq .pic{ width:80px; height:80px; }
+  #isl-modal .isl-cpq h3{ font-size:16px !important; }
+  #isl-modal .isl-cpq .ln{ font-size:12px; margin:2px 0; }
+  #isl-modal .isl-lockbar{ padding:4px 6px; gap:4px 6px; margin:0 0 4px; }
+  #isl-modal .isl-lockbar .lt{ font-size:11px; }
+  #isl-modal .isl-lockbar .isl-btn{ font-size:12px !important; padding:4px 9px !important; }
+  #isl-modal .isl-locknote{ font-size:11px; }
+}
 </style>
 
 <!-- ★ v1.90.0 — 🏝 像素荒島求生記 P1 骨架:畫面容器。所有內容由 isl* 函式動態填入;子畫面用 .hidden 切換。
@@ -7982,8 +8072,11 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
     <div id="isl-camp" class="hidden">
       <img id="isl-camp-bg" src="" alt="" onerror="this.style.display='none';">
       <div id="isl-camp-viewport"><div id="isl-camp-grid"><img id="isl-camp-wbg" src="" alt="" draggable="false" onerror="this.style.display='none';"><div id="isl-camp-cells"></div><div id="isl-camp-deco"></div><div id="isl-camp-char" title="長按和他說說話"></div><div id="isl-camp-pets"></div><div id="isl-camp-board" class="hidden" onclick="islBoardTap()"></div></div></div><!-- ★ v1.186.0 老師⑦「建造區域改成可以用雙指同時滑動縮放,呈現更遼闊的建造區域和裝飾空間」:新增 #isl-camp-viewport(overflow:hidden 視窗,仿 #isl-map-wrap),#isl-camp-grid 改成固定 860×860 設計畫布(可縮放/平移),舊有 isl-camp-deco=可拖曳裝飾層;★ v1.107.0 isl-camp-board=營地留言板告示牌(顯示最新一則) --><!-- ★ v1.283.0 老師「主角長按1秒才開啟視窗」— onclick 拿掉,改由 islCampPaint 呼叫 islLongTapBind 一次性綁定(見該處說明) -->
+      <div id="isl-camp-zoom" title="拉近放大/拉遠縮小營地畫面"><button type="button" class="zb" onclick="islCampZoomStep(-1)" aria-label="拉遠縮小">－</button><input type="range" id="isl-camp-zoom-r" min="0" max="100" step="1" value="0" oninput="islCampZoomSet(this.value)" aria-label="營地縮放"><button type="button" class="zb" onclick="islCampZoomStep(1)" aria-label="拉近放大">＋</button><span class="zp" id="isl-camp-zoom-p">100%</span></div><!-- ★ v1.476.0 老師「營地造景的上方新增荒島營地畫面拉近放大,拉遠縮小的調節條」— 跟雙指縮放/滾輪共用 _IS.campCam(islCampZoomSet/islCampZoomSync);掛 #isl-camp 底下不吃營地縮放 -->
       <button id="isl-camp-fix-btn" onclick="islCampFixOpen()" title="設施或裝飾不小心拖到畫面外時,從這裡一鍵搬回營地正中央">🏕 營地造景</button><!-- ★ v1.360.0 老師「營地設施裝飾不小心拖移到畫面外,無法移回來或編輯:新增一顆營地造景鈕在營地左上角,打開設施與裝飾清單,每個物件旁有重設位置一鍵回到營地正中心」— 掛在 #isl-camp 底下(不在 #isl-camp-grid 裡),跟 #isl-camp-joy/#isl-camp-movebtns 同一個理由:不被雙指縮放/平移的 transform 一起吃到,永遠停在視窗左上角;參觀好友營地(_IS.coop)時由 islCampPaint 加 .hidden 藏起來 -->
       <div id="isl-camp-actbar" class="hidden"></div><!-- ★ v1.454.0 裝飾互動中的操作列(起身/睡到明天/位置微調),掛 #isl-camp 底下不吃營地縮放 -->
+      <button id="isl-camp-undo" class="hidden" onclick="islCampUndo()" title="把剛剛調整的位置、大小、方向或圖層改回去">↩ 取消修改</button><!-- ★ v1.476.0 老師「每次在有裝飾被調整位置、尺寸、角度時,新增［取消修改］按鈕在營地造景的下方」(islCampUndoPush/islCampUndo) -->
+      <div id="isl-camp-petlist" class="hidden"></div><!-- ★ v1.476.0 老師「陪伴的三隻寵物用列表放在營地左側營地造景下方,肚子餓的寵物顯示標記,點擊直接開視窗餵食和互動」(islCampPetListPaint/islCampPetQuick) -->
       <div id="isl-camp-pend" class="hidden"></div><!-- ★ v1.406.0 營地造景下方「🧺 待布置」暫放區:按過「開始布置」的新設施/裝飾排在這裡,拖進營地才擺上去(islPendPaint/islPendDragBind);同樣掛在 #isl-camp 底下不吃營地縮放 -->
       <div id="isl-camp-side"></div>
       <div id="isl-camp-joy" title="拖曳方向盤移動(拖到外圈邊緣自動奔跑)"><div class="knob"></div></div><div id="isl-camp-movebtns"><button id="isl-camp-jump-btn" title="跳躍(鍵盤:空白鍵)">🪽</button></div><!-- ★ v1.276.0 老師需求「移除跑步鍵、保留跳躍鍵(放大並移到方向盤右側)」— 👟 奔跑鈕已移除,奔跑改由方向盤拖到外圈邊緣自動觸發 --><!-- ★ v1.244.0 老師「營地中的主角移動也增加小方向盤移動方式」— #isl-camp-joy 固定在左下角(不像野外那顆是「按哪裡冒哪裡」:營地的單指手勢已被 點地走路/裝飾拖曳/雙指縮放 瓜分,固定式方向盤才不會跟它們打架),拖曳知道方向後寫進 _IS.campJoy,islCampTick 跟鍵盤同一條 manual 路徑吃 --><!-- ★ v1.212.0 老師「讓營地的主角也具備完整的野外移動指令功能」— 比照野外 #isl-movebtns,掛在 #isl-camp 底下(不是 #isl-camp-grid 裡面),才不會被雙指縮放/平移的 transform 一起吃到;鍵盤 WASD/方向鍵即時移動、Shift/雙擊點地=跑步、空白鍵=跳躍(純視覺,見 islCampMoveBind/islCampTick) -->
@@ -8068,7 +8161,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 (function(){
 'use strict';
 
-var MG_VER = 'v1.475.0';   /* ★ v1.475.0(2026-11-28 09:25・老師「《荒島的夜襲》手機模式右下角的寵物蓋住橡膠手套的選項,無法使用。把下方武器按鈕置於最頂,不要被好友或寵物蓋住」)— #isl-def-tools z-index 4→30(寵物 6/7、好友 3、閃紅光 8)、整列 pointer-events:none 只讓按鈕吃點擊;寵物開場位置/拖曳上限改避開武器列(islDefToolTop)。只改本檔+sw,island_db 不動 */ void 'v1.474.0';   /* ★ v1.474.0(2026-11-28 07:51・老師「荒島家具互動的調整位置,增加自由旋轉(順/逆時針一次 30 度)躺下時的角度,自動儲存角度和左右高低位置,下次和相同方向的家具互動時以調整後的角度位置來躺」)— 互動操作列躺下多「角度 ↺ ↻ ⟲」,位置/角度改存 ISL.actAdj(同種家具+同方向共用,小木屋另記;舊 deco.ax/ay 為退路);程式搜尋 v1.474.0。island_db 零改動 */   void 'v1.473.0';   /* ★ v1.473.0(2026-11-27 22:00・老師「繼續 外島 12 種夥伴的專屬天賦和技能」;池子表 claude/荒島寵物個體化_第3輪之二_外島專屬池.md)— ISL_PX.T/S/POOL 補外島 12 種(各 4 天賦+4 技能,只用既有效果鍵,冰凍/破甲/處決走 islSeaCmdOnHit;招牌機制不進池);舊外島夥伴讀檔 islPxFill 固定種子自動補抽;說明頁 ISL_PET_NEWS_V 3→4(即將推出→外島 NEW 卡)。 */
+var MG_VER = 'v1.476.0';   /* ★ v1.476.0(2026-11-28 11:10・老師四項)— ①營地擺設上鎖:設施/裝飾存 lock:1,上鎖的拖不動、不能縮放/翻轉/轉向/換圖層/重設;🏕 營地造景清單每列 🔒/🔓 + 全部上鎖/解鎖 ②↩ 取消修改:搬家/縮放/翻轉/轉向/圖層/重設前拍快照(_IS.campUndo 最多 30 步,不存檔),營地造景下方按一次退一步 ③營地造景上方縮放條 #isl-camp-zoom(與雙指/滾輪共用 _IS.campCam)④左側 🐾 隨身夥伴列表(🍖 餓了/💢 鬧脾氣標記),點一下開 islCampPetQuick(餵食/💗摸摸/夥伴卡;餵完回小視窗),營地走動的夥伴改成點一下就開;左側排版 islCampLeftLayout。只改 index + sw,island_db 不動(?v= 仍 v1.456.0) */ void 'v1.475.0';   /* ★ v1.475.0(2026-11-28 09:25・老師「《荒島的夜襲》手機模式右下角的寵物蓋住橡膠手套的選項,無法使用。把下方武器按鈕置於最頂,不要被好友或寵物蓋住」)— #isl-def-tools z-index 4→30(寵物 6/7、好友 3、閃紅光 8)、整列 pointer-events:none 只讓按鈕吃點擊;寵物開場位置/拖曳上限改避開武器列(islDefToolTop)。只改本檔+sw,island_db 不動 */ void 'v1.474.0';   /* ★ v1.474.0(2026-11-28 07:51・老師「荒島家具互動的調整位置,增加自由旋轉(順/逆時針一次 30 度)躺下時的角度,自動儲存角度和左右高低位置,下次和相同方向的家具互動時以調整後的角度位置來躺」)— 互動操作列躺下多「角度 ↺ ↻ ⟲」,位置/角度改存 ISL.actAdj(同種家具+同方向共用,小木屋另記;舊 deco.ax/ay 為退路);程式搜尋 v1.474.0。island_db 零改動 */   void 'v1.473.0';   /* ★ v1.473.0(2026-11-27 22:00・老師「繼續 外島 12 種夥伴的專屬天賦和技能」;池子表 claude/荒島寵物個體化_第3輪之二_外島專屬池.md)— ISL_PX.T/S/POOL 補外島 12 種(各 4 天賦+4 技能,只用既有效果鍵,冰凍/破甲/處決走 islSeaCmdOnHit;招牌機制不進池);舊外島夥伴讀檔 islPxFill 固定種子自動補抽;說明頁 ISL_PET_NEWS_V 3→4(即將推出→外島 NEW 卡)。 */
 void 'v1.472.0';   /* ★ v1.472.0(2026-11-27 21:10・老師「寵物個體化第 3 輪」;設計書 claude/荒島寵物個體化_設計書.md 第 5/9/11 節,裁定 D/L/M/N)— ①本島 19 種專屬池 ISL_PX(各 4 天賦+4 技能,每隻隨機帶 2+2;舊存檔用 uid|id 固定種子補抽;外島 12 種下一次)②天賦走 islPetTal/islPartyTal 單一出口(+islPxTal,數值吃品級)③戰鬥 3 招:u.xcmds/u.xcd,每招各自冷卻+公共冷卻 2,自動 islBtCmdPick、手動預覽視窗每招一顆鈕④📘 訓練書 ISL.pxBook(阿獺常駐 500/萬獸之王 400,夥伴卡「換技能」自選)⑤星盤馴獸星域 islPxInit 只改效果與說明(幸運 8%/馴獸之心 SR+3 SSR+1/心有靈犀 傳承 50%/羈絆守護 升階+3/萬獸共鳴 每隻 SR+ +1% 最多 3/萬獸之王 升階+5 訓練書 8 折)⑥說明頁 ISL_PET_NEWS_V 2→3;反彈/自我修復/每回合補全隊/閃開 四條戰鬥紀錄改成通用文字。 */
 void 'v1.471.0';   /* ★ v1.471.0(2026-11-27 21:01・老師「遇到寵物如果身上剛好沒有攜帶食物,寵物現在會留在原地等待(用寵物在營地的角色圖即可),最多等到主角睡覺之前都可以來招募。主角睡覺後寵物就會離去等下次再遇。」)— 一般遭遇(islPetEncounterOpen)與重複遭遇(islPetDupOpen)沒食物 ⇒ islPetWaitAdd 登記 ISL.petWait(種類/區/日/座標/重複時先抽好的那一隻),場景畫營地同款角色圖+「🍽 等你帶○○來」泡泡(islPetWaitPaint,進場景時畫);主角走近 <100px 自動再開遭遇視窗(islTick 移動時 islPetWaitNear;走開 >150px 才再觸發);送出食物 islPetWaitDel;睡覺換日 islNewDay → islPetWaitClear(日誌「等不到你,回到森林裡了」)。等待的那一隻跨重讀檔編號被占用 ⇒ islPetGet 重新給號。含 v1.470.0(寵物個體化第 2 輪,尚未上傳)。island_db 零改動。 */
 void 'v1.470.0';   /* ★ v1.470.0(2026-11-27 20:35・老師「寵物個體化第 2 輪」;設計書 claude/荒島寵物個體化_設計書.md 第 7/8/10 節)— ①重複遭遇:這一區沒有沒收服的夥伴時,已擁有的種類採集類活動成功 6% 再遇到(同種一天 1 次,ISL.petDupDay),🌈 傳說擁有過後在原調查區 2%;以前答過題 ⇒ 送喜歡的食物就加入(裁定 E);NPC 4 位唯一;阿獺換購的在夥伴卡「🦦 再換一隻」。②營地空間提示「還能再收留幾隻(n/2)」+ 先看新來這一隻(islPetMiniHtml)。③滿 2 隻 ⇒ 三選一 islPetDupChoose(放生一隻舊的換新的/放棄新的,食物不退)。④🍃 放生 islPetReleaseOpen:裝備卸回、離開編組/出來逛,回饋貝幣 N20/R40/SR80/SSR150 + 1 份最愛食物,經驗傳承 30% 自選對象(可給三選一的新來的),離別禮 🍇 islPetReleaseFruitP,SR 以上再確認,日誌附自然教育小語;放生最後一隻可以,圖鑑保留(petDex),之後再遇到送食物就回來;傳說任務改看 islPetEver。⑤⬆ 打倒頭目升階:撐到戰鬥結束(沒倒下、沒被旋風吹走 _wasGone)的夥伴每隻頭目 10%(islPetsGainAfterWin)。⑥同種 2 隻前置:islPetCount 改「幾種」、islPetIndN 個體數、選隊友一隻一張卡(同格換同種另一隻 OK)、圖鑑 ×2/🍃、物品包餵食/飽足標籤/夜襲守衛改個體、章節外島夥伴數只算種類。⑦📢 說明頁 ISL_PET_NEWS_V 1→2(三張 NEW 卡)。island_db 零改動。 */
@@ -21252,6 +21345,7 @@ function islShowScreen(name){
   _IS.screen = name;
   try{ $('island-root').classList.toggle('isl-def-on', name === 'def'); document.body.classList.toggle('isl-def-on', name === 'def'); }catch(_dr){}   /* ★ v1.282.0 老師「擊退提示訊息移到最上方」;★ v1.288.0 真正生效的是 body 這一份——#toast 掛在 body 直下,不是 #island-root 的子孫(見該條 CSS 說明)。#island-root 那一份刻意保留,萬一日後有規則想針對根容器還用得到。 */
   if(name !== 'zone') islZoneStop();
+  if(name === 'camp') setTimeout(function(){ try{ islCampLeftLayout(); islCampZoomSync(); }catch(_cl){} }, 0);   /* ★ v1.476.0 營地畫面真的顯示後再排左側一整排(隱藏時量不到高度) */
   if(name !== 'camp') islCampPetsStop();   /* ★ v1.197.0 離開營地就停掉寵物漫步計時器,不留孤兒 setInterval */
   if(name !== 'camp' && name !== 'act') islCabinClose(true);   /* ★ v1.333.0 離開營地就收起小木屋室內(活動畫面疊在營地上時不收,做完家具回來還在屋裡) */
   if(name !== 'camp') islCampJoyStop();   /* ★ v1.247.0 離開營地就清空方向盤殘留向量,比照上面 islZoneStop() 對野外搖桿的做法(見 islCampJoyStop 說明) */
@@ -26388,6 +26482,7 @@ function islCampDepositAsk(){
 }
 function islCampPaint(){
   try{ var _fxb = $('isl-camp-fix-btn'); if(_fxb) _fxb.classList.toggle('hidden', !!_IS.coop); }catch(_fx){}   /* ★ v1.360.0 參觀好友營地(唯讀)藏起「🏕 營地造景」鈕,回自己營地再顯示 */
+  try{ islCampUndoPaint(); }catch(_cup){}   /* ★ v1.476.0 取消修改鈕(參觀好友營地收起) */
   try{ islPendPaint(); }catch(_pdp){}   /* ★ v1.406.0 營地造景 NEW! 標籤 + 左側待布置暫放區(參觀好友時自己收起) */
   if(_IS.coop && _IS.screen === 'camp'){ islCoopCampPaint(); return; }   /* ★ v1.114.0 拜訪模式下營地畫面一律畫島主的唯讀營地,不畫自己的 */
   var db = islDB(), cells = $('isl-camp-cells'), side = $('isl-camp-side'), h = '', i, s, b, u, hasFire = islCampHasBld('campfire'), cl = db.CAMP_LV[ISL.camp.lv] || db.CAMP_LV[1], nSlot = cl.n, comfort = islComfort();
@@ -26515,7 +26610,7 @@ function islCampExitCheck(p){
      只有真的在這顆元素身上 down() 過(mousedown/touchstart)才會是 true,全域 mouseup 監聽先檢查這個
      旗標,不是「衝著我來的」放開事件一律直接略過,不會再誤觸 islCampTapWalk。 */
 var ISL_LONGTAP_MS = 1000;
-function islLongTapBind(el, cb){
+function islLongTapBind(el, cb, tapCb){   /* ★ v1.476.0 tapCb:有給 ⇒ 短按呼叫它(營地夥伴點一下就開小視窗),沒給 ⇒ 照舊短按讓給移動 */
   var timer = null, sx = 0, sy = 0, lx = 0, ly = 0, moved = false, fired = false, active = false, lastTouch = 0;   /* ★ v1.374.0 lastTouch:最近一次真的觸控時間,用來濾掉 Android/iOS 觸控後補發的幽靈滑鼠事件 */
   function pos(ev){ var t = ev.touches && ev.touches.length ? ev.touches[0] : (ev.changedTouches && ev.changedTouches.length ? ev.changedTouches[0] : ev); return { x: t.clientX, y: t.clientY }; }
   function clearBar(){ var b = el.querySelector('.isl-lp-bar'); if(b && b.parentNode) b.parentNode.removeChild(b); }
@@ -26534,6 +26629,7 @@ function islLongTapBind(el, cb){
     var wasFired = fired, wasMoved = moved, tx = lx, ty = ly;
     if(timer){ clearTimeout(timer); timer = null; }
     clearBar(); fired = false;
+    if(!wasFired && !wasMoved && tapCb){ tapCb(); return; }   /* ★ v1.476.0 */
     if(!wasFired && !wasMoved) islCampTapWalk(tx, ty);   /* ★ v1.288.0 老師「營地點擊任何位置都以移動為優先」— 主角/寵物的短按也讓給移動(islCampTapWalk 自己會守門,不在營地畫面就直接 return) */
   }
   /* ★ v1.374.0(老師「檢查還有沒有其他地方也有相同的 bug」稽核出的同類問題,與 v1.373.0 戰鬥動作鈕同一種成因:觸控後瀏覽器補發相容滑鼠事件)
@@ -26667,7 +26763,8 @@ function islCampViewApply(){
   if(cw * c.s <= w) c.x = (w - cw * c.s) / 2; else c.x = islClamp(c.x, w - cw * c.s, 0);
   if(ch * c.s <= h) c.y = (h - ch * c.s) / 2; else c.y = islClamp(c.y, h - ch * c.s, 0);
   g.style.transform = 'translate(' + c.x + 'px,' + c.y + 'px) scale(' + c.s + ')';
-  g.style.setProperty('--isl-cinv', String(islClamp(1 / c.s, 0.35, 3)));   /* ★ v1.400.0 畫布內文字標籤反向縮放(CSS scale:var(--isl-cinv)) */
+  g.style.setProperty('--isl-cinv', String(islClamp(1 / c.s, 0.35, 3)));
+  try{ islCampZoomSync(); }catch(_zs){}   /* ★ v1.476.0 縮放條跟著雙指/滾輪/調節條同步 */   /* ★ v1.400.0 畫布內文字標籤反向縮放(CSS scale:var(--isl-cinv)) */
 }
 function islCampViewIsInteractive(t){   /* 沿著祖先鏈往上找,碰到建造格/裝飾/告示牌/主角就讓給它們自己的手勢,不搶 */
   while(t && t !== document.body){
@@ -26807,7 +26904,7 @@ function islCampPetsPaint(){
     el.style.width = _psz + 'px'; el.style.height = _psz + 'px'; el.style.marginLeft = (-_psz / 2) + 'px';
     el.style.lineHeight = _psz + 'px'; el.style.fontSize = Math.round(_psz * 0.62) + 'px';
     el.style.left = x + '%'; el.style.bottom = y + '%';
-    if(!rec.ro) islLongTapBind(el, (function(kk){ return function(){ islPetCardOpen(kk); }; })(rec.id || rec.k));   /* ★ v1.283.0 老師「寵物長按1秒才開啟視窗」;★ v1.454.0 好友的夥伴不開自己的夥伴卡;★ v1.468.0 開這一隻(個體 id) */
+    if(!rec.ro) islLongTapBind(el, (function(kk){ return function(){ if(islPetSave(kk)) islCampPetQuick(kk); else islPetCardOpen(kk); }; })(rec.id || rec.k), (function(kk){ return function(){ if(islPetSave(kk)) islCampPetQuick(kk); else islPetCardOpen(kk); }; })(rec.id || rec.k));   /* ★ v1.476.0 老師「也可以直接點走來走去的那些寵物」— 點一下(或長按)都開餵食/互動小視窗 */   /* ★ v1.283.0 老師「寵物長按1秒才開啟視窗」;★ v1.454.0 好友的夥伴不開自己的夥伴卡;★ v1.468.0 開這一隻(個體 id) */
     host.appendChild(el);
     _IS.campPets.push({ id: id, x: x, y: y, k: rec.k, pid: rec.ro ? '' : (rec.id || ''), pt: !rec.ro && !!rec.id && islPartyHasPid(rec.id), ps: rec.ro ? '' : (rec.ps || ''), nm: rec.nm || '', gr: rec.gr || '', sz: _psz, walking: false, el: el });   /* ★ v1.468.0 pid=個體、pt=隨身編組(只有這種會陪休息)、ps=個性(營地行為) */
     islCampPetRender(_IS.campPets.length - 1);   /* 初始一律畫待機(idle)姿態 */
@@ -26815,7 +26912,8 @@ function islCampPetsPaint(){
   islCampPetsGather();   /* ★ v1.272.0 老師需求「營地建設等待時間的同時,隨機1~3隻寵物會圍在建設中的設施旁邊,原地跳躍」— 見函式說明 */
   islCampPetsScale();
   islCampPetsWanderStart();
-  try{ if(_IS.campAct && _IS.campAct.rest && _IS.campAct.ctx === 'camp' && _IS.campAct.an) islActPetsJoin(_IS.campAct.an, true); }catch(_pj3){}   /* ★ v1.454.0 休息中營地重畫 ⇒ 陪休息的夥伴重新圍過來 */
+  try{ if(_IS.campAct && _IS.campAct.rest && _IS.campAct.ctx === 'camp' && _IS.campAct.an) islActPetsJoin(_IS.campAct.an, true); }catch(_pj3){}
+  try{ islCampPetListPaint(); }catch(_cpl){}   /* ★ v1.476.0 左側隨身夥伴列表(飢餓標記跟著更新) */   /* ★ v1.454.0 休息中營地重畫 ⇒ 陪休息的夥伴重新圍過來 */
 }
 /* ★ v1.272.0(2026-09-19・老師「營地建設等待時間的同時,隨機1~3隻寵物會圍在建設中的設施旁邊,原地跳躍」)—
    從已隨機分布好的寵物池裡,每個「施工中」的設施(ISL.camp.slots[].bt)各自抽 1~3 隻(池子不夠就有幾隻抽幾隻),
@@ -27159,7 +27257,7 @@ function islCampGroundBind(){
     var t = ev.target, p;
     if(!ISL || _IS.screen !== 'camp' || _IS.campMoved) return;   /* ★ v1.454.0 好友營地也能點地板走過去(拿掉 _IS.coop 擋) */   /* ★ v1.199.0 老師「建造改自由拖曳」— 舊版搬移模式(_IS.campMove)已移除,拖曳直接在設施本身完成,這裡不必再判斷;仍保留 campMoved(雙指縮放/滑鼠拖曳平移剛結束時不要誤判成走路點擊) */
     cells = $('isl-camp-cells');
-    while(t && t !== g){ if(t === cells || (t.classList && (t.classList.contains('isl-deco') || t.id === 'isl-camp-board'))) return; t = t.parentNode; }   /* ★ v1.288.0 設施層/裝飾層的短按改由它們自己的 up() 直接呼叫 islCampTapWalk(它們 down() 就 preventDefault,click 根本不會走到這裡),這道排除維持原樣 */
+    while(t && t !== g){ if(t === cells || (t.classList && (t.classList.contains('isl-deco') || t.id === 'isl-camp-board' || (t.classList.contains('isl-camp-pet') && !_IS.coop)))) return; t = t.parentNode; }   /* ★ v1.476.0 點自己的夥伴 = 開小視窗(islLongTapBind tapCb),不再同時走過去 */   /* ★ v1.288.0 設施層/裝飾層的短按改由它們自己的 up() 直接呼叫 islCampTapWalk(它們 down() 就 preventDefault,click 根本不會走到這裡),這道排除維持原樣 */
     p = ev.changedTouches ? ev.changedTouches[0] : ev;
     islCampTapWalk(p.clientX, p.clientY);
   });
@@ -27313,8 +27411,8 @@ function islCampBldDragBind(layer){
   function move(ev){
     if(!cur) return; var p = pos(ev), r = layer.getBoundingClientRect(), x = islClamp((p.x - r.left) / r.width * 100, 4, 96), y = islClamp((p.y - r.top) / r.height * 100, 6, 94);
     cur._lx = p.x; cur._ly = p.y;
-    if(!cur._moved && (Math.abs(p.x - cur._sx) > 8 || Math.abs(p.y - cur._sy) > 8)){ cur._moved = true; if(timer){ clearTimeout(timer); timer = null; } clearBar(cur); cur.classList.add('drag'); }
-    if(cur._moved){ cur.style.left = x + '%'; cur.style.top = y + '%'; cur._x = x; cur._y = y; }
+    if(!cur._moved && (Math.abs(p.x - cur._sx) > 8 || Math.abs(p.y - cur._sy) > 8)){ cur._moved = true; if(timer){ clearTimeout(timer); timer = null; } clearBar(cur); cur._lockHit = islCampLockedToast(ISL.camp.slots[parseInt(cur.getAttribute('data-i'), 10)]); if(!cur._lockHit) cur.classList.add('drag'); }   /* ★ v1.476.0 上鎖的拖不動 */
+    if(cur._moved && !cur._lockHit){ cur.style.left = x + '%'; cur.style.top = y + '%'; cur._x = x; cur._y = y; }
     islHoldPlace();   /* ★ v1.363.0 拖曳中名稱牌跟著設施走 */
     ev.preventDefault();
   }
@@ -27325,7 +27423,7 @@ function islCampBldDragBind(layer){
     var el = cur, i = parseInt(el.getAttribute('data-i'), 10), s = ISL.camp.slots[i], moved = el._moved, tapX = el._lx, tapY = el._ly, wasFired = fired;
     clearBar(el); el.classList.remove('drag');
     if(s && s.bt){ el.style.left = s.x + '%'; el.style.top = s.y + '%'; cur = null; if(!moved && !wasFired) islCampTapWalk(tapX, tapY); return; }   /* ★ v1.288.0 施工中的設施不能拖也不能開,短按一樣讓給移動 */
-    if(s && moved && el._x != null){ s.x = Math.round(el._x); s.y = Math.round(el._y); islSave('campbldmove'); islCampBldApplyTransforms(); }
+    if(s && moved && el._x != null && (Math.round(el._x) !== s.x || Math.round(el._y) !== s.y)){ islCampUndoPush('b', i, 'move'); s.x = Math.round(el._x); s.y = Math.round(el._y); islSave('campbldmove'); islCampBldApplyTransforms(); }   /* ★ v1.476.0 先記一步「取消修改」 */
     cur = null;
     if(!moved && !wasFired) islCampTapWalk(tapX, tapY);   /* ★ v1.288.0 短按(沒撐滿 1 秒、也沒拖動)⇒ 移動優先 */
   }
@@ -27338,6 +27436,8 @@ function islCampBldDragBind(layer){
 window.islCampFlip = function(i){
   var s = ISL.camp.slots[i];
   if(!s) return;
+  if(islCampLockedToast(s)) return;   /* ★ v1.476.0 */
+  islCampUndoPush('b', i, 'flip');
   s.flip = s.flip ? 0 : 1;
   playSfx('sfx-tap', 0.3); toast('🔁 左右翻轉了');
   islModalClose(); islCampPaint(); islSave('campflip');
@@ -27345,6 +27445,8 @@ window.islCampFlip = function(i){
 window.islCampScale = function(i, delta){
   var s = ISL.camp.slots[i];
   if(!s) return;
+  if(islCampLockedToast(s)) return;   /* ★ v1.476.0 */
+  islCampUndoPush('b', i, 'scale');
   s.scale = islClamp(Math.round(((s.scale || 1) + delta) * 100) / 100, islDB().DECO_SCALE_MIN || 0.2, islDB().DECO_SCALE_MAX || 3.0);   /* ★ v1.333.0 老師「放大縮小上限提高至 20%~300%」(原 50%~200%) */
   playSfx('sfx-tap', 0.2);
   islCampBldApplyTransforms();
@@ -27354,6 +27456,8 @@ window.islCampScale = function(i, delta){
 window.islDecoScale = function(i, delta){
   var d = ISL.camp.deco[i];
   if(!d) return;
+  if(islCampLockedToast(d)) return;   /* ★ v1.476.0 */
+  islCampUndoPush('d', i, 'scale');
   d.scale = islClamp(Math.round(((d.scale || 1) + delta) * 100) / 100, islDB().DECO_SCALE_MIN || 0.2, islDB().DECO_SCALE_MAX || 3.0);   /* ★ v1.333.0 20%~300% */
   playSfx('sfx-tap', 0.2);
   islDecoPaint();
@@ -27662,7 +27766,7 @@ function islCampCellTap(i){
   islModal('<h3>' + b.e + ' ' + islEsc(b.n) + ' Lv' + s.lv + '</h3><p>' + islEsc(b.desc) + '</p><p>耐久 ' + s.hp + '/' + maxHp + (islBldBroken(s) ? ' <b style="color:#ff6b6b">⚠ 嚴重受損:暫時不能使用(相關功能與地圖都停擺),修好立刻恢復;耐久歸零會倒塌,要重新建造。</b>' : (islBldHpPct(s) < islBldDmgRule().warnP ? ' <span style="color:#ff9f7b">(受損,舒適度 −' + islBldDmgRule().comfortWarn + ',建議修理)</span>' : (s.hp < maxHp ? ' <span style="color:#ff8f8f">(結構受損,建議修理)</span>' : ''))) + '　本級效果:' + islEsc(b.lvText[s.lv - 1] || '') + '</p>' +
     '<p class="isl-bldtools"><button class="isl-btn ghost" onclick="islCampFlip(' + i + ')">🔁 左右翻轉</button><button class="isl-btn ghost" onclick="islCampScale(' + i + ',-0.25)">🔍− 縮小</button><span style="font-size:15px;opacity:.85">' + Math.round((s.scale || 1) * 100) + '%</span><button class="isl-btn ghost" onclick="islCampScale(' + i + ',0.25)">🔍+ 放大</button></p>' +
     islLayerRowHtml(islBldZ(s), 'islCampLayer(' + i + ',') +   /* ★ v1.333.0 前後圖層 1~9 */
-    '<p style="font-size:13px;opacity:.7">拖曳它就能換位置(不用再進「搬移模式」)。</p>' +
+    (s.lock ? '<p class="isl-locknote">🔒 已上鎖:不能拖動、翻轉、縮放或換圖層。到左上「🏕 營地造景」可以解鎖。</p>' : '<p style="font-size:13px;opacity:.7">拖曳它就能換位置(不用再進「搬移模式」)。</p>') +   /* ★ v1.476.0 */
     (s.lv < db.BLD_MAX_LV ? '<p>⬆ 升到 Lv' + (s.lv + 1) + ' 需要:' + islCostHtml(islBldCost(s.bld, s.lv + 1)) + ' ' + islLackBadge(islBldCost(s.bld, s.lv + 1), true) + '<br><small style="opacity:.75">(升級 = 交材料 + 再做一次建造品質小遊戲)<br>Lv' + (s.lv + 1) + ':' + islEsc(b.lvText[s.lv] || '') + '</small></p>' : '<p style="opacity:.7">已達最高 Lv' + db.BLD_MAX_LV + '</p>'), btns);   /* ★ v1.94.0 Lv5 */
   islLackBind($('isl-modal'));   /* ★ v1.130.0 */
 }
@@ -28822,6 +28926,7 @@ function islPetReviveShortText(){
   return (d ? d.e : '💊') + ' 復活(持有 ' + islHave(ISL_REVIVE_ITEM()) + ')';
 }
 window.islPetDexOpen = function(pickIdx){
+  _IS.pcBack = null;   /* ★ v1.476.0 離開營地夥伴小視窗流程 */
   var db = islDB(), h = '', i, k, p, rec, got, ps, typeDef, F = _islDexF, pick = (typeof pickIdx === 'number'), list = [], it, rs, inP, blk, tk, f, cdl, blv, nFr = 0, ft;
   ft = (!pick && F.t === 'friend') ? 'all' : F.t;   /* ★ v1.323.0 老師「隊友的篩選新增類別 好友」— 「好友」只在選隊友模式出現;一般圖鑑沒有好友卡,殘留的 friend 篩選一律視為全部 */
   playSfx('sfx-tap', 0.3);
@@ -28941,7 +29046,9 @@ function islPetCardOpen(k, back){
   var db = islDB(), rec = islPetSave(k), p, ps, h = '', btns = [], cmd, nxt, _pid;
   if(rec) k = rec.k;   /* ★ v1.468.0 可以傳個體 id;back = 'house' ⇒ 關閉回 🏡 夥伴小屋 */
   p = db.PETS[k]; if(!p) return; cmd = db.PET_CMDS[p.cmd]; _pid = rec ? rec.id : k;
-  var _back = function(){ if(back === 'house') islPetHouseOpen(); else islPetDexOpen(); };
+  /* ★ v1.476.0 從營地左側夥伴列表/點營地夥伴進來的(islCampPetQuick 記 _IS.pcBack):餵完、取消餵食這類「回夥伴卡」都改回那個小視窗;夥伴卡本身關閉也回小視窗 */
+  if(back === undefined && rec && _IS.pcBack && _IS.pcBack.pid === rec.id && islNow() - _IS.pcBack.t < 600000 && _IS.screen === 'camp'){ islCampPetQuick(rec.id); return; }
+  var _back = function(){ if(back === 'camp'){ if(rec && islPetSave(rec.id)) islCampPetQuick(rec.id); return; } if(back === 'house') islPetHouseOpen(); else islPetDexOpen(); };
   h = (rec ? '<div style="text-align:center" class="isl-pcpic g-' + rec.gr + '">' + islPetPicHtml(k, 96) + '</div>' : '') + '<h3>' + (rec ? islPetGrHtml(rec) + ' ' : '❔ ') + (rec ? islEsc(islPetNm(rec)) + (rec.nm ? ' <span style="font-size:15px;opacity:.75">・' + islEsc(p.n) + '</span>' : '') : '???') + (p.legend ? ' <span style="font-size:16px;padding:1px 8px;border-radius:10px;background:linear-gradient(90deg,#ff8f8f,#ffd166,#7bed9f,#5fb3d9,#c58fff);color:#1a1a1a">🌈 傳說</span>' : '') + '</h3>';   /* ★ v1.331.0 傳說夥伴標記 */   /* ★ v1.194.0 老師「所有關於寵物的地方都要顯示寵物圖片」— 詳情卡加大圖портrait,已收服時圖已經有畫面了,標題不必再重複小 emoji */
   if(!rec){
     h += '<p>' + (db.PET_TYPES[p.type] ? db.PET_TYPES[p.type].e + db.PET_TYPES[p.type].n : '') + '</p>';
@@ -29199,6 +29306,7 @@ function islPhScrollGet(){ var o = { a: 0, b: 0 }; try{ var bx = $('isl-modal').
 function islPhScrollSet(o){ try{ var bx = $('isl-modal').querySelector('.isl-phouse'), bd = bx && bx.querySelector('.bd'); if(bx) bx.scrollTop = o.a; if(bd) bd.scrollTop = o.b; }catch(_e){} }
 var ISL_PH_SORTS = [{ k: 'gr', n: '品級' }, { k: 'lv', n: '等級' }, { k: 'sp', n: '種類' }, { k: 'new', n: '新加入' }];
 window.islPetHouseOpen = function(){
+  _IS.pcBack = null;   /* ★ v1.476.0 */
   var db = islDB(), F = _islPhF, h = '', L = [], i, r, p, inP, tk, outN = islPetOutCount(), on = !!ISL.petOutOn;
   playSfx('sfx-tap', 0.25);
   for(i = 0; i < (ISL.pets || []).length; i++){ r = ISL.pets[i]; p = r && db.PETS[r.k]; if(!p) continue; if(F.t !== 'all' && p.type !== F.t) continue; L.push({ r: r, p: p, o: db.PET_ORDER.indexOf(r.k), n: parseInt(String(r.id).slice(1), 10) || 0 }); }
@@ -32419,7 +32527,7 @@ window.islDecoTap = function(i){
     { t: '關閉', cls: 'ghost' },
     { t: '🔍− 縮小', cb: function(){ islDecoScale(i, -0.25); } },
     { t: '🔍+ 放大', cb: function(){ islDecoScale(i, 0.25); } },
-    islDecoTurnBtn(d, def, islDecoPaint, 'decoflip')   /* ★ v1.342.0 有正面圖 ⇒ 🔄 轉向三段循環 */
+    (function(B){ var cb0 = B.cb; B.cb = function(){ if(islCampLockedToast(d)) return; islCampUndoPush('d', i, 'turn'); cb0(); }; return B; })(islDecoTurnBtn(d, def, islDecoPaint, 'decoflip'))   /* ★ v1.476.0 上鎖擋下+記一步取消修改 */   /* ★ v1.342.0 有正面圖 ⇒ 🔄 轉向三段循環 */
   ];
   if(d.id === 'cabin') btns.push({ t: '🚪 進入小木屋', cls: 'gold', cb: function(){ islCabinOpen('c'); } });
   else if(islCabinOwned() && d.id !== 'cabin') btns.push({ t: islDecoIsOutdoor(def) && def.out ? '🌳 搬到小木屋後院' : '🏠 搬進小木屋', cb: function(){ islCabinMoveInAsk(i); } });
@@ -32427,7 +32535,7 @@ window.islDecoTap = function(i){
   islModal('<h3>' + def.e + ' ' + islEsc(def.n) + '</h3><p style="font-size:15px;opacity:.85">' + (def.d ? '🔬 ' + islEsc(def.d) : '') + '</p>'
     + '<p style="font-size:15px;opacity:.85;margin:4px 0">🔍 目前大小 ' + Math.round((d.scale || 1) * 100) + '%(20%~300%)</p>'
     + islLayerRowHtml(islDecoZ(d), 'islDecoLayer(' + i + ',')
-    + '<p style="font-size:14px;opacity:.7">拖曳可以換位置。</p>', btns);
+    + (d.lock ? '<p class="isl-locknote">🔒 已上鎖:不能拖動、縮放、轉向或換圖層。到左上「🏕 營地造景」可以解鎖。</p>' : '<p style="font-size:14px;opacity:.7">拖曳可以換位置。</p>'), btns);   /* ★ v1.476.0 */
 };
 /* ══════════════════════════════════════════════════════════════════════════
  * ★ v1.454.0(2026-11-24・老師「設計荒島求生的主角與營地裝飾互動的功能」;設計書 claude/荒島營地裝飾互動_設計書.md v0.2)
@@ -32858,6 +32966,8 @@ function islLayerRowHtml(cur, fnPrefix){
 window.islDecoLayer = function(i, n){
   var d = ISL.camp.deco[i];
   if(!d) return;
+  if(islCampLockedToast(d)) return;   /* ★ v1.476.0 */
+  islCampUndoPush('d', i, 'layer');
   d.z = islClamp(parseInt(n, 10) || 5, 1, 9);
   playSfx('sfx-tap', 0.2);
   islDecoPaint(); islSave('decolayer');
@@ -32866,6 +32976,8 @@ window.islDecoLayer = function(i, n){
 window.islCampLayer = function(i, n){
   var s = ISL.camp.slots[i], el;
   if(!s) return;
+  if(islCampLockedToast(s)) return;   /* ★ v1.476.0 */
+  islCampUndoPush('b', i, 'layer');
   s.z = islClamp(parseInt(n, 10) || 4, 1, 9);
   playSfx('sfx-tap', 0.2);
   el = document.querySelector('#isl-camp-cells [data-i="' + i + '"]'); if(el) el.style.zIndex = s.z;
@@ -33069,6 +33181,7 @@ function islCabinCharIn(){
 function islCabinCharOut(){
   var ch = $('isl-camp-char'), g = $('isl-camp-grid'), pets = $('isl-camp-pets'), cp = $('isl-camp');
   if(cp) cp.classList.remove('in-cabin');
+  setTimeout(function(){ try{ islCampLeftLayout(); }catch(_cll){} }, 0);   /* ★ v1.476.0 出小木屋:左側一整排重新排(屋內時是隱藏的) */
   if(!ch || !g) return;
   if(ch.parentNode !== g){ if(pets && pets.parentNode === g) g.insertBefore(ch, pets); else g.appendChild(ch); }
   try{ _IS.campDir = 'd'; islCampCharScale(); islCampCharPlace(); islCharPaint('idle', 'isl-camp-char', true); }catch(_co){}
@@ -33341,8 +33454,8 @@ function islDecoDragBind(layer){
   function move(ev){
     if(!cur) return; var p = pos(ev), r = layer.getBoundingClientRect(), x = islClamp((p.x - r.left) / r.width * 100, 4, 96), y = islClamp((p.y - r.top) / r.height * 100, 6, 94);
     cur._lx = p.x; cur._ly = p.y;
-    if(!cur._moved && (Math.abs(p.x - cur._sx) > 8 || Math.abs(p.y - cur._sy) > 8)){ cur._moved = true; if(timer){ clearTimeout(timer); timer = null; } clearBar(cur); cur.classList.add('drag'); }
-    if(cur._moved){ cur.style.left = x + '%'; cur.style.top = y + '%'; cur._x = x; cur._y = y; }
+    if(!cur._moved && (Math.abs(p.x - cur._sx) > 8 || Math.abs(p.y - cur._sy) > 8)){ cur._moved = true; if(timer){ clearTimeout(timer); timer = null; } clearBar(cur); cur._lockHit = islCampLockedToast(ISL.camp.deco[parseInt(cur.getAttribute('data-d'), 10)]); if(!cur._lockHit) cur.classList.add('drag'); }   /* ★ v1.476.0 上鎖的拖不動 */
+    if(cur._moved && !cur._lockHit){ cur.style.left = x + '%'; cur.style.top = y + '%'; cur._x = x; cur._y = y; }
     islHoldPlace();   /* ★ v1.363.0 拖曳中名稱牌跟著裝飾走 */
     ev.preventDefault();
   }
@@ -33352,7 +33465,7 @@ function islDecoDragBind(layer){
     if(timer){ clearTimeout(timer); timer = null; }
     var el = cur, i = parseInt(el.getAttribute('data-d'), 10), d = ISL.camp.deco[i], moved = el._moved, tapX = el._lx, tapY = el._ly, wasFired = fired;
     clearBar(el); el.classList.remove('drag');
-    if(d && moved && el._x != null){ d.x = Math.round(el._x); d.y = Math.round(el._y); islSave('decomove'); if(d.id === 'cabin') islCabinDoorPaint(); }   /* ★ v1.333.0 搬了小木屋,門口標籤跟著移 */
+    if(d && moved && el._x != null && (Math.round(el._x) !== d.x || Math.round(el._y) !== d.y)){ islCampUndoPush('d', i, 'move'); d.x = Math.round(el._x); d.y = Math.round(el._y); islSave('decomove'); if(d.id === 'cabin') islCabinDoorPaint(); }   /* ★ v1.333.0 搬了小木屋,門口標籤跟著移 */
     cur = null;
     if(!moved && !wasFired) islCampTapWalk(tapX, tapY);   /* ★ v1.288.0 短按 ⇒ 移動優先 */
   }
@@ -33369,14 +33482,15 @@ window.islCampFixOpen = function(){
   if(!ISL) return;
   if(_IS.coop){ toast('參觀好友的營地不能搬東西'); return; }
   playSfx('sfx-tap', 0.3);
-  h = '<h3 class="isl-fixh">🏕 營地造景</h3>' + islPendFixHtml() + '<p class="isl-fixtip">設施或裝飾不小心拖到畫面外、點不到的時候,按「📍 重設位置」就會回到營地正中央,再拖到想放的地方就好。</p><div class="isl-fixlist">';   /* ★ v1.406.0 最上方先列「最新獲得、還沒布置」+「🧺 開始布置」 */
+  h = '<h3 class="isl-fixh">🏕 營地造景</h3>' + islPendFixHtml() + '<p class="isl-fixtip">設施或裝飾不小心拖到畫面外、點不到的時候,按「📍 重設位置」就會回到營地正中央,再拖到想放的地方就好。</p>' +
+      '<div class="isl-lockbar"><span class="lt">🔒 上鎖的東西不會被不小心拖走、縮放或轉向。</span><button class="isl-btn" id="isl-lock-all">🔒 全部上鎖</button><button class="isl-btn ghost" id="isl-unlock-all">🔓 全部解鎖</button></div><div class="isl-fixlist">';   /* ★ v1.476.0 老師「營地的擺設位置新增鎖定功能…可以從左側的營地造景去設定上鎖與解鎖」 */   /* ★ v1.406.0 最上方先列「最新獲得、還沒布置」+「🧺 開始布置」 */
   for(i = 0; i < ISL.camp.slots.length; i++){
     s = ISL.camp.slots[i]; b = db.BUILDINGS[s.bld]; if(!b || s.pend) continue; n++;   /* ★ v1.406.0 還沒布置的不在「已擺放」清單 */
-    h += '<div class="isl-fixrow" data-row="b' + i + '"><span class="fe">' + islIcoHtml(b.img + (s.lv >= 3 ? '_3' : '_1'), b.e, 56) + '</span><span class="fn">' + islEsc(b.n) + ' Lv' + (s.lv || 1) + '</span><span class="fp">' + Math.round(s.x) + '%,' + Math.round(s.y) + '%</span><button class="isl-btn gold" data-k="b" data-i="' + i + '">📍 重設位置</button></div>';
+    h += '<div class="isl-fixrow" data-row="b' + i + '"><span class="fe">' + islIcoHtml(b.img + (s.lv >= 3 ? '_3' : '_1'), b.e, 56) + '</span><span class="fn">' + islEsc(b.n) + ' Lv' + (s.lv || 1) + '</span><span class="fp">' + Math.round(s.x) + '%,' + Math.round(s.y) + '%</span>' + islCampLockBtnHtml('b', i, s) + '<button class="isl-btn ' + (s.lock ? 'ghost' : 'gold') + '" data-k="b" data-i="' + i + '"' + (s.lock ? ' disabled' : '') + '>📍 重設位置</button></div>';   /* ★ v1.476.0 🔒 上鎖 */
   }
   for(i = 0; i < (ISL.camp.deco || []).length; i++){
     d = ISL.camp.deco[i]; def = islDecoDef(d.id); if(!def || d.pend) continue; n++;   /* ★ v1.406.0 */
-    h += '<div class="isl-fixrow" data-row="d' + i + '"><span class="fe">' + islIcoHtml(islDecoImgKey(d, def), def.e, 56) + '</span><span class="fn">' + islEsc(def.n) + (d.scale && d.scale !== 1 ? ' ' + Math.round(d.scale * 100) + '%' : '') + '</span><span class="fp">' + Math.round(d.x) + '%,' + Math.round(d.y) + '%</span><button class="isl-btn gold" data-k="d" data-i="' + i + '">📍 重設位置</button></div>';
+    h += '<div class="isl-fixrow" data-row="d' + i + '"><span class="fe">' + islIcoHtml(islDecoImgKey(d, def), def.e, 56) + '</span><span class="fn">' + islEsc(def.n) + (d.scale && d.scale !== 1 ? ' ' + Math.round(d.scale * 100) + '%' : '') + '</span><span class="fp">' + Math.round(d.x) + '%,' + Math.round(d.y) + '%</span>' + islCampLockBtnHtml('d', i, d) + '<button class="isl-btn ' + (d.lock ? 'ghost' : 'gold') + '" data-k="d" data-i="' + i + '"' + (d.lock ? ' disabled' : '') + '>📍 重設位置</button></div>';   /* ★ v1.476.0 🔒 上鎖 */
   }
   if(!n) h += '<p style="opacity:.8">營地裡還沒有擺好的設施或裝飾。</p>';
   h += '</div>';
@@ -33392,6 +33506,19 @@ window.islCampFixOpen = function(){
     };
   }
   bs = $('isl-fix-go'); if(bs) bs.onclick = function(ev){ ev.stopPropagation(); islPendStart(); };   /* ★ v1.406.0 */
+  /* ★ v1.476.0 🔒/🔓 每列切換(就地改按鈕,不重開視窗、清單捲動位置不跳)+ 全部上鎖/解鎖(重開視窗刷新) */
+  bs = $('isl-modal').querySelectorAll('button[data-lk]');
+  for(i = 0; i < bs.length; i++){
+    bs[i].onclick = function(ev){
+      ev.stopPropagation();
+      var k = this.getAttribute('data-lk'), ix = parseInt(this.getAttribute('data-i'), 10), on = islCampLockToggle(k, ix), rb = this.parentNode ? this.parentNode.querySelector('button[data-k]') : null;
+      this.classList.toggle('on', !!on); this.textContent = on ? '🔒 已上鎖' : '🔓 未上鎖';
+      if(rb && rb.textContent.indexOf('已回中央') < 0){ rb.disabled = !!on; rb.classList.toggle('gold', !on); rb.classList.toggle('ghost', !!on); }
+      toast(on ? '🔒 上鎖了,這個不會再被拖動' : '🔓 解鎖了,可以再調整');
+    };
+  }
+  bs = $('isl-lock-all'); if(bs) bs.onclick = function(ev){ ev.stopPropagation(); var bd = $('isl-modal').querySelector('.bd'), st = bd ? bd.scrollTop : 0; islCampLockAll(true); islCampFixOpen(); bd = $('isl-modal').querySelector('.bd'); if(bd) bd.scrollTop = st; };
+  bs = $('isl-unlock-all'); if(bs) bs.onclick = function(ev){ ev.stopPropagation(); var bd = $('isl-modal').querySelector('.bd'), st = bd ? bd.scrollTop : 0; islCampLockAll(false); islCampFixOpen(); bd = $('isl-modal').querySelector('.bd'); if(bd) bd.scrollTop = st; };
 };
 /* ══ ★ v1.406.0(2026-10-22・老師「尋寶或製作出新設施或裝飾時,進到營地後把新增的物品統一先集中到左上方『營地造景』視窗內(出現 NEW! 標籤),
    玩家點進去後最上方先列出最新獲得但還沒調整位置的物品,按『開始布置』後才放進左側空白區域(營地造景下方),讓玩家拖曳到營地中配置」)══
@@ -33458,6 +33585,7 @@ function islPendPaint(){
   if(!tray._bound){ tray._bound = true; islPendDragBind(tray); }
   if(n1 > (_IS.pendTold | 0) && _IS.screen === 'camp'){ try{ toast('🏕 有 ' + n1 + ' 件新東西在左上「營地造景」等你布置!'); }catch(_pt){} }
   _IS.pendTold = n1;
+  try{ islCampLeftLayout(); }catch(_ll){}   /* ★ v1.476.0 */
 }
 function islPendDragBind(tray){
   var cur = null;
@@ -33534,9 +33662,196 @@ function islPendDragBind(tray){
   window.addEventListener('mousemove', function(ev){ if(cur) move(ev); });
   window.addEventListener('mouseup', function(ev){ if(cur) end(pos(ev)); });
 }
+/* ══ ★ v1.476.0(2026-11-28・老師四項)══
+   ①「營地的擺設位置新增鎖定功能,被鎖定的裝飾不會再被隨便移動,可以從左側的『營地造景』去設定上鎖與解鎖」
+     ⇒ 設施/裝飾多一個存檔欄位 lock:1。鎖住的:拖不動、不能縮放/翻轉/轉向/換圖層/重設位置(長按選單照開,功能鈕照用);
+        營地造景清單每列多一顆 🔒/🔓,上方「全部上鎖/全部解鎖」。好友名片照舊不發布這個欄位(對方看不到也用不到)。
+   ②「每次有裝飾被調整位置、尺寸、角度時,新增[取消修改]按鈕在營地造景的下方」
+     ⇒ _IS.campUndo 堆疊(最多 30 步,不存檔):拖曳搬家/縮放/翻轉/轉向/圖層/重設位置之前先拍一張 {x,y,scale,flip,f,z} 快照,
+        按「↩ 取消修改」一次退一步;物件已被賣掉/搬進小木屋就跳過那步;換島(ISL 換了)整疊作廢。
+   ③「營地造景的上方新增荒島營地畫面拉近放大、拉遠縮小的調節條」⇒ #isl-camp-zoom,與雙指/滾輪共用 _IS.campCam,以視窗中心縮放。
+   ④「陪伴的三隻寵物用列表放在營地左側、營地造景下方,肚子餓的寵物直接顯示標記,點擊可直接開啟視窗餵食和互動;也可以直接點走來走去的寵物」
+     ⇒ #isl-camp-petlist(探險編組裡的隨身夥伴),🍖 餓了 / 💢 鬧脾氣 標記;點一下開 islCampPetQuick(餵食/摸摸/夥伴卡);
+        營地裡走動的寵物改成點一下就開同一個視窗(原本長按 1 秒,長按仍有效)。
+   左側一整排(縮放條 → 營地造景 → 取消修改 → 夥伴列表 → 待布置暫放區)由 islCampLeftLayout 依實際高度往下排,
+   碰到左下方向盤就把暫放區縮短;手機橫放空間不夠時夥伴列表改排到縮放條右邊(橫排)。 */
+var ISL_CAMP_UNDO_MAX = 30, ISL_CAMP_UNDO_KEYS = ['x', 'y', 'scale', 'flip', 'f', 'z'];
+function islCampObj(k, i){ return k === 'b' ? (ISL.camp.slots || [])[i] : (ISL.camp.deco || [])[i]; }
+function islCampIsLocked(o){ return !!(o && o.lock); }
+function islCampLockedToast(o){ if(!islCampIsLocked(o)) return false; toast('🔒 這個已經上鎖,到左上「🏕 營地造景」解鎖才能調整'); playSfx('sfx-cancel', 0.25); return true; }
+function islCampUndoPush(k, i, tag){
+  var o = islCampObj(k, i), s = {}, j, kk;
+  if(!o || !ISL || _IS.coop) return;
+  for(j = 0; j < ISL_CAMP_UNDO_KEYS.length; j++){ kk = ISL_CAMP_UNDO_KEYS[j]; s[kk] = o.hasOwnProperty(kk) ? o[kk] : undefined; }
+  if(!_IS.campUndo || _IS.campUndoIsl !== ISL){ _IS.campUndo = []; _IS.campUndoIsl = ISL; }
+  _IS.campUndo.push({ k: k, o: o, s: s, tag: tag || '' });
+  if(_IS.campUndo.length > ISL_CAMP_UNDO_MAX) _IS.campUndo.shift();
+  islCampUndoPaint();
+}
+function islCampUndoList(){ if(!_IS.campUndo || _IS.campUndoIsl !== ISL) _IS.campUndo = []; return _IS.campUndo; }
+function islCampUndoPaint(){
+  var b = $('isl-camp-undo'), n;
+  if(!b) return;
+  n = ISL && !_IS.coop ? islCampUndoList().length : 0;
+  b.innerHTML = '↩ 取消修改' + (n > 1 ? '<b class="un">' + n + '</b>' : '');
+  b.classList.toggle('hidden', !n);
+  islCampLeftLayout();
+}
+window.islCampUndo = function(){
+  var L = islCampUndoList(), e, arr, j, kk, ix;
+  if(_IS.coop) return;
+  while(L.length){
+    e = L.pop(); arr = e.k === 'b' ? (ISL.camp.slots || []) : (ISL.camp.deco || []); ix = arr.indexOf(e.o);
+    if(ix < 0 || e.o.pend) continue;   /* 已經賣掉/搬進小木屋/回到待布置 ⇒ 這一步跳過 */
+    if(islCampIsLocked(e.o)) continue;   /* 後來上鎖了 ⇒ 不動它 */
+    for(j = 0; j < ISL_CAMP_UNDO_KEYS.length; j++){ kk = ISL_CAMP_UNDO_KEYS[j]; if(e.s[kk] === undefined) delete e.o[kk]; else e.o[kk] = e.s[kk]; }
+    if(e.k === 'b') islCampPaint(); else { islDecoPaint(); if(e.o.id === 'cabin') islCabinDoorPaint(); }
+    playSfx('sfx-cancel', 0.3);
+    toast('↩ 改回去了' + (L.length ? '(還可以再退 ' + L.length + ' 步)' : ''));
+    islSave('campundo');
+    islCampUndoPaint();
+    return;
+  }
+  toast('沒有可以取消的修改了');
+  islCampUndoPaint();
+};
+window.islCampLockToggle = function(k, i){
+  var o = islCampObj(k, i), L, j;
+  if(!o || _IS.coop) return;
+  if(o.lock) delete o.lock; else { o.lock = 1; L = islCampUndoList(); for(j = L.length - 1; j >= 0; j--){ if(L[j].o === o) L.splice(j, 1); } islCampUndoPaint(); }
+  playSfx(o.lock ? 'sfx-confirm' : 'sfx-tap', 0.3);
+  islSave('camplock');
+  return !!o.lock;
+};
+function islCampLockAll(on){
+  var i, n = 0, a = ISL.camp.slots || [], d = ISL.camp.deco || [];
+  for(i = 0; i < a.length; i++){ if(a[i] && !a[i].pend){ if(on) a[i].lock = 1; else delete a[i].lock; n++; } }
+  for(i = 0; i < d.length; i++){ if(d[i] && !d[i].pend){ if(on) d[i].lock = 1; else delete d[i].lock; n++; } }
+  if(on){ _IS.campUndo = []; islCampUndoPaint(); }
+  playSfx(on ? 'sfx-confirm' : 'sfx-tap', 0.3);
+  toast(on ? '🔒 ' + n + ' 件全部上鎖了,不會再被不小心拖走' : '🔓 ' + n + ' 件全部解鎖,可以自由調整');
+  islSave('camplockall');
+}
+function islCampLockBtnHtml(k, i, o){ return '<button class="isl-btn isl-lockbtn' + (o.lock ? ' on' : '') + '" data-lk="' + k + '" data-i="' + i + '" title="' + (o.lock ? '已上鎖:不會被拖動或調整,按一下解鎖' : '按一下上鎖,固定位置') + '">' + (o.lock ? '🔒 已上鎖' : '🔓 未上鎖') + '</button>'; }
+/* ── 縮放條 ── */
+function islCampZoomSync(){
+  var r = $('isl-camp-zoom-r'), p = $('isl-camp-zoom-p'), c = _IS.campCam, v;
+  if(!r || !c || !(c.max > c.min)) return;
+  v = Math.round((c.s - c.min) / (c.max - c.min) * 100);
+  if(String(r.value) !== String(v)) r.value = v;
+  if(p) p.textContent = Math.round(c.s / c.min * 100) + '%';
+}
+function islCampZoomTo(ns){
+  var vp = $('isl-camp-viewport'), c = _IS.campCam, w, h, cx, cy;
+  if(!vp || !c) return;
+  ns = islClamp(ns, c.min, c.max);
+  w = vp.clientWidth; h = vp.clientHeight; cx = w / 2; cy = h / 2;
+  c.x = cx - (cx - c.x) * (ns / c.s); c.y = cy - (cy - c.y) * (ns / c.s); c.s = ns;
+  islCampViewApply();
+}
+window.islCampZoomSet = function(v){ var c = _IS.campCam; if(!c) return; islCampZoomTo(c.min + (c.max - c.min) * islClamp(parseFloat(v) || 0, 0, 100) / 100); };
+window.islCampZoomStep = function(d){ var c = _IS.campCam, v; if(!c) return; v = Math.round((c.s - c.min) / (c.max - c.min) * 100); v = Math.round(v / 10) * 10 + (d > 0 ? 10 : -10); playSfx('sfx-tap', 0.2); islCampZoomSet(islClamp(v, 0, 100)); };
+/* ── 左側隨身夥伴列表 ── */
+function islCampPetListRecs(){ var out = [], i, r, seen = {}; if(!ISL) return out; for(i = 0; i < (ISL.party || []).length; i++){ r = islPartySlotRec(ISL.party[i]); if(r && !seen[r.id]){ seen[r.id] = 1; out.push(r); } } return out; }
+function islCampPetListPaint(){
+  var host = $('isl-camp-petlist'), L, i, r, p, h, hun, mk, db;
+  if(!host) return;
+  L = (_IS.coop || !ISL) ? [] : islCampPetListRecs();
+  if(!L.length){ host.classList.add('hidden'); host.innerHTML = ''; islCampLeftLayout(); return; }
+  db = islDB(); h = '<div class="pt">🐾 隨身夥伴</div>';
+  for(i = 0; i < L.length; i++){
+    r = L[i]; p = db.PETS[r.k]; if(!p) continue; mk = '';
+    try{
+      if(islHunOn() && islHunCfg()){
+        if(islPetSulk(r)) mk = '<span class="mk sulk" title="鬧脾氣了,餵牠吃東西就會和好">💢</span>';
+        else { hun = Math.round(islHunPetGet(r)); if(hun < 50) mk = '<span class="mk" title="肚子餓了(🍖' + hun + '%)">🍖</span>'; }
+      }
+    }catch(_hm){}
+    h += '<button type="button" class="pi' + (mk ? ' hungry' : '') + (r.gr ? ' g-' + r.gr : '') + '" data-pid="' + islEsc(r.id) + '" title="點一下:餵食、摸摸、看夥伴卡">' +
+         '<span class="pc">' + islPetPicHtml(r.k, 56, '', 'idle') + '</span><span class="pn">' + islEsc(islPetNm(r)) + '</span>' +
+         (islPetDown(r) ? '<span class="dw">💤</span>' : '') + mk + '</button>';
+  }
+  host.innerHTML = h; host.classList.remove('hidden');
+  if(!host._bound){ host._bound = true; host.addEventListener('click', function(ev){ var t = ev.target; while(t && t !== host && !(t.getAttribute && t.getAttribute('data-pid'))) t = t.parentNode; if(!t || t === host) return; ev.stopPropagation(); islCampPetQuick(t.getAttribute('data-pid')); }); }
+  islCampLeftLayout();
+}
+/* 點夥伴(列表或營地上走動的)⇒ 小視窗:餵食 / 摸摸 / 夥伴卡。
+   從這裡進去餵食、取消、餵完 ⇒ 都回到這個小視窗(islPetCardOpen 讀 _IS.pcBack 轉回來),關閉就回營地。 */
+window.islCampPetQuick = function(pid){
+  var db = islDB(), rec = islPetSave(pid), p, h, hun = null, sulk = false, H, down, btns;
+  if(!rec || _IS.coop) return;
+  p = db.PETS[rec.k]; if(!p) return;
+  H = islHunCfg();
+  try{ if(islHunOn() && H){ sulk = islPetSulk(rec); if(islPartyHasPid(rec.id)) hun = Math.round(islHunPetGet(rec)); } }catch(_qh){}
+  down = islPetDown(rec);
+  _IS.pcBack = { pid: rec.id, t: islNow() };
+  playSfx('sfx-tap', 0.3);
+  h = '<div class="isl-cpq"><div class="pic g-' + rec.gr + '">' + islPetPicHtml(rec.k, 120) + '</div><div class="inf">' +
+      '<h3>' + islPetGrHtml(rec) + ' ' + islEsc(islPetNm(rec)) + (rec.nm ? ' <span class="sub">・' + islEsc(p.n) + '</span>' : '') + '</h3>' +
+      '<p class="isl-pethp-row">' + islPetHpTag(rec) + islPetHunTag(rec) + '</p>' +
+      '<p class="ln">Lv.' + rec.lv + '　💖 ' + db.PET_BOND[rec.bond].e + ' ' + islEsc(db.PET_BOND[rec.bond].n) + '</p>' +
+      (sulk ? '<p class="ln warn">💢 鬧脾氣中:先餵牠吃東西,親密度回到 ' + H.bond.sulkBack + ' 就會和好。</p>' : (hun !== null && hun < 50 ? '<p class="ln warn">🍖 肚子餓了(' + hun + '%),能力會變差,快餵牠吃東西!</p>' : '')) +
+      (down ? '<p class="ln">💤 倒下休息中:睡一覺到明天(或用復活道具)才會醒來。</p>' : '') +
+      '</div></div>';
+  btns = [
+    { t: '🍖 餵食', cls: (sulk || (hun !== null && hun < 50)) ? 'gold' : '', cb: function(){ islPetFeed(rec.id); } },
+    { t: '💗 摸摸牠', cls: '', cb: function(){ islCampPetPat(rec.id); } },
+    { t: '📋 夥伴卡', cls: 'ghost', cb: function(){ islPetCardOpen(rec.id, 'camp'); } },
+    { t: '關閉', cls: 'ghost', cb: function(){ _IS.pcBack = null; } }
+  ];
+  islModal(h, btns);
+};
+window.islCampPetPat = function(pid){
+  var rec = islPetSave(pid), p = rec ? islDB().PETS[rec.k] : null, u = _IS.campPets || [], i, lines;
+  if(!rec || !p) return;
+  lines = ['開心地蹭了蹭你的手', '瞇起眼睛,好舒服的樣子', '繞著你轉了一圈', '把頭靠過來還想再摸', '發出滿足的聲音'];
+  try{ islHeartFx(); }catch(_hf){}
+  playSfx('sfx-heal', 0.35);
+  for(i = 0; i < u.length; i++){ if(u[i] && u[i].pid === rec.id && !u[i].hop){ (function(r0, idx){ r0.hop = true; islCampPetRender(idx); setTimeout(function(){ var uu = _IS.campPets || []; if(uu[idx] === r0){ r0.hop = false; islCampPetRender(idx); } }, 1400); })(u[i], i); } }
+  toast('💗 ' + p.e + ' ' + islPetNm(rec) + ' ' + lines[Math.floor(Math.random() * lines.length)]);
+  islCampPetQuick(rec.id);
+};
+/* ── 左側一整排依實際高度排位置 ── */
+function islCampLeftLayout(){
+  var camp = $('isl-camp'), zb = $('isl-camp-zoom'), fx = $('isl-camp-fix-btn'), un = $('isl-camp-undo'), pl = $('isl-camp-petlist'), pd = $('isl-camp-pend'), joy = $('isl-camp-joy'),
+      phone = false, gap, y, lim, need, x0;
+  if(!camp || !zb || !fx || camp.classList.contains('hidden') || !camp.offsetHeight) return;
+  try{ phone = window.matchMedia('(orientation:landscape) and (max-height:520px)').matches; }catch(_mq){}
+  gap = phone ? 4 : 6;
+  function vis(el){ return el && !el.classList.contains('hidden') && el.offsetHeight > 0; }
+  function put(el, top){ el.style.setProperty('top', Math.round(top) + 'px', 'important'); }
+  y = zb.offsetTop + zb.offsetHeight + gap;
+  if(un) un.style.removeProperty('left');
+  if(pd) pd.style.removeProperty('left');
+  if(vis(fx)){
+    put(fx, y);
+    if(un && vis(un)){ un.style.setProperty('left', (fx.offsetLeft + fx.offsetWidth + gap) + 'px', 'important'); put(un, y); }   /* 取消修改排在營地造景右邊(緊貼下方那一列),省下一列高度給夥伴列表 */
+    y += Math.max(fx.offsetHeight, (un && vis(un)) ? un.offsetHeight : 0) + gap;
+  } else if(un && vis(un)){ put(un, y); y += un.offsetHeight + gap; }
+  lim = (joy && joy.offsetHeight) ? joy.offsetTop - gap : camp.offsetHeight - gap;
+  if(pl && vis(pl)){
+    pl.classList.remove('row'); pl.classList.remove('cmp'); pl.style.removeProperty('left');
+    need = pl.offsetHeight;
+    if(y + need > lim){ pl.classList.add('cmp'); need = pl.offsetHeight; }   /* 先試精簡版(圖小一點) */
+    if(y + need > lim){   /* 還是放不下(手機橫放)⇒ 改橫排到縮放條右邊 */
+      pl.classList.remove('cmp'); pl.classList.add('row');
+      x0 = Math.max(zb.offsetLeft + zb.offsetWidth, fx.offsetLeft + fx.offsetWidth) + gap;
+      pl.style.setProperty('left', x0 + 'px', 'important'); put(pl, zb.offsetTop);
+    } else { put(pl, y); y += need + gap; }
+  }
+  if(pd && vis(pd)){
+    if(pl && vis(pl) && !pl.classList.contains('row') && lim - y < (phone ? 92 : 120)){   /* 夥伴列表下面放不下待布置暫放區 ⇒ 暫放區排到夥伴列表右邊(暫時的,拖完就收) */
+      pd.style.setProperty('left', (pl.offsetLeft + pl.offsetWidth + gap) + 'px', 'important'); put(pd, pl.offsetTop);
+      pd.style.setProperty('max-height', Math.max(phone ? 92 : 120, lim - pl.offsetTop) + 'px', 'important');
+    } else { put(pd, y); pd.style.setProperty('max-height', Math.max(phone ? 92 : 120, lim - y) + 'px', 'important'); }
+  }
+}
+(function(){ var t = null; function rf(){ clearTimeout(t); t = setTimeout(function(){ try{ islCampLeftLayout(); }catch(_ll){} }, 260); } window.addEventListener('resize', rf); window.addEventListener('orientationchange', rf); })();
 function islCampFixReset(kind, i){
   var o = kind === 'b' ? ISL.camp.slots[i] : (ISL.camp.deco || [])[i];
   if(!o) return false;
+  if(islCampLockedToast(o)) return false;   /* ★ v1.476.0 上鎖的不搬 */
+  islCampUndoPush(kind, i, 'reset');
   o.x = 50; o.y = 50;   /* #isl-camp-grid 正中央(設施 .isl-cell 與 .isl-deco 都是 left/top % + 負 margin 置中,50/50 就是圖示中心點落在畫布中心) */
   if(kind === 'b'){ islCampPaint(); }   /* 設施整層重畫(含 islCampBldApplyTransforms 與 islCampViewFit);islCampPaint 內部順手也會重畫裝飾層 */
   else { islDecoPaint(); if(o.id === 'cabin') islCabinDoorPaint(); islCampViewFit(); }   /* 裝飾只重畫裝飾層;小木屋門口標籤跟著搬(同 islDecoDragBind up 的做法);視窗縮回全貌 */
