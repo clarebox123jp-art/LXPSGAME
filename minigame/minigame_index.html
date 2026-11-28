@@ -7638,6 +7638,15 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 .isl-pgr.g-SR{ background:#c58fff; }
 .isl-pgr.g-SSR{ background:linear-gradient(90deg,#ffe08a,#ffd166,#ffb347); box-shadow:0 0 8px rgba(255,209,102,.8); }
 .isl-pgw{ display:inline-block; padding:0 .5em; border-radius:.5em; font-weight:900; font-size:.82em; line-height:1.45; background:rgba(255,255,255,.12); color:#e8eef5; white-space:nowrap; vertical-align:middle; }
+/* ★ v1.480.0 🎖 職能徽章(顏色比照類型:坦克藍/攻擊珊瑚/治療綠/控場紫;輔助黃、全能金) */
+.isl-prole{ display:inline-block; padding:0 .5em; border-radius:.5em; font-weight:900; font-size:.82em; line-height:1.45; white-space:nowrap; vertical-align:middle; color:#14161a; background:#ff9d9d; }
+.isl-prole.r-t{ background:#7cc4e8; }
+.isl-prole.r-h{ background:#8be8a8; }
+.isl-prole.r-c{ background:#cfa6ff; }
+.isl-prole.r-s{ background:#ffe08a; }
+.isl-prole.r-all{ background:linear-gradient(90deg,#ffe08a,#ffd166,#ffb347); }
+.isl-pjoin .pj-sec.s-role{ background:rgba(255,209,102,.1); border-color:#ffd166; color:#fff0c8; }
+.isl-pjoin .pj-sec.s-role .hd small{ display:block; margin:0; }
 .isl-pgw.w-A{ color:#7bed9f; } .isl-pgw.w-B{ color:#b5f5c8; } .isl-pgw.w-D{ color:#ffd9a0; } .isl-pgw.w-E{ color:#ffb3a0; }
 .isl-pps{ display:inline-block; padding:0 .5em; border-radius:.5em; font-weight:900; font-size:.82em; line-height:1.45; background:rgba(255,150,200,.16); color:#ffd0e6; white-space:nowrap; vertical-align:middle; }
 .isl-pindiv{ display:flex; flex-wrap:wrap; justify-content:center; gap:6px 10px; margin:2px 0 8px; font-size:16px; }
@@ -8166,7 +8175,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 (function(){
 'use strict';
 
-var MG_VER = 'v1.479.0';   /* ★ v1.479.0(2026-11-28 13:10・老師「主角防卡死:被自己的障礙物圍住時,點營地任何空白區域就自動跳起跨越障礙到那個位置」)— islCampWalkTo:islCampPath 回 null(找不到路)⇒ _IS.campWalk.hop,islJump 跳躍弧線+0.62 秒直線滑到目的地(不看障礙),落地照常 cb;toast「🦘 被圍住了,跳過去!」。只改本檔+sw */ void 'v1.478.0';   /* ★ v1.478.0(2026-11-28 13:03・老師兩項)— ①營地「💾 儲存配置」鈕(跟 ↩ 取消修改一起出現、排右邊;按下存檔+清掉取消步驟,islCampLayoutSave)②營地障礙物:已擺好的設施/裝飾腳底區當障礙(量 DOM,石板路/木橋/花拱門/地毯/野餐墊/坐墊可踩),主角點地走路 A* 繞路、方向盤撞到貼著滑,營地寵物漫步也避開/繞路(islCampObsList/islCampPath/islCampMoveSlide/islCampPetStep)。只改本檔+sw */ void 'v1.477.0';   /* ★ v1.477.0(2026-11-28 13:00・老師「營地放大時畫面鎖定主角人物為中心」)— 營地視角放大(>100%)時 islCampViewApply 先把視角中心對準主角(islCampFollowAim,靠邊照舊夾邊界),主角每次移動 islCampCharPlace → islCampFollowNow 重套;雙指/滾輪/縮放條放大縮小都以主角為中心;100% 全貌、小木屋內不跟。只改本檔+sw,island_db 不動(?v= 仍 v1.456.0) */ void 'v1.476.0';   /* ★ v1.476.0(2026-11-28 11:10・老師四項)— ①營地擺設上鎖:設施/裝飾存 lock:1,上鎖的拖不動、不能縮放/翻轉/轉向/換圖層/重設;🏕 營地造景清單每列 🔒/🔓 + 全部上鎖/解鎖 ②↩ 取消修改:搬家/縮放/翻轉/轉向/圖層/重設前拍快照(_IS.campUndo 最多 30 步,不存檔),營地造景下方按一次退一步 ③營地造景上方縮放條 #isl-camp-zoom(與雙指/滾輪共用 _IS.campCam)④左側 🐾 隨身夥伴列表(🍖 餓了/💢 鬧脾氣標記),點一下開 islCampPetQuick(餵食/💗摸摸/夥伴卡;餵完回小視窗),營地走動的夥伴改成點一下就開;左側排版 islCampLeftLayout。只改 index + sw,island_db 不動(?v= 仍 v1.456.0) */ void 'v1.475.0';   /* ★ v1.475.0(2026-11-28 09:25・老師「《荒島的夜襲》手機模式右下角的寵物蓋住橡膠手套的選項,無法使用。把下方武器按鈕置於最頂,不要被好友或寵物蓋住」)— #isl-def-tools z-index 4→30(寵物 6/7、好友 3、閃紅光 8)、整列 pointer-events:none 只讓按鈕吃點擊;寵物開場位置/拖曳上限改避開武器列(islDefToolTop)。只改本檔+sw,island_db 不動 */ void 'v1.474.0';   /* ★ v1.474.0(2026-11-28 07:51・老師「荒島家具互動的調整位置,增加自由旋轉(順/逆時針一次 30 度)躺下時的角度,自動儲存角度和左右高低位置,下次和相同方向的家具互動時以調整後的角度位置來躺」)— 互動操作列躺下多「角度 ↺ ↻ ⟲」,位置/角度改存 ISL.actAdj(同種家具+同方向共用,小木屋另記;舊 deco.ax/ay 為退路);程式搜尋 v1.474.0。island_db 零改動 */   void 'v1.473.0';   /* ★ v1.473.0(2026-11-27 22:00・老師「繼續 外島 12 種夥伴的專屬天賦和技能」;池子表 claude/荒島寵物個體化_第3輪之二_外島專屬池.md)— ISL_PX.T/S/POOL 補外島 12 種(各 4 天賦+4 技能,只用既有效果鍵,冰凍/破甲/處決走 islSeaCmdOnHit;招牌機制不進池);舊外島夥伴讀檔 islPxFill 固定種子自動補抽;說明頁 ISL_PET_NEWS_V 3→4(即將推出→外島 NEW 卡)。 */
+var MG_VER = 'v1.480.0';   /* ★ v1.480.0(2026-11-28 14:14・老師「荒島寵物職能定位,做第 1 輪實作」;設計書 claude/荒島寵物職能定位_設計書.md;裁定:職能顯示主職能+副職能、職能影響一般戰鬥的自動輪招和被盯上機率、夜襲守衛戰寵物不用技能不受職能影響)— 純 index 改動(island_db 零改動):①新純函式 islPetRole(rec[,tl,sk]) 執行時算職能不存檔(存檔不動、不需轉換):原專屬指令與原天賦 ×2、這一隻天生 2 天賦 2 技能 ×1,依效果鍵查表 ISL_ROLE_FX/ISL_ROLE_TAL 給攻/坦/療/控/輔分數,主職能=最高、副職能=第二高且 ≥ 主 60%、前兩名差 <10% 且三項以上 ≥75% ⇒ 🔰全能(門檻都是 ISL_ROLE 常數);②顯示:夥伴卡、加入視窗、夥伴小屋卡、重複遭遇/放生三選一小卡、編組格、編組選人卡、戰鬥血條旁標籤與單位預覽;夥伴小屋加「職能」篩選(主或副符合)與排序;訓練書第 2 步每個候選招顯示「換後職能:A → B」;夥伴說明頁新增職能卡(ISL_PET_NEWS_V 4→5);③戰鬥:islBtMakeAllies 單位帶 role;islBtCmdPick 自動輪招——💚治療在隊友(含主角)體力 <60% 或有人倒下時優先補血招、🛡坦克優先護盾/嘲諷/護體招、🌀控場優先控制招,沒有符合的招就維持原本輪流,冷卻/計量/公共冷卻/治療值不值得放全照舊;islBtMonPickTarget 被盯上權重再乘 🛡 +10%、💚/✨ −10%(與個性相乘);④夜襲守衛戰(islDef* 獨立流程)完全不讀職能。⚠ 未在 iPad 實機看過各畫面。)   */   void 'v1.479.0';   /* ★ v1.479.0(2026-11-28 13:10・老師「主角防卡死:被自己的障礙物圍住時,點營地任何空白區域就自動跳起跨越障礙到那個位置」)— islCampWalkTo:islCampPath 回 null(找不到路)⇒ _IS.campWalk.hop,islJump 跳躍弧線+0.62 秒直線滑到目的地(不看障礙),落地照常 cb;toast「🦘 被圍住了,跳過去!」。只改本檔+sw */ void 'v1.478.0';   /* ★ v1.478.0(2026-11-28 13:03・老師兩項)— ①營地「💾 儲存配置」鈕(跟 ↩ 取消修改一起出現、排右邊;按下存檔+清掉取消步驟,islCampLayoutSave)②營地障礙物:已擺好的設施/裝飾腳底區當障礙(量 DOM,石板路/木橋/花拱門/地毯/野餐墊/坐墊可踩),主角點地走路 A* 繞路、方向盤撞到貼著滑,營地寵物漫步也避開/繞路(islCampObsList/islCampPath/islCampMoveSlide/islCampPetStep)。只改本檔+sw */ void 'v1.477.0';   /* ★ v1.477.0(2026-11-28 13:00・老師「營地放大時畫面鎖定主角人物為中心」)— 營地視角放大(>100%)時 islCampViewApply 先把視角中心對準主角(islCampFollowAim,靠邊照舊夾邊界),主角每次移動 islCampCharPlace → islCampFollowNow 重套;雙指/滾輪/縮放條放大縮小都以主角為中心;100% 全貌、小木屋內不跟。只改本檔+sw,island_db 不動(?v= 仍 v1.456.0) */ void 'v1.476.0';   /* ★ v1.476.0(2026-11-28 11:10・老師四項)— ①營地擺設上鎖:設施/裝飾存 lock:1,上鎖的拖不動、不能縮放/翻轉/轉向/換圖層/重設;🏕 營地造景清單每列 🔒/🔓 + 全部上鎖/解鎖 ②↩ 取消修改:搬家/縮放/翻轉/轉向/圖層/重設前拍快照(_IS.campUndo 最多 30 步,不存檔),營地造景下方按一次退一步 ③營地造景上方縮放條 #isl-camp-zoom(與雙指/滾輪共用 _IS.campCam)④左側 🐾 隨身夥伴列表(🍖 餓了/💢 鬧脾氣標記),點一下開 islCampPetQuick(餵食/💗摸摸/夥伴卡;餵完回小視窗),營地走動的夥伴改成點一下就開;左側排版 islCampLeftLayout。只改 index + sw,island_db 不動(?v= 仍 v1.456.0) */ void 'v1.475.0';   /* ★ v1.475.0(2026-11-28 09:25・老師「《荒島的夜襲》手機模式右下角的寵物蓋住橡膠手套的選項,無法使用。把下方武器按鈕置於最頂,不要被好友或寵物蓋住」)— #isl-def-tools z-index 4→30(寵物 6/7、好友 3、閃紅光 8)、整列 pointer-events:none 只讓按鈕吃點擊;寵物開場位置/拖曳上限改避開武器列(islDefToolTop)。只改本檔+sw,island_db 不動 */ void 'v1.474.0';   /* ★ v1.474.0(2026-11-28 07:51・老師「荒島家具互動的調整位置,增加自由旋轉(順/逆時針一次 30 度)躺下時的角度,自動儲存角度和左右高低位置,下次和相同方向的家具互動時以調整後的角度位置來躺」)— 互動操作列躺下多「角度 ↺ ↻ ⟲」,位置/角度改存 ISL.actAdj(同種家具+同方向共用,小木屋另記;舊 deco.ax/ay 為退路);程式搜尋 v1.474.0。island_db 零改動 */   void 'v1.473.0';   /* ★ v1.473.0(2026-11-27 22:00・老師「繼續 外島 12 種夥伴的專屬天賦和技能」;池子表 claude/荒島寵物個體化_第3輪之二_外島專屬池.md)— ISL_PX.T/S/POOL 補外島 12 種(各 4 天賦+4 技能,只用既有效果鍵,冰凍/破甲/處決走 islSeaCmdOnHit;招牌機制不進池);舊外島夥伴讀檔 islPxFill 固定種子自動補抽;說明頁 ISL_PET_NEWS_V 3→4(即將推出→外島 NEW 卡)。 */
 void 'v1.472.0';   /* ★ v1.472.0(2026-11-27 21:10・老師「寵物個體化第 3 輪」;設計書 claude/荒島寵物個體化_設計書.md 第 5/9/11 節,裁定 D/L/M/N)— ①本島 19 種專屬池 ISL_PX(各 4 天賦+4 技能,每隻隨機帶 2+2;舊存檔用 uid|id 固定種子補抽;外島 12 種下一次)②天賦走 islPetTal/islPartyTal 單一出口(+islPxTal,數值吃品級)③戰鬥 3 招:u.xcmds/u.xcd,每招各自冷卻+公共冷卻 2,自動 islBtCmdPick、手動預覽視窗每招一顆鈕④📘 訓練書 ISL.pxBook(阿獺常駐 500/萬獸之王 400,夥伴卡「換技能」自選)⑤星盤馴獸星域 islPxInit 只改效果與說明(幸運 8%/馴獸之心 SR+3 SSR+1/心有靈犀 傳承 50%/羈絆守護 升階+3/萬獸共鳴 每隻 SR+ +1% 最多 3/萬獸之王 升階+5 訓練書 8 折)⑥說明頁 ISL_PET_NEWS_V 2→3;反彈/自我修復/每回合補全隊/閃開 四條戰鬥紀錄改成通用文字。 */
 void 'v1.471.0';   /* ★ v1.471.0(2026-11-27 21:01・老師「遇到寵物如果身上剛好沒有攜帶食物,寵物現在會留在原地等待(用寵物在營地的角色圖即可),最多等到主角睡覺之前都可以來招募。主角睡覺後寵物就會離去等下次再遇。」)— 一般遭遇(islPetEncounterOpen)與重複遭遇(islPetDupOpen)沒食物 ⇒ islPetWaitAdd 登記 ISL.petWait(種類/區/日/座標/重複時先抽好的那一隻),場景畫營地同款角色圖+「🍽 等你帶○○來」泡泡(islPetWaitPaint,進場景時畫);主角走近 <100px 自動再開遭遇視窗(islTick 移動時 islPetWaitNear;走開 >150px 才再觸發);送出食物 islPetWaitDel;睡覺換日 islNewDay → islPetWaitClear(日誌「等不到你,回到森林裡了」)。等待的那一隻跨重讀檔編號被占用 ⇒ islPetGet 重新給號。含 v1.470.0(寵物個體化第 2 輪,尚未上傳)。island_db 零改動。 */
 void 'v1.470.0';   /* ★ v1.470.0(2026-11-27 20:35・老師「寵物個體化第 2 輪」;設計書 claude/荒島寵物個體化_設計書.md 第 7/8/10 節)— ①重複遭遇:這一區沒有沒收服的夥伴時,已擁有的種類採集類活動成功 6% 再遇到(同種一天 1 次,ISL.petDupDay),🌈 傳說擁有過後在原調查區 2%;以前答過題 ⇒ 送喜歡的食物就加入(裁定 E);NPC 4 位唯一;阿獺換購的在夥伴卡「🦦 再換一隻」。②營地空間提示「還能再收留幾隻(n/2)」+ 先看新來這一隻(islPetMiniHtml)。③滿 2 隻 ⇒ 三選一 islPetDupChoose(放生一隻舊的換新的/放棄新的,食物不退)。④🍃 放生 islPetReleaseOpen:裝備卸回、離開編組/出來逛,回饋貝幣 N20/R40/SR80/SSR150 + 1 份最愛食物,經驗傳承 30% 自選對象(可給三選一的新來的),離別禮 🍇 islPetReleaseFruitP,SR 以上再確認,日誌附自然教育小語;放生最後一隻可以,圖鑑保留(petDex),之後再遇到送食物就回來;傳說任務改看 islPetEver。⑤⬆ 打倒頭目升階:撐到戰鬥結束(沒倒下、沒被旋風吹走 _wasGone)的夥伴每隻頭目 10%(islPetsGainAfterWin)。⑥同種 2 隻前置:islPetCount 改「幾種」、islPetIndN 個體數、選隊友一隻一張卡(同格換同種另一隻 OK)、圖鑑 ×2/🍃、物品包餵食/飽足標籤/夜襲守衛改個體、章節外島夥伴數只算種類。⑦📢 說明頁 ISL_PET_NEWS_V 1→2(三張 NEW 卡)。island_db 零改動。 */
@@ -28601,6 +28610,7 @@ function islPetGet(k, quiet, opt){
         '</div>' +
       '</div><div class="pj-r">' +
         (_TY ? '<div class="pj-sec s-ty"><span class="hd">' + _TY.e + ' ' + islEsc(_TY.n) + '</span><span class="bd">' + islEsc(_TY.d) + '</span></div>' : '') +
+        '<div class="pj-sec s-role"><span class="hd">🎖 職能:' + islPetRoleHtml(_nr) + '<small>(換了天賦、技能,職能會跟著變)</small></span><span class="bd">' + islEsc(islPetRoleDesc(islPetRole(_nr))) + '</span></div>' +   /* ★ v1.480.0 */
         (_CM ? '<div class="pj-sec s-cmd"><span class="hd">' + _CM.e + ' 專屬指令:' + islEsc(_CM.n) + (_CM.cd ? '<small>冷卻 ' + _CM.cd + ' 回合</small>' : '') + '</span><span class="bd">' + islEsc(_CM.d) + '</span></div>' : '') +
         '<div class="pj-sec s-tal"><span class="hd">✨ 天賦</span><span class="bd">' + islEsc(p.talent) + '</span></div>' +
         '<div class="pj-sec s-sci"><span class="bd">🔬 ' + islEsc(p.sci) + '</span></div>' +
@@ -28769,6 +28779,7 @@ function islPetMiniHtml(rec, tag, btn){
     '<div class="pic">' + islPetPicHtml(rec.k, 'fill') + '</div>' +
     '<div class="nm">' + islPetGrHtml(rec) + ' ' + islEsc(islPetNm(rec)) + (rec.nm ? '<small>・' + islEsc(p.n) + '</small>' : '') + '</div>' +
     '<div class="ln">Lv' + rec.lv + '　' + islPetGwHtml(rec) + ' ' + islPetPsHtml(rec) + '</div>' +
+    '<div class="ln">' + islPetRoleHtml(rec) + '</div>' +   /* ★ v1.480.0 職能(重複遭遇/放生三選一/加入視窗共用的小卡) */
     '<div class="ln">' + islPetGwsHtml(rec) + '</div>' +
     '<div class="ln st">❤' + ps.hp + ' ⚔' + ps.atk + ' 🛡' + ps.def + ' 💨' + islNum1(ps.spd) + '</div>' +
     (PS ? '<div class="ln sm">' + PS.e + ' ' + islEsc(PS.fx) + '</div>' : '') +
@@ -29128,7 +29139,7 @@ window.islPetDexOpen = function(pickIdx){
     h += '<div class="nm">' + (got ? (pick ? islPetGrHtml(rec) + ' ' + islEsc(islPetNm(rec)) : islEsc(p.n)) : (it.rel ? islEsc(p.n) : '???')) + '</div>';
     if(rs) h += '<div class="rst">💤 今天受傷休息</div><span class="isl-dexrev" data-act="rev" data-k="' + rec.id + '">' + islPetReviveShortText() + '</span>';   /* ★ v1.323.0 ② 短版復活鈕貼在名字正下方 */
     h += '<div class="tp">' + (typeDef ? typeDef.e + ' ' + typeDef.n : '') + '</div>';
-    if(got) h += '<div class="lv">Lv' + rec.lv + '　' + db.PET_BOND[rec.bond].e + (islPetSulk(rec) ? ' 💢' : '') + '</div><div class="st">❤️' + ps.hp + '　⚔' + ps.atk + '　🛡' + ps.def + '　💨' + islNum1(ps.spd) + '</div>';
+    if(got) h += '<div class="lv">Lv' + rec.lv + '　' + db.PET_BOND[rec.bond].e + (islPetSulk(rec) ? ' 💢' : '') + '</div>' + (pick ? '<div class="lv">🎖 ' + islPetRoleHtml(rec) + '</div>' : '') + '<div class="st">❤️' + ps.hp + '　⚔' + ps.atk + '　🛡' + ps.def + '　💨' + islNum1(ps.spd) + '</div>';
     else h += '<div class="lv hint">' + islEsc(it.rel ? (p.get.how === 'shop' ? '🍃 放生過了——可以再跟阿獺換一隻' : '🍃 放生過了——再遇到時,送牠喜歡的食物就會回來') : islPetGetHint(p)) + '</div>';
     h += (inP ? '<span class="pin">🧭 ' + (pick ? '已在隊上' : '編組中') + '</span>' : '') + '</button>';
   }
@@ -29243,6 +29254,7 @@ function islPetCardOpen(k, back){
   var _bondPct = nxt ? Math.round(Math.min(100, (rec.xp / nxt) * 100)) : 100;
   h += '<div class="isl-petinfo">';
   h += '<div class="sec typ"><span class="badge" style="background:' + _tc.bg + ';color:' + _tc.tx + '">' + (db.PET_TYPES[p.type] ? db.PET_TYPES[p.type].e + ' ' + islEsc(db.PET_TYPES[p.type].n) : '') + '</span><span class="d">' + (db.PET_TYPES[p.type] ? islEsc(db.PET_TYPES[p.type].d) : '') + '</span></div>';
+  h += '<div class="sec typ"><span class="badge" style="background:rgba(255,209,102,.9);color:#14161a">🎖 職能</span> ' + islPetRoleHtml(rec) + '<span class="d">' + islEsc(islPetRoleDesc(islPetRole(rec))) + '(換了天賦、技能,職能會跟著變)</span></div>';   /* ★ v1.480.0 主職能+副職能 */
   h += '<div class="sec lv-box"><div class="hd">🎓 已收錄馴養　Lv.' + rec.lv + '</div><div class="xpbar"><i style="width:' + _bondPct + '%"></i></div><div class="sub">' + (nxt ? 'EXP ' + rec.xp + ' / ' + nxt : '已滿級') + '</div></div>';
   h += '<div class="sec stat"><span>❤️<b>' + ps.hp + '</b><i>HP</i></span><span>⚔<b>' + ps.atk + '</b><i>攻擊</i></span><span>🛡<b>' + ps.def + '</b><i>防禦</i></span><span>💨<b>' + islNum1(ps.spd) + '</b><i>速度</i></span></div>';   /* ★ v1.213.0 老師「寵物狀態的四維有圖示也要有中文」— 原本只有 emoji+數字,補上 <i>HP/攻擊/防禦/速度</i> 小字標籤(CSS 見 .isl-petinfo .sec.stat i) */
   h += '<div class="sec skill"><div class="hd">' + cmd.e + ' ' + islEsc(cmd.n) + '<span class="cd">冷卻 ' + cmd.cd + ' 回合' + (islPetCmdCd(cmd.cd, ps.cdCut) !== cmd.cd ? '(你的縮減 −' + (ps.cdCut | 0) + (islPetCmdCd(cmd.cd, ps.cdCut) > cmd.cd - (ps.cdCut | 0) ? ',最多縮一半' : '') + ' → ' + islPetCmdCd(cmd.cd, ps.cdCut) + ')' : '') + '</span></div><div class="bd2">' + islEsc(cmd.d) + (rec.sk && rec.sk.length ? '<div class="isl-pxsk">🆕 天生的技能' + islPxSkLines(rec) + '</div>' : '') + '</div></div>';   /* ★ v1.472.0 3 招 */
@@ -29307,7 +29319,7 @@ function islPetNameRnd(){
    版面仿大對抗 _showNewHeroAnnouncement:深色漸層卡、發光標題、一塊一塊彩色說明卡、底部「即將推出」預告。
    入口:回營地時沒看過(ISL.flags.newsPet1 沒設)且已有夥伴 ⇒ 等畫面沒有其他視窗時自動跳一次;之後在 🏕 營地選單「📢 夥伴大更新」、🏡 夥伴小屋右上「❓ 說明」隨時重看。
    ⚠ 第 2/3 輪上線時,把「即將推出」那塊的對應項目搬到正式說明、ISL_PET_NEWS_V +1(會讓所有人再自動看一次)。 */
-var ISL_PET_NEWS_V = 4;   /* ★ v1.470.0 第 2 輪上線 1→2(重複遭遇/放生/頭目升階搬成正式說明);★ v1.472.0 第 3 輪 2→3;★ v1.473.0 外島 12 種 3→4 */
+var ISL_PET_NEWS_V = 5;   /* ★ v1.470.0 第 2 輪上線 1→2(重複遭遇/放生/頭目升階搬成正式說明);★ v1.472.0 第 3 輪 2→3;★ v1.473.0 外島 12 種 3→4;★ v1.480.0 職能定位 4→5 */
 function islPetNewsAuto(){
   var n = 0;
   if(!ISL || !ISL.flags || (ISL.flags.newsPet1 | 0) >= ISL_PET_NEWS_V || !islPetCount() || _IS.coop) return;
@@ -29364,6 +29376,13 @@ window.islPetNewsOpen = function(){
   /* ★ v1.473.0 第 3 輪之二:外島 12 種專屬池上線,「即將推出」拿掉(ISL_PET_NEWS_V 3→4) */
   h += '<div class="pn-card c-sk"><div class="pn-ttl">🌊 NEW!外島夥伴也有天生的天賦和技能</div><div class="pn-txt">皇帝企鵝、雪鴞、北極狐、水豚、金剛鸚鵡、美洲豹、海鸚、象龜、信天翁、旗魚、海獺、大王具足蟲,<b>12 種外島夥伴</b>也各有 4 個專屬天賦 + 4 招專屬技能,每一隻隨機帶 2+2。<br>' +
     '• 冰天雪地島的夥伴有會「🧊 冰凍」敵人的招,金剛鸚鵡會「🥜 咬碎硬殼」讓敵人防禦變低。<br>• 已經有的外島夥伴也自動補上了,到夥伴卡看看!</div></div>';
+  /* ★ v1.480.0 職能定位第 1 輪(老師 2026-11-28 裁定):顯示主職能+副職能,影響一般戰鬥自動出招與被盯上機率;夜襲守衛戰不受影響 */
+  h += '<div class="pn-card c-sk"><div class="pn-ttl">🎖 NEW!夥伴的職能</div><div class="pn-txt">每一隻夥伴都有<b>主職能</b>,有時還有<b>副職能</b>(例如「⚔攻擊(兼🛡)」)。職能是看牠帶的天賦和技能算出來的——<b>換了技能,職能也會跟著變</b>!<br>' +
+    '• ⚔ 攻擊　🛡 坦克　💚 治療　🌀 控場　✨ 輔助　🔰 全能(各方面都很平均)<br>' +
+    '• 🤖 <b>自動模式</b>:🛡 坦克會優先用護盾、嘲諷、護體;💚 治療在隊友體力不到 60% 時優先補血;🌀 控場優先用暈眩、睡眠、減益的招。<br>' +
+    '• 🎯 <b>被盯上的機率</b>:🛡 坦克 +10%,💚 治療、✨ 輔助 −10%(跟個性疊加)。<br>' +
+    '• 🌙 夜襲守衛戰夥伴不用技能,所以不受職能影響。<br>' +
+    '• 到 🏡 夥伴小屋可以用「職能」篩選和排序;用 📘 訓練書換技能前,會先告訴你「換後職能」。</div></div>';
   h += '<div class="pn-foot"><button class="isl-btn ghost" data-act="close">知道了</button><button class="isl-btn gold" data-act="house">🏡 去夥伴小屋看看</button></div>';
   h += '</div></div>';
   islPanel(h, function(t){
@@ -29463,21 +29482,23 @@ function islPetNamePaint(){
     }
   });
 }
-var _islPhF = { s: 'gr', t: 'all' };
+var _islPhF = { s: 'gr', t: 'all', r: 'all' };   /* ★ v1.480.0 r = 職能篩選('all'/a/t/h/c/s/'allr' 全能) */
 /* 小屋重畫時保留捲動位置(捲動的可能是 .bd 或整個框,兩個都記) */
 function islPhScrollGet(){ var o = { a: 0, b: 0 }; try{ var bx = $('isl-modal').querySelector('.isl-phouse'), bd = bx && bx.querySelector('.bd'); if(bx) o.a = bx.scrollTop; if(bd) o.b = bd.scrollTop; }catch(_e){} return o; }
 function islPhScrollSet(o){ try{ var bx = $('isl-modal').querySelector('.isl-phouse'), bd = bx && bx.querySelector('.bd'); if(bx) bx.scrollTop = o.a; if(bd) bd.scrollTop = o.b; }catch(_e){} }
-var ISL_PH_SORTS = [{ k: 'gr', n: '品級' }, { k: 'lv', n: '等級' }, { k: 'sp', n: '種類' }, { k: 'new', n: '新加入' }];
+var ISL_PH_SORTS = [{ k: 'gr', n: '品級' }, { k: 'lv', n: '等級' }, { k: 'rl', n: '職能' }, { k: 'sp', n: '種類' }, { k: 'new', n: '新加入' }];   /* ★ v1.480.0 加「職能」 */
+function islPhRoleIdx(ro){ var o = ISL_ROLE.ORDER, a = ro.main === 'all' ? o.length : o.indexOf(ro.main), b = ro.sub ? o.indexOf(ro.sub) : -1; return a * 10 + (b + 1); }
 window.islPetHouseOpen = function(){
   _IS.pcBack = null;   /* ★ v1.476.0 */
-  var db = islDB(), F = _islPhF, h = '', L = [], i, r, p, inP, tk, outN = islPetOutCount(), on = !!ISL.petOutOn;
+  var db = islDB(), F = _islPhF, h = '', L = [], i, r, p, inP, tk, ro, outN = islPetOutCount(), on = !!ISL.petOutOn;
   playSfx('sfx-tap', 0.25);
-  for(i = 0; i < (ISL.pets || []).length; i++){ r = ISL.pets[i]; p = r && db.PETS[r.k]; if(!p) continue; if(F.t !== 'all' && p.type !== F.t) continue; L.push({ r: r, p: p, o: db.PET_ORDER.indexOf(r.k), n: parseInt(String(r.id).slice(1), 10) || 0 }); }
+  for(i = 0; i < (ISL.pets || []).length; i++){ r = ISL.pets[i]; p = r && db.PETS[r.k]; if(!p) continue; if(F.t !== 'all' && p.type !== F.t) continue; ro = islPetRole(r); if(F.r && F.r !== 'all' && !(F.r === 'allr' ? ro.main === 'all' : (ro.main === F.r || ro.sub === F.r))) continue; L.push({ r: r, p: p, ro: ro, o: db.PET_ORDER.indexOf(r.k), n: parseInt(String(r.id).slice(1), 10) || 0 }); }   /* ★ v1.480.0 職能篩選:主或副職能符合就列出 */
   L.sort(function(a, b){
     var v;
     if(F.s === 'gr') v = ISL_PI.GR_ORDER.indexOf(b.r.gr) - ISL_PI.GR_ORDER.indexOf(a.r.gr);
     else if(F.s === 'lv') v = (b.r.lv | 0) - (a.r.lv | 0);
     else if(F.s === 'new') v = b.n - a.n;
+    else if(F.s === 'rl') v = islPhRoleIdx(a.ro) - islPhRoleIdx(b.ro);   /* ★ v1.480.0 職能排序:攻→坦→療→控→輔→全能,同主職能再看副職能 */
     else v = a.o - b.o;
     return v || (a.o - b.o) || (a.n - b.n);
   });
@@ -29488,8 +29509,11 @@ window.islPetHouseOpen = function(){
     (on ? '<span class="cnt">🚶 出來逛 ' + outN + '/' + ISL_PI.OUT_MAX + '</span>' : '') + '</div>';
   h += '<p class="ph-hint">🧭 編組裡的夥伴(最多 3 位)會在營地走來走去,也會陪你坐椅子、躺床休息;勾了 🚶 的只在營地走動。同一種夥伴一隊只能帶 1 隻;營地同一種最多住 ' + ISL_PI.DUP.max + ' 隻(🍃 放生 會留下貝幣、食物,經驗也能傳給別的夥伴)。</p>';
   if((ISL.mfruit | 0) > 0) h += '<p class="ph-mf">' + ISL_PI.MF.e + ' 你有 <b>' + (ISL.mfruit | 0) + '</b> 顆' + ISL_PI.MF.n + ':按夥伴卡上的「' + ISL_PI.MF.e + ' 吃果實」,選一項能力讓成長率升 1 階(體/攻/防/速)。</p>';   /* ★ v1.469.0 */
-  h += '<div class="isl-dexbar"><div class="row"><span class="lb">類型</span><span class="chip' + (F.t === 'all' ? ' on' : '') + '" data-act="phT" data-v="all">全部</span>';
+  h += '<div class="isl-dexbar"><div class="row"><span class="lb">種類型</span><span class="chip' + (F.t === 'all' ? ' on' : '') + '" data-act="phT" data-v="all">全部</span>';
   for(tk in db.PET_TYPES){ if(db.PET_TYPES.hasOwnProperty(tk)) h += '<span class="chip ty-' + tk + (F.t === tk ? ' on' : '') + '" data-act="phT" data-v="' + tk + '">' + db.PET_TYPES[tk].e + ' ' + islEsc(db.PET_TYPES[tk].n) + '</span>'; }
+  h += '</div><div class="row"><span class="lb">職能</span><span class="chip' + (F.r === 'all' ? ' on' : '') + '" data-act="phR" data-v="all">全部</span>';   /* ★ v1.480.0 職能篩選(主或副職能符合就列出) */
+  for(i = 0; i < ISL_ROLE.ORDER.length; i++) h += '<span class="chip' + (F.r === ISL_ROLE.ORDER[i] ? ' on' : '') + '" data-act="phR" data-v="' + ISL_ROLE.ORDER[i] + '">' + ISL_ROLE.DIM[ISL_ROLE.ORDER[i]].e + ' ' + ISL_ROLE.DIM[ISL_ROLE.ORDER[i]].n + '</span>';
+  h += '<span class="chip' + (F.r === 'allr' ? ' on' : '') + '" data-act="phR" data-v="allr">' + ISL_ROLE.ALL.e + ' ' + ISL_ROLE.ALL.n + '</span>';
   h += '</div><div class="row"><span class="lb">排序</span>';
   for(i = 0; i < ISL_PH_SORTS.length; i++) h += '<span class="chip' + (F.s === ISL_PH_SORTS[i].k ? ' on' : '') + '" data-act="phS" data-v="' + ISL_PH_SORTS[i].k + '">' + ISL_PH_SORTS[i].n + '</span>';
   h += '</div></div>';
@@ -29502,6 +29526,7 @@ window.islPetHouseOpen = function(){
       '<div class="nm">' + islPetGrHtml(r) + ' ' + islEsc(islPetNm(r)) + '</div>' +
       '<div class="tp">' + p.e + ' ' + islEsc(p.n) + (db.PET_TYPES[p.type] ? '・' + db.PET_TYPES[p.type].e + islEsc(db.PET_TYPES[p.type].n) : '') + '</div>' +
       '<div class="tg">' + islPetGwHtml(r) + ' ' + islPetPsHtml(r) + '</div>' +
+      '<div class="tg">🎖 ' + islPetRoleHtml(r) + '</div>' +   /* ★ v1.480.0 職能(主+副) */
       '<div class="tg">' + islPetGwsHtml(r) + '</div>' +
       '<div class="lv">Lv' + r.lv + '　' + (db.PET_BOND[r.bond] ? db.PET_BOND[r.bond].e : '') + (islPetSulk(r) ? ' 💢' : '') + ' ' + islPetHpTag(r) + '</div>' +
       '<div class="acts">' +
@@ -29521,6 +29546,7 @@ window.islPetHouseOpen = function(){
     if(a === 'news'){ islPetNewsOpen(); return; }
     if(a === 'phT'){ F.t = v; islPetHouseOpen(); return; }
     if(a === 'phS'){ F.s = v; islPetHouseOpen(); return; }
+    if(a === 'phR'){ F.r = v; islPetHouseOpen(); return; }   /* ★ v1.480.0 */
     if(a === 'outoff' || a === 'outon'){ ISL.petOutOn = (a === 'outon'); done = true; toast(ISL.petOutOn ? '🚶 勾選的夥伴會出來營地逛逛(最多 ' + ISL_PI.OUT_MAX + ' 隻)' : '🏡 不在編組的夥伴都待在小屋裡'); }
     else if(a === 'phCard' && rr){ islPetCardOpen(rr.id, 'house'); return; }
     else if(a === 'phName' && rr){ islPetNameOpen(rr.id, function(){ islPetHouseOpen(); }); return; }
@@ -29687,7 +29713,7 @@ function islPartyPaint(){
     if(slot && slot.t === 'pet' && db.PETS[slot.k]){
       p = db.PETS[slot.k]; rec = islPartySlotRec(slot);
       var _rst = islPetDown(rec);   /* ★ v1.454.0 含血量 0 */   /* ★ v1.288.0 老師「當天受傷休息的寵物要用紅色字體標示,並新增使用復活道具的按鈕」 */
-      h += '<div class="isl-pslot' + (_rst ? ' rest' : '') + '"><div class="sh">隊友 ' + (i + 1) + (_rst ? '<span class="restag">（💤 休息中）</span>' : '') + '</div><button class="sb" data-act="pick" data-i="' + i + '"><span class="se">' + islPetPicHtml(slot.k, 44, null, _rst ? 'sleep' : 'idle') + '</span><span class="sn">' + (rec ? islPetGrHtml(rec) + ' ' : '') + islEsc(rec ? islPetNm(rec) : p.n) + '</span><span class="sx">' + (_rst ? '💤 今天受傷休息,明天才會自己好' : 'Lv' + (rec ? rec.lv : 1) + '　' + db.PET_TYPES[p.type].e + db.PET_TYPES[p.type].n + ' ' + islPetHpTag(rec) + islPetHunTag(rec)) + '</span></button>' + (_rst ? '<button class="isl-btn gold" data-act="revive" data-k="' + (rec ? rec.id : slot.k) + '">' + islPetReviveBtnText() + '</button>' : '') + '<button class="isl-btn ghost" data-act="clear" data-i="' + i + '">移出</button></div>';   /* ★ v1.295.0 老師看圖「探險編組選擇的寵物休息中,圖片要換成睡覺的」— islPetPicHtml 本來就支援 pose 參數(walk/sleep,沒圖會自動退回 idle,見 v1.212.0 說明),休息中(_rst)的隊友卡改傳 'sleep' 姿態,不必新寫任何顯示邏輯 */
+      h += '<div class="isl-pslot' + (_rst ? ' rest' : '') + '"><div class="sh">隊友 ' + (i + 1) + (_rst ? '<span class="restag">（💤 休息中）</span>' : '') + '</div><button class="sb" data-act="pick" data-i="' + i + '"><span class="se">' + islPetPicHtml(slot.k, 44, null, _rst ? 'sleep' : 'idle') + '</span><span class="sn">' + (rec ? islPetGrHtml(rec) + ' ' : '') + islEsc(rec ? islPetNm(rec) : p.n) + '</span><span class="sx">' + (_rst ? '💤 今天受傷休息,明天才會自己好' : 'Lv' + (rec ? rec.lv : 1) + '　' + (rec ? '🎖' + islPetRoleTxt(islPetRole(rec)) : db.PET_TYPES[p.type].e + db.PET_TYPES[p.type].n) + ' ' + islPetHpTag(rec) + islPetHunTag(rec)) + '</span></button>' + (_rst ? '<button class="isl-btn gold" data-act="revive" data-k="' + (rec ? rec.id : slot.k) + '">' + islPetReviveBtnText() + '</button>' : '') + '<button class="isl-btn ghost" data-act="clear" data-i="' + i + '">移出</button></div>';   /* ★ v1.295.0 老師看圖「探險編組選擇的寵物休息中,圖片要換成睡覺的」— islPetPicHtml 本來就支援 pose 參數(walk/sleep,沒圖會自動退回 idle,見 v1.212.0 說明),休息中(_rst)的隊友卡改傳 'sleep' 姿態,不必新寫任何顯示邏輯 */
     } else if(slot && slot.t === 'friend'){
       f = ISL.friendCache[slot.uid];
       var _np = islFriendNpcActive(slot.uid);
@@ -37372,7 +37398,7 @@ function islPxBookCan(rec){
   return n > 0;
 }
 function islPxBookShown(){ var i, L = (ISL && ISL.pets) || []; for(i = 0; i < L.length; i++){ if(islPxBookCan(L[i])) return true; } return false; }
-function islPxSkCard(k, tag){ var c = ISL_PX.S[k]; return c ? '<div class="isl-pxbk-c"><b>' + c.e + ' ' + islEsc(c.n) + '</b>' + (tag ? '<i>' + tag + '</i>' : '') + '<span>冷卻 ' + c.cd + ' 回合・' + islEsc(c.d) + '</span></div>' : ''; }
+function islPxSkCard(k, tag, extra){ var c = ISL_PX.S[k]; return c ? '<div class="isl-pxbk-c"><b>' + c.e + ' ' + islEsc(c.n) + '</b>' + (tag ? '<i>' + tag + '</i>' : '') + '<span>冷卻 ' + c.cd + ' 回合・' + islEsc(c.d) + '</span>' + (extra || '') + '</div>' : ''; }   /* ★ v1.480.0 extra:訓練書「換後職能」預覽列 */
 window.islPxBookOpen = function(pid, after){
   var rec = islPetSave(pid), P, i, h, btns = [], nm;
   var back = function(){ if(after) after(); };
@@ -37393,7 +37419,10 @@ window.islPxBookLearn = function(pid, old, after){
   h = '<h3>' + ISL_PX.BOOK.e + ' 換技能(2/2):要學哪一招?</h3><p>忘掉「' + islEsc(ISL_PX.S[old].n) + '」,改學下面其中一招:</p><div class="isl-pxbk">';
   for(i = 0; i < P.s.length; i++){
     if(rec.sk.indexOf(P.s[i]) >= 0) continue;
-    h += islPxSkCard(P.s[i], '還沒學');
+    var _nsk = rec.sk.slice(), _rb = islPetRole(rec), _ra, _rt;
+    _nsk[_nsk.indexOf(old)] = P.s[i]; _ra = islPetRole(rec, null, _nsk);
+    _rt = islPetRoleTxt(_rb) === islPetRoleTxt(_ra) ? islPetRoleTxt(_rb) + '(不變)' : islPetRoleTxt(_rb) + ' → ' + islPetRoleTxt(_ra);
+    h += islPxSkCard(P.s[i], '還沒學', '<span style="display:block;margin-top:4px;font-weight:900;color:#ffe08a">🎖 換後職能:' + _rt + '</span>');   /* ★ v1.480.0 訓練書確認預覽(老師「換後職能:A → B」) */
     btns.push({ t: '學會「' + ISL_PX.S[P.s[i]].n + '」', cls: 'gold', cb: (function(nw){ return function(){
       var r2 = islPetSave(pid), ix;
       if(!r2 || (ISL.pxBook | 0) <= 0) return;
@@ -37411,6 +37440,134 @@ window.islPxBookLearn = function(pid, old, after){
 };
 /* 技能定義(新技能先找 ISL_PX.S,再找 db.PET_CMDS) */
 function islPxCmd(key){ var db = islDB(); return ISL_PX.S[key] || (db && db.PET_CMDS && db.PET_CMDS[key]) || null; }
+/* ══ ★ v1.480.0 🎖 寵物職能定位(第 1 輪)——職能由「原專屬指令+原天賦(×2)+這一隻天生帶的 2 天賦、2 技能(×1)」執行時算出,不存檔 ══
+   老師 2026-11-28 裁定:①顯示「主職能+副職能」②職能影響一般戰鬥的自動輪招優先序與被盯上機率③夜襲守衛戰寵物不用技能,不受職能影響(islDef* 是獨立小遊戲,不讀 islPetRole)。
+   六種職能:⚔攻擊 🛡坦克 💚治療 🌀控場 ✨輔助 🔰全能。分數看「效果鍵」(查表 ISL_ROLE_FX / ISL_ROLE_TAL),查不到的鍵算 0。
+   ⚠ 職能只是「顯示+自動輪招排序+被盯上機率微調」,不改任何傷害/治療數值;站位 row 仍照種類原本的 type(不隨職能搬家)。 */
+var ISL_ROLE = {
+  DIM: { a: { e: '⚔', n: '攻擊' }, t: { e: '🛡', n: '坦克' }, h: { e: '💚', n: '治療' }, c: { e: '🌀', n: '控場' }, s: { e: '✨', n: '輔助' } },
+  ALL: { e: '🔰', n: '全能' },
+  ORDER: ['a', 't', 'h', 'c', 's'],
+  SUB_MIN: 0.6,     /* 副職能 = 第二高且 ≥ 主職能 60% */
+  ALL_GAP: 0.10,    /* 前兩名差 < 10% 且三項以上接近 ⇒ 全能 */
+  ALL_NEAR: 0.75,   /* 「接近」= ≥ 最高分 75% */
+  AGGRO: { t: 10, h: -10, s: -10 },   /* 被盯上機率 %(主職能;與個性疊加相乘) */
+  HEAL_LOW: 0.6,    /* 💚治療型:有隊友體力低於這個比例,自動出招優先補血 */
+  ITEM_MIN: 0.6,    /* 每個天賦/技能的總分夾在 [MIN, MAX] 再按各職能比例分配(避免一個超強原招/小數值新天賦把另一邊壓扁,新抽的才有機會改變職能) */
+  ITEM_MAX: 1.5
+};
+/* 招式 fx:每個鍵對應 [職能, 除數];分數 = 值 / 除數。mul/hits/all/dur 另外處理。 */
+var ISL_ROLE_FX = {
+  critAdd: ['a', 30], execP: ['a', 20], armBrkP: ['a', 50], chainMul: ['a', 2], pierceMul: ['a', 2.4], sure: ['a', 3],
+  guard: ['t', 0.5], cut: ['t', 40], shield: ['t', 10], defUpP: ['t', 25], taunt: ['t', 0.5], invuln: ['t', 0.34], absorb: ['t', 0.67], shareP: ['t', 30],
+  heal: ['h', 25], healAll: ['h', 15], healRevive: ['h', 40], revive: ['h', 40], regenAll: ['h', 20], cure: ['h', 2], cureAll: ['h', 1], cleanseAll: ['h', 1], healAmpP: ['h', 50], fishHealP: ['h', 16], cleanseHealP: ['h', 20],
+  stunP: ['c', 40], sleepP: ['c', 30], spdDownP: ['c', 25], hitDownP: ['c', 25], dmgDownP: ['c', 30], skillSeal: ['c', 0.5], poisonP: ['c', 100], confuseP: ['c', 40], freezeP: ['c', 40],
+  spdUpP: ['s', 20], atkUpP: ['s', 15], immuneAll: ['s', 0.67], mimic: ['s', 1], chainUpP: ['s', 40], cleanseAtkP: ['s', 20], first: ['s', 3]
+};
+/* 天賦 tal:同上 */
+var ISL_ROLE_TAL = {
+  critP: ['a', 10], lowHpAtkP: ['a', 25], firstDmgP: ['a', 25], pierceP: ['a', 15], atkStackCapP: ['a', 15], spdDmgCap: ['a', 30], splashP: ['a', 30], soloCritP: ['a', 50], basicHits: ['a', 1], extraEvery: ['a', 3], poisonOnHitDmgP: ['a', 4], markP: ['a', 40],
+  cutP: ['t', 30], thornP: ['t', 25], selfRegenP: ['t', 10], shieldP: ['t', 15], coverAddP: ['t', 12], lostHpCutCap: ['t', 30], aggroHpP: ['t', 0.5], selfDodgeP: ['t', 20], darkDodgeP: ['t', 12], dodgeCrit: ['t', 2], hitCapP: ['t', 15], huddleP: ['t', 3], auraDmgDownP: ['t', 8],
+  healOutP: ['h', 10], tickHealAllP: ['h', 3], healLowP: ['h', 10], rainHealP: ['h', 100], lowHealP: ['h', 20], atkHealLowP: ['h', 15], downHealAllP: ['h', 60], atkHealAllP: ['h', 10], handRevive: ['h', 30], tickCure1: ['h', 2], fishMax: ['h', 10],
+  stunAddP: ['c', 10], blindOnHitP: ['c', 30], hitRallyP: ['c', 40], poisonOnHitP: ['c', 50], markOnHit: ['c', 2],
+  darkAtkP: ['s', 15], aggroCutP: ['s', 40], cdCutOnHit: ['s', 1], atkStackP: ['s', 8], fieldTempP: ['s', 60], fieldWaterP: ['s', 60], fieldGustP: ['s', 100], fieldOxyP: ['s', 60], poisonImm: ['s', 2], ailShort: ['s', 2]
+};
+function islRoleZero(){ return { a: 0, t: 0, h: 0, c: 0, s: 0 }; }
+/* 一個招式 fx 的分數(加到 sc,乘 w) */
+function islRoleAddFx(sc, fx, w){
+  var k, v, m, e, d;
+  if(!fx) return;
+  d = fx.dur > 0 ? fx.dur : 1;
+  if(typeof fx.mul === 'number'){ sc.a += fx.mul * (fx.hits > 0 ? fx.hits : 1) * (fx.all ? 1.5 : 1) * w; }
+  else if(fx.hits > 0){ sc.a += fx.hits * w * 0.5; }
+  for(k in fx){
+    if(!fx.hasOwnProperty(k) || !ISL_ROLE_FX.hasOwnProperty(k)) continue;
+    e = ISL_ROLE_FX[k]; v = fx[k]; if(typeof v !== 'number') continue;
+    m = v / e[1];
+    if(k === 'regenAll' || k === 'defUpP' || k === 'spdUpP' || k === 'atkUpP') m *= d / 2;   /* 持續型:2 回合為基準 */
+    if(k === 'stunP') m *= (fx.stun > 0 ? fx.stun : 1);
+    if(k === 'sleepP') m *= (fx.sleepDur > 0 ? fx.sleepDur : 1);
+    if(k === 'freezeP') m *= (fx.freezeDur > 0 ? fx.freezeDur : 1);
+    if(k === 'confuseP') m *= (fx.confuseDur > 0 ? fx.confuseDur : 1);
+    if((k === 'stunP' || k === 'sleepP' || k === 'freezeP' || k === 'confuseP' || k === 'hitDownP' || k === 'spdDownP' || k === 'dmgDownP') && fx.all) m *= 1.3;
+    if(k === 'poisonP') m *= (fx.poisonDmgP || 5) * (fx.poisonDur || 2) / 16;   /* 中毒:算在控場(持續傷害+削弱) */
+    sc[e[0]] += m * w;
+  }
+}
+function islRoleAddTal(sc, tal, w){
+  var k, e, v;
+  if(!tal) return;
+  for(k in tal){
+    if(!tal.hasOwnProperty(k) || !ISL_ROLE_TAL.hasOwnProperty(k)) continue;
+    v = tal[k]; if(typeof v !== 'number') continue;
+    e = ISL_ROLE_TAL[k];
+    sc[e[0]] += v / e[1] * w;
+  }
+}
+/* 一個天賦/技能(fx 或 tal 擇一)的分數 → 夾在 [ITEM_MIN, ITEM_MAX] 後按職能比例分配,乘權重 w 加進 sc */
+function islRoleItem(sc, fx, tal, w){
+  var v = islRoleZero(), t = 0, i, k, mag;
+  if(fx) islRoleAddFx(v, fx, 1); if(tal) islRoleAddTal(v, tal, 1);
+  for(i = 0; i < ISL_ROLE.ORDER.length; i++) t += v[ISL_ROLE.ORDER[i]];
+  if(t <= 0) return;
+  mag = Math.max(ISL_ROLE.ITEM_MIN, Math.min(ISL_ROLE.ITEM_MAX, t));
+  for(i = 0; i < ISL_ROLE.ORDER.length; i++){ k = ISL_ROLE.ORDER[i]; sc[k] += v[k] / t * mag * w; }
+}
+/* 分數 → 職能。回傳 { main:'a'|…|'all', sub:'t'|…|'' , sc, top:主分數 } */
+function islRoleFromScore(sc, fallback){
+  var L = [], i, a, b, near = 0;
+  for(i = 0; i < ISL_ROLE.ORDER.length; i++) L.push({ k: ISL_ROLE.ORDER[i], v: sc[ISL_ROLE.ORDER[i]] || 0, i: i });
+  L.sort(function(x, y){ return (y.v - x.v) || (x.i - y.i); });
+  a = L[0]; b = L[1];
+  if(a.v <= 0) return { main: fallback || 'a', sub: '', sc: sc, top: 0 };
+  for(i = 0; i < L.length; i++){ if(L[i].v >= a.v * ISL_ROLE.ALL_NEAR) near++; }
+  if((a.v - b.v) / a.v < ISL_ROLE.ALL_GAP && near >= 3) return { main: 'all', sub: '', sc: sc, top: a.v };
+  return { main: a.k, sub: (b.v >= a.v * ISL_ROLE.SUB_MIN ? b.k : ''), sc: sc, top: a.v };
+}
+/* 核心:rec = 寵物個體存檔({k,tl,sk});傳 skOverride/tlOverride 可預覽「換技能後」的職能(訓練書用)。 */
+function islPetRole(rec, tlOv, skOv){
+  var db = islDB(), pd, sc, i, c, T, S;
+  if(!rec || !db || !db.PETS || !db.PETS[rec.k]) return { main: 'a', sub: '', sc: islRoleZero(), top: 0 };
+  pd = db.PETS[rec.k];
+  sc = islRoleZero();
+  c = islPxCmd(pd.cmd); if(c && c.fx) islRoleItem(sc, c.fx, null, 2);   /* 原專屬指令 ×2 */
+  islRoleItem(sc, null, pd.tal, 2);                                        /* 原天賦 ×2 */
+  T = tlOv || ((rec.tl instanceof Array) ? rec.tl : []); S = skOv || ((rec.sk instanceof Array) ? rec.sk : []);
+  for(i = 0; i < T.length; i++){ if(ISL_PX.T[T[i]]) islRoleItem(sc, null, ISL_PX.T[T[i]].tal, 1); }   /* 新抽 2 天賦 ×1 */
+  for(i = 0; i < S.length; i++){ c = ISL_PX.S[S[i]]; if(c && c.fx) islRoleItem(sc, c.fx, null, 1); }  /* 新抽 2 技能 ×1 */
+  return islRoleFromScore(sc, pd.type === 'tank' ? 't' : pd.type === 'heal' ? 'h' : pd.type === 'ctrl' ? 'c' : 'a');
+}
+/* 顯示用:職能文字/徽章。「⚔攻擊(兼🛡)」「🔰全能」 */
+function islPetRoleTxt(r){
+  var D = ISL_ROLE.DIM;
+  if(!r) return '';
+  if(r.main === 'all') return ISL_ROLE.ALL.e + ISL_ROLE.ALL.n;
+  return D[r.main].e + D[r.main].n + (r.sub ? '(兼' + D[r.sub].e + ')' : '');
+}
+function islPetRoleHtml(rec){ var r = islPetRole(rec); return '<span class="isl-prole r-' + r.main + '">' + islPetRoleTxt(r) + '</span>'; }
+/* 一句話說明(夥伴卡用) */
+function islPetRoleDesc(r){
+  var m = r.main, t = { a: '以輸出傷害為主', t: '以承受傷害、保護隊友為主', h: '以補血、復活、解除狀態為主', c: '以暈眩、睡眠、減益拖住敵人為主', s: '以加速、加攻等增益為主', all: '各方面都很平均,哪裡缺人就補哪裡' }[m];
+  var mine = (m === 't' ? '一般戰鬥自動出招會優先用護盾、嘲諷、護體的招,也比較容易被魔物盯上(+10%)。' : m === 'h' ? '一般戰鬥中隊友體力不到 60% 時,自動出招會優先補血,比較不會被魔物盯上(−10%)。' : m === 'c' ? '一般戰鬥自動出招會優先用暈眩、睡眠、減益的招。' : m === 's' ? '比較不會被魔物盯上(−10%)。' : '');
+  return t + '。' + mine;
+}
+/* 🎖 戰鬥用:這一招算不算「符合這隻的職能」(自動輪招優先序) */
+function islRoleCmdFits(role, c){
+  var f = c && c.fx, m = role && role.main;
+  if(!f) return false;
+  if(m === 't') return !!(f.shield || f.taunt || f.guard || f.defUpP || f.absorb || f.shareP);
+  if(m === 'c') return !!(f.stunP || f.sleepP || f.freezeP || f.confuseP || f.skillSeal || f.spdDownP || f.hitDownP || f.dmgDownP);
+  if(m === 'h') return islBtIsHealCmd(c);
+  return false;
+}
+/* 隊上(含主角)有人體力低於比例,或有隊友倒下 */
+function islRoleTeamHurt(){
+  var B = _islBt, i, a;
+  if(!B) return false;
+  if(ISL.hp > 0 && ISL.hpMax > 0 && ISL.hp / ISL.hpMax < ISL_ROLE.HEAL_LOW) return true;
+  for(i = 0; i < B.allies.length; i++){ a = B.allies[i]; if(a.down) return true; if(a.hpMax > 0 && a.hp / a.hpMax < ISL_ROLE.HEAL_LOW) return true; }
+  return false;
+}
 /* 一次性:新技能登記進 db.PET_CMDS;星盤馴獸星域改效果(設計書第 11 節,只改效果、不動節點) */
 function islPxInit(db){
   var k, i, n, P;
@@ -37550,6 +37707,7 @@ function islBtMakeAllies(){
       out.push({ side: 'a' + out.length, t: 'pet', k: k, pid: rec.id, ps: rec.ps, gr: rec.gr, n: islPetNm(rec),   /* ★ v1.468.0 個體:pid/個性/品級/名字 */ e: pd.e, type: pd.type,
         row: db.PET_TYPES[pd.type] ? db.PET_TYPES[pd.type].row : 2,
         lv: rec.lv, hpMax: ps.hp, hp: islPetHpNow(rec, ps.hp),   /* ★ v1.454.0 老師「夥伴有跨場的血量,每場戰鬥都繼承上一場」 */ atk: ps.atk, def: ps.def, spd: ps.spd,
+        role: islPetRole(rec),   /* ★ v1.480.0 🎖 職能(開戰時算一次;自動輪招 islBtCmdPick、被盯上機率 islBtMonPickTarget 讀) */
         cmd: pd.cmd, cd: 0, xcmds: islPxSkOf(rec), xcd: {}, cdCut: ps.cdCut, shield: 0, stun: 0, down: false, rec: rec, gauge: Math.min(100, Math.max(0, islSkEff('petGaugeStart'))) });   /* ★ v1.317.0 馴獸專精 petGaugeStart:開戰計量先有 N% */   /* ★ v1.258.0 gauge=技能計量(0~100,每個角色行動 +25) */
     } else if(slot.t === 'friend'){
       /* ★ 老師裁定 3:借用版好友角色不可更改任何屬性或裝備,也不會升級。
@@ -38678,7 +38836,7 @@ function islBtItemUse(k, side){
 /* 一列 HP 條(隊友與魔物共用;主角那一列在 islBtOpen 直接寫,沿用既有 id 不動) */
 function islBtHpBoxHtml(u){
   var db = islDB(), tag = '', isM = (u.side || '').charAt(0) === 'm';
-  if(!isM){ tag = (u.t === 'friend') ? '<span class="tag">借用・不升級</span>' : '<span class="tag">' + (db.PET_TYPES[u.type] ? db.PET_TYPES[u.type].e + db.PET_TYPES[u.type].n : '') + '</span>'; }
+  if(!isM){ tag = (u.t === 'friend') ? '<span class="tag">借用・不升級</span>' : '<span class="tag">' + (u.role ? islPetRoleTxt(u.role) : (db.PET_TYPES[u.type] ? db.PET_TYPES[u.type].e + db.PET_TYPES[u.type].n : '')) + '</span>'; }   /* ★ v1.480.0 戰鬥血條旁的小標籤改顯示職能(主+副);沒有職能的(舊路徑)照舊顯示種類型 */
   else { var _mt = db.MON_TAGS ? db.MON_TAGS[islMonTag(u)] : null; tag = (_mt ? '<span class="tag mt" onclick="event.stopPropagation();islBtTagTap(\'' + islMonTag(u) + '\')">' + _mt.e + _mt.n + '</span>' : '') + '<span class="rel"></span>'; }   /* ★ v1.228.0 魔物屬性+剋制箭頭 */
   return '<div class="bt-hpbox ' + (isM ? 'm' : '') + '" id="isl-bt-box-' + u.side + '" data-s="' + u.side + '">' +
     '<div class="nm">' + u.e + ' <span class="mn" id="isl-bt-mn-' + u.side + '">' + islEsc(u.n) + '</span> <small>Lv' + u.lv + '</small> ' + tag + '</div>' +   /* ★ v1.261.0 名字包 span,之後補代號只改這一格 */
@@ -38722,7 +38880,7 @@ function islBtUnitPreview(side){
       if(u.t === 'pet'){
         p = db.PETS[u.k]; cmd = db.PET_CMDS[p.cmd];
         var _g = Math.min(100, u.gauge || 0), _rdy = islBtGaugeReady(u);   /* ★ v1.258.0 技能計量與可施展判定 */
-        h = '<div style="text-align:center">' + islPetPicHtml(u.k, 96) + '</div><h3>' + u.e + ' ' + islEsc(u.n) + ' Lv' + u.lv + '</h3><p>' + (db.PET_TYPES[p.type] ? db.PET_TYPES[p.type].e + db.PET_TYPES[p.type].n : '') + '</p><p>❤️ ' + Math.max(0, u.hp) + '/' + u.hpMax + '　⚔ ' + u.atk + '　🛡 ' + u.def + '　💨 ' + islNum1(u.spd) + (u.shield > 0 ? '　🛡+' + u.shield : '') + (u.down ? '　💤 倒下' : '') + '</p>' + islBtCmdListHtml(u) +
+        h = '<div style="text-align:center">' + islPetPicHtml(u.k, 96) + '</div><h3>' + u.e + ' ' + islEsc(u.n) + ' Lv' + u.lv + '</h3><p>' + (db.PET_TYPES[p.type] ? db.PET_TYPES[p.type].e + db.PET_TYPES[p.type].n : '') + (u.role ? '　🎖 職能:' + islPetRoleTxt(u.role) : '') + '</p><p>❤️ ' + Math.max(0, u.hp) + '/' + u.hpMax + '　⚔ ' + u.atk + '　🛡 ' + u.def + '　💨 ' + islNum1(u.spd) + (u.shield > 0 ? '　🛡+' + u.shield : '') + (u.down ? '　💤 倒下' : '') + '</p>' + islBtCmdListHtml(u) +
             '<p>⚡ 技能計量 <b style="color:' + (_rdy ? '#ff6a4d' : '#ffd166') + '">' + _g + '%</b>' + (!islBtCmdAnyReady(u) ? '　⏳ 3 招都在冷卻中' : (_rdy ? '　🔥 可以施展!選一招' : '　(每個角色行動 +25%)')) + '</p><p>天賦:' + islEsc(p.talent) + islPxTalLines(u.rec, ' ') + '</p>';
         if(_rdy && !B.over){   /* ★ v1.258.0 手動插隊施放:計量滿+冷卻好才給「施展!」鈕,不論自動或手動模式都能插隊;★ v1.472.0 每一招冷卻好的各一顆鈕(3 招選單) */
           var _btns = [], _rk = islBtCmdReadyKeys(u), _ri, _rc;
@@ -39741,7 +39899,7 @@ function islBtMonPickTarget(){
   if(ISL.hp > 0){ cands.push(B.hero); w.push(2); }
   for(i = 0; i < B.allies.length; i++){
     u = B.allies[i]; if(u.down) continue;
-    cands.push(u); w.push((u.row <= db.PARTY.ROW.hero ? 3 : (u.row >= db.PARTY.ROW.heal ? 1 : 2)) * Math.max(0, 1 - Math.min(95, islPetTal(u, 'aggroCutP')) / 100) * (u.t === 'pet' && u.ps && ISL_PI.PS[u.ps] ? 1 + (ISL_PI.PS[u.ps].aggro || 0) / 100 : 1));   /* ★ v1.468.0 個性:膽小 −20%/勇敢 +15% 被盯上 */   /* ★ v1.331.0 🐙 藍環章魚 aggroCutP:被點名的權重 ×(1−N%),與黑熊 aggroHpP 同一套權重系統的反方向 */
+    cands.push(u); w.push((u.row <= db.PARTY.ROW.hero ? 3 : (u.row >= db.PARTY.ROW.heal ? 1 : 2)) * Math.max(0, 1 - Math.min(95, islPetTal(u, 'aggroCutP')) / 100) * (u.t === 'pet' && u.ps && ISL_PI.PS[u.ps] ? 1 + (ISL_PI.PS[u.ps].aggro || 0) / 100 : 1) * (u.t === 'pet' && u.role && ISL_ROLE.AGGRO[u.role.main] ? 1 + ISL_ROLE.AGGRO[u.role.main] / 100 : 1));   /* ★ v1.468.0 個性:膽小 −20%/勇敢 +15% 被盯上 */   /* ★ v1.480.0 🎖 職能:🛡坦克 +10%、💚治療/✨輔助 −10%(與個性相乘疊加;⚔攻擊/🌀控場/🔰全能不變) */   /* ★ v1.331.0 🐙 藍環章魚 aggroCutP:被點名的權重 ×(1−N%),與黑熊 aggroHpP 同一套權重系統的反方向 */
     if(u.type === 'tank' && !islPetTal(u, 'aggroHpP')) tank = u;   /* ★ v1.241.0 仇恨型坦克不再另外走代受(見上方說明) */
   }
   if(!cands.length) return null;
@@ -39804,13 +39962,23 @@ function islBtCmdUse(u, k){
 /* 自動施放挑哪一招:冷卻好、這時候值得放(治療招有人需要/象龜無敵值得)的裡面,挑「最久沒放」的(輪流用,招牌的專屬指令不會被冷落);都沒放過時原本那招優先。
    ⚠ 第一版挑「原始冷卻最長」測出來石虎的二段攻擊(冷卻 2)幾乎永遠輪不到,改成輪流。 */
 function islBtCmdPick(u){
-  var L = islBtCmdReadyKeys(u), i, c, best = null, bl = 1e9, t;
+  var L = islBtCmdReadyKeys(u), i, c, best = null, bl = 1e9, t, ok = [], fit = [], pool, hurt;
   for(i = 0; i < L.length; i++){
     c = islPxCmd(L[i]); if(!c || !c.fx) continue;
     if(islBtIsHealCmd(c) && !islBtHealNeeded(c)) continue;
     if(c.fx.invuln && islSeaOn() && !islSeaInvulnWorth()) continue;
-    t = (u.xlast && typeof u.xlast[L[i]] === 'number') ? u.xlast[L[i]] : -1 - (L[i] === u.cmd ? 1 : 0);
-    if(t < bl){ bl = t; best = L[i]; }
+    ok.push(L[i]);
+  }
+  /* ★ v1.480.0 🎖 職能影響自動輪招(老師 2026-11-28):💚治療型在隊友體力 <60%(或有人倒下)時優先補血招;🛡坦克型優先護盾/嘲諷/護體招;🌀控場型優先控制招。
+     只改「挑哪一招」的優先序,冷卻/計量/公共冷卻/治療值不值得放的判斷全部照舊;沒有符合職能的招(或治療型沒人受傷)就維持原本輪流。夜襲守衛戰是獨立流程,不走這裡。 */
+  if(u.role && ok.length > 1 && (u.role.main === 't' || u.role.main === 'c' || u.role.main === 'h')){
+    hurt = (u.role.main !== 'h') || islRoleTeamHurt();
+    if(hurt){ for(i = 0; i < ok.length; i++){ if(islRoleCmdFits(u.role, islPxCmd(ok[i]))) fit.push(ok[i]); } }
+  }
+  pool = fit.length ? fit : ok;
+  for(i = 0; i < pool.length; i++){
+    t = (u.xlast && typeof u.xlast[pool[i]] === 'number') ? u.xlast[pool[i]] : -1 - (pool[i] === u.cmd ? 1 : 0);
+    if(t < bl){ bl = t; best = pool[i]; }
   }
   return best;
 }   /* ★ v1.385.0 好友隊友(沒有 cmd、有 fsk)也有計量:還有沒用過的技能就算可施展 */
