@@ -76063,7 +76063,7 @@ window._openPetRetrainBookPicker = function(){
 // ══════════════════════════════════════════════════════════════════
 // ★ v4.3.0 — 撫摸改「搓揉」互動 + 首入教學 + 首次餵食提示(老師需求 1/2)
 // ══════════════════════════════════════════════════════════════════
-window._PH_STROKE_GOAL_MS = 3000;   // 需累積 3 秒有效搓揉才發獎
+window._PH_STROKE_GOAL_MS = 2500;   // ★ v5.468.0 3000→2500:說明文字仍寫「搓滿 3 秒」,預留 0.5 秒給起手/轉向/手指小停頓,確保手機真的搓 3 秒內一定滿(原本 3000 加上起手延遲會變 3.03~3.08 秒)
 window._phStroke = null;
 window._phEvPoint = function(ev){
   var t = (ev.touches && ev.touches[0]) || (ev.changedTouches && ev.changedTouches[0]) || ev;
@@ -76124,7 +76124,7 @@ window._petHouseStrokeStart = function(ev, pn, slotIdx, wrap){
     if(ev && ev.preventDefault) ev.preventDefault();
     var p = window._phEvPoint(ev); var now = Date.now();
     window._phStroke = { pn:pn, slotIdx:slotIdx, wrap:wrap, moved:false, dist:0, accMs:0,
-      lastX:p.x, lastY:p.y, lastT:now, lastHeartT:0, lastSfxT:0, rewarded:false };
+      lastX:p.x, lastY:p.y, lastT:now, lastHeartT:0, lastSfxT:0, rewarded:false, smp:[] };
     // ★ v4.9.0 老師需求③ — 撫摸開始:寵物圖放大+輕輕上下搖晃(先移除跳動/顫抖 class 避免動畫互相覆蓋)
     try{ if(wrap){ wrap.classList.remove('_ph-bouncing'); wrap.classList.remove('_ph-shaking'); wrap.classList.add('_ph-stroking'); } }catch(_){}
     document.addEventListener('mousemove', window._petHouseStrokeMove, { passive:false });
@@ -76143,12 +76143,22 @@ window._petHouseStrokeMove = function(ev){
     var step = Math.sqrt(dx*dx + dy*dy);
     var now = Date.now(); var dt = now - s.lastT;
     s.lastX = p.x; s.lastY = p.y; s.lastT = now;
-    // 只有「真的在移動」(每幀位移夠大、時間夠短)才算有效搓揉
-    if(step >= 6 && dt > 0 && dt <= 260){
-      s.moved = true; s.dist += step; s.accMs += dt;
-      if(now - s.lastHeartT > 85){ s.lastHeartT = now; window._petHouseStrokeHeart(p.x, p.y); }
-      if(now - s.lastSfxT > 260){ s.lastSfxT = now; try{ playSfx('sfx-gentle', 0.26); }catch(_){} }
-      if(s.accMs >= window._PH_STROKE_GOAL_MS){ window._petHouseStrokeReward(); }
+    // ★ v5.468.0 手機觸控修正(老師:手機版撫摸實際要超過 3 秒才滿 100%)
+    //   舊判斷「單筆 touchmove 位移 ≥ 6px」把慢速搓揉、120Hz 手機(每筆只有 2~4px)、來回轉向處全部丟掉,
+    //   實測一般搓法 10 秒以上才滿。改看「最近 160ms 的累計移動路徑」(與每秒觸控取樣次數無關),
+    //   只要手指有在動(≥10px/160ms ≈ 62px/s)就把這一筆的實際經過時間算進進度;
+    //   手指停住(沒有事件)或只是點一下(路徑不足)仍不計時 → 「戳戳會生氣」規則不變。
+    if(dt > 0 && dt <= 260){
+      s.dist += step;
+      var sm = s.smp; sm.push({ t:now, d:step });
+      while(sm.length && now - sm[0].t > 160){ sm.shift(); }
+      var path = 0; for(var si = 0; si < sm.length; si++){ path += sm[si].d; }
+      if(path >= 10){
+        s.moved = true; s.accMs += dt;
+        if(now - s.lastHeartT > 85){ s.lastHeartT = now; window._petHouseStrokeHeart(p.x, p.y); }
+        if(now - s.lastSfxT > 260){ s.lastSfxT = now; try{ playSfx('sfx-gentle', 0.26); }catch(_){} }
+        if(s.accMs >= window._PH_STROKE_GOAL_MS){ window._petHouseStrokeReward(); }
+      }
     }
   }catch(_){}
 };
