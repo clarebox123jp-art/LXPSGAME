@@ -12367,7 +12367,7 @@ window._lxpsAdvPrepGate = function(stage, next){
         try{
           if(!h || !h.name) return;
           var e = _db[h.name];
-          if(e && e.url) items.push({ u:e.url, t:'media' });
+          if(e && e.url) items.push({ u:((typeof window._bvUrlFor === 'function' && window._bvUrlFor(h.name)) || e.url), t:'media' });   /* ★ v5.472.0 依皮膚 */
           // 技能影片（如魔劍姬「神魔滅殺」）一併納入
           var sv = (window._SKILL_VIDEO_DB || {})[h.name];
           if(sv && sv.url) items.push({ u:sv.url, t:'media' });

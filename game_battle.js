@@ -5458,7 +5458,7 @@ function _onPortraitSwitcherClick(heroName, portraitId){
 //   只要在 _BURST_VIDEO_DB 加一筆,戰鬥爆發與圖鑑欣賞同時生效,無需改此邏輯)。
 function _codexVideoUrlFor(name){
   try{
-    if(window._BURST_VIDEO_DB && window._BURST_VIDEO_DB[name] && window._BURST_VIDEO_DB[name].url) return window._BURST_VIDEO_DB[name].url;
+    if(window._BURST_VIDEO_DB && window._BURST_VIDEO_DB[name] && window._BURST_VIDEO_DB[name].url) return (typeof window._bvUrlFor === 'function' ? window._bvUrlFor(name) : null) || window._BURST_VIDEO_DB[name].url;   /* ★ v5.472.0 依皮膚選原版/異性版 */
     if(window._SKILL_VIDEO_DB && window._SKILL_VIDEO_DB[name] && window._SKILL_VIDEO_DB[name].url) return window._SKILL_VIDEO_DB[name].url;
   }catch(_){}
   return null;
@@ -19358,7 +19358,7 @@ function execBurst(side, pos, expectedName){
   var _bvP2Ok = !!(_bvEntry && _bvEntry.bossSide
     && typeof _adventureMode !== 'undefined' && _adventureMode
     && typeof _adventureStage !== 'undefined' && _adventureStage === 'china');
-  var _bvUrl = (_bvEntry && (side === 'p1' || _bvP2Ok)) ? _bvEntry.url : null;
+  var _bvUrl = (_bvEntry && (side === 'p1' || _bvP2Ok)) ? ((side === 'p1' && typeof window._bvUrlFor === 'function' && window._bvUrlFor(h.name)) || _bvEntry.url) : null;   /* ★ v5.472.0 我方依皮膚選原版/異性版 */
   // ★ v5.22.0 — 老師需求「所有爆發技動畫結束後才生效傷害/治療;點跳過=同時跳過動畫並立即生效」:
   //   移除 v4.33.0 的世界BOSS排除(_bvInWB)——世界BOSS戰中有爆發影片的英雄也改走
   //   「影片結束/跳過才放 GIF 特效+傷害/治療」重排路徑(先前 WB 內效果在 1.2 秒就生效、
@@ -19521,18 +19521,10 @@ window._BURST_VIDEO_DB = window._BURST_VIDEO_DB || {
   //   十二位全數先登記檔名(標準流程一筆=戰鬥爆發+圖鑑欣賞雙處自動生效),
   //   影片尚未上傳前 _playBurstVideo 的 onerror/5s 兜底會自動退回 BURST_GIF_DB 的既有 GIF(零阻塞、零黑畫面);
   //   老師之後只要把對應檔名的 mp4 上傳進 repo 根目錄即自動切換播放,不必再改這裡。
-  '牡羊星神': { url: _BV_RAW('牡羊星神動畫.mp4') },
-  '金牛星神': { url: _BV_RAW('金牛星神動畫.mp4') },
-  '雙子星神': { url: _BV_RAW('雙子星神動畫.mp4') },
-  '巨蟹星神': { url: _BV_RAW('巨蟹星神動畫.mp4') },
-  '獅子星神': { url: _BV_RAW('獅子星神動畫.mp4') },
-  '處女星神': { url: _BV_RAW('處女星神動畫.mp4') },
-  '天秤星神': { url: _BV_RAW('天秤星神動畫.mp4') },
-  '天蠍星神': { url: _BV_RAW('天蠍星神動畫.mp4') },
-  '射手星神': { url: _BV_RAW('射手星神動畫.mp4') },
-  '摩羯星神': { url: _BV_RAW('摩羯星神動畫.mp4') },
-  '水瓶星神': { url: _BV_RAW('水瓶星神動畫.mp4') },
-  '雙魚星神': { url: _BV_RAW('雙魚星神動畫.mp4') },
+  // ★ v5.472.0(2026-11-29・老師「十二星神爆發動畫在英雄圖鑑沒有正常播放(戰鬥中也要檢查)」)根因:
+  //   v5.200.0 先登記了 12 筆檔名,但 repo 裡一支星神影片都沒有(raw 全 404)⇒ 圖鑑顯示金色「播放動畫」卻播不出來、
+  //   戰鬥每次爆發都先等 404+重試(最多約 5 秒)才退回。改為:12 筆移出本表,只有列在 _BV_ZODIAC_READY 的星座才登記
+  //   (見本表下方 IIFE),沒列的星座圖鑑顯示灰色「動畫日後開放」、戰鬥直接走無影片路徑不等待。
   // ★ v5.294.0(2026-10-24)— UR 三神爆發動畫對接(老師 Google Vids/Veo 生成;疊在 v5.293.0《繪卷新章》之上)。
   //   標準流程一筆=戰鬥爆發+圖鑑欣賞雙處自動生效;冒險開戰預熱(game_adv.js ③)也自動納入。
   //   三位皆玩家 UR 英雄、無 BOSS 版 → 不帶 bossSide。影片全程只有音效、無音樂無人聲(2026-10-18 裁定)。
@@ -19589,6 +19581,34 @@ window._BURST_VIDEO_DB = window._BURST_VIDEO_DB || {
   '魔術師':     { url: _BV_RAW('魔術師動畫.mp4') },
   '暗魔將·血':  { url: _BV_RAW('暗魔將·血動畫.mp4') },
   '幽魂暗狐':   { url: _BV_RAW('幽魂暗狐動畫.mp4') }
+};
+/* ★ v5.472.0 十二星神爆發動畫:上傳完成的星座才登記(原版=XX星神動畫.mp4、異性版=XX星神_異性版動畫.mp4)。
+   影片上傳到 repo 根目錄後,把星座加進下面兩個清單即可(原版、異性版分開列;只有一版時另一版自動用同一支)。
+   玩家目前使用「異性版」皮膚(zodiac_alt)→ 優先播異性版影片,沒有就播原版;反之亦然。 */
+window._BV_ZODIAC_READY     = window._BV_ZODIAC_READY     || [];   // 原版已上傳,例:['牡羊','金牛']
+window._BV_ZODIAC_ALT_READY = window._BV_ZODIAC_ALT_READY || [];   // 異性版已上傳
+(function(){
+  try{
+    var _all = ['牡羊','金牛','雙子','巨蟹','獅子','處女','天秤','天蠍','射手','摩羯','水瓶','雙魚'];
+    _all.forEach(function(z){
+      var _o = window._BV_ZODIAC_READY.indexOf(z) >= 0 ? _BV_RAW(z + '星神動畫.mp4') : null;
+      var _a = window._BV_ZODIAC_ALT_READY.indexOf(z) >= 0 ? _BV_RAW(z + '星神_異性版動畫.mp4') : null;
+      if(!_o && !_a) return;
+      window._BURST_VIDEO_DB[z + '星神'] = { url: (_o || _a), altUrl: (_a || _o), altSkin: 'zodiac_alt' };
+    });
+  }catch(_){}
+})();
+/* ★ v5.472.0 依「這位英雄目前的皮膚」決定播哪一支(圖鑑、戰鬥、預熱共用;查無回 null)。 */
+window._bvUrlFor = function(name){
+  try{
+    var e = window._BURST_VIDEO_DB && window._BURST_VIDEO_DB[name];
+    if(!e || !e.url) return null;
+    if(e.altUrl && e.altSkin){
+      var _ch = (typeof _heroPortraitChoice !== 'undefined' && _heroPortraitChoice) ? _heroPortraitChoice[name] : null;
+      if(_ch === e.altSkin) return e.altUrl;
+    }
+    return e.url;
+  }catch(_){ return null; }
 };
 window._SKILL_VIDEO_DB = window._SKILL_VIDEO_DB || {
   // 英雄名 → 特定技能+條件才播(魔劍姬僅在爆發「魔尊覺醒」再行動狀態下的 0 消耗 S1)
@@ -19751,7 +19771,7 @@ window._bvPrewarmBattle = function(){
         // ── 爆發影片 ──
         var _e = (window._BURST_VIDEO_DB || {})[h.name];
         if(_e && _e.url){
-          if(!isP2) window._bvPrewarmPush(_e.url);                 // 我方一律可能播
+          if(!isP2) window._bvPrewarmPush((typeof window._bvUrlFor === 'function' && window._bvUrlFor(h.name)) || _e.url);   // 我方一律可能播(★ v5.472.0 依皮膚)
           else if(_e.bossSide && _cnAdv) window._bvPrewarmPush(_e.url);  // 敵方僅中國關 BOSS 版
         }
         // ── 爆發 GIF 特效(小檔,直接 Image 預載;不進串行佇列) ──
@@ -20143,7 +20163,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     var _bvRbP2 = !!(_bvRbE && _bvRbE.bossSide
       && typeof _adventureMode !== 'undefined' && _adventureMode
       && typeof _adventureStage !== 'undefined' && _adventureStage === 'china');
-    if(_bvRbE && (side==='p1' || _bvRbP2) && !window._bvSuppressInRunBurst) _playBurstVideo(_bvRbE.url);
+    if(_bvRbE && (side==='p1' || _bvRbP2) && !window._bvSuppressInRunBurst) _playBurstVideo((side==='p1' && typeof window._bvUrlFor === 'function' && window._bvUrlFor(name)) || _bvRbE.url);   /* ★ v5.472.0 */
   }catch(_){}
   try{ window._bvSuppressInRunBurst = false; }catch(_){}
 
