@@ -19581,7 +19581,14 @@ window._BURST_VIDEO_DB = window._BURST_VIDEO_DB || {
   '電腦老師':   { url: _BV_RAW('電腦老師動畫.mp4') },
   '網路駭客':   { url: _BV_RAW('網路駭客動畫.mp4') },
   '科學發明家': { url: _BV_RAW('科學發明家動畫.mp4') },
-  '武器精靈':   { url: _BV_RAW('武器精靈動畫.mp4') }
+  '武器精靈':   { url: _BV_RAW('武器精靈動畫.mp4') },
+  // ★ v5.471.0(2026-11-28)— SSR 爆發動畫補完計畫第 5 批(魔法暗系):死靈法師/聖冥法師/魔術師/暗魔將·血/幽魂暗狐。
+  //   皆招募英雄、無 BOSS 版 ⇒ 不帶 bossSide;新檔名不需 bump _BV_ASSET_VER。
+  '死靈法師':   { url: _BV_RAW('死靈法師動畫.mp4') },
+  '聖冥法師':   { url: _BV_RAW('聖冥法師動畫.mp4') },
+  '魔術師':     { url: _BV_RAW('魔術師動畫.mp4') },
+  '暗魔將·血':  { url: _BV_RAW('暗魔將·血動畫.mp4') },
+  '幽魂暗狐':   { url: _BV_RAW('幽魂暗狐動畫.mp4') }
 };
 window._SKILL_VIDEO_DB = window._SKILL_VIDEO_DB || {
   // 英雄名 → 特定技能+條件才播(魔劍姬僅在爆發「魔尊覺醒」再行動狀態下的 0 消耗 S1)
