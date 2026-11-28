@@ -7931,6 +7931,8 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 #isl-camp-zoom .zp{ min-width:3.2em; font-size:14px; font-weight:900; text-align:right; text-shadow:0 1px 2px rgba(0,0,0,.6); }
 #isl-camp-undo{ position:absolute; left:12px; top:58px; z-index:9; min-height:0; font-size:15px; font-weight:900; padding:6px 12px; border-radius:12px; border:2px solid #ffb86b; background:rgba(120,58,12,.94); color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.6); box-shadow:0 3px 0 #4a2306,0 4px 10px rgba(0,0,0,.4); cursor:pointer; line-height:1.2; white-space:nowrap; }
 #isl-camp-undo .un{ display:inline-block; margin-left:6px; min-width:1.4em; padding:0 5px; border-radius:999px; background:#fff; color:#7a3a0c; font-size:12px; line-height:1.4; text-shadow:none; }
+#isl-camp-save{ position:absolute; left:12px; top:58px; z-index:9; min-height:0; font-size:15px; font-weight:900; padding:6px 12px; border-radius:12px; border:2px solid #7bed9f; background:rgba(28,96,52,.94); color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.6); box-shadow:0 3px 0 #0f3a1e; cursor:pointer; white-space:nowrap; }   /* ★ v1.478.0 💾 儲存配置(位置由 islCampLeftLayout 排在取消修改右邊) */
+#isl-camp.in-cabin #isl-camp-save{ display:none; }
 #isl-camp-petlist{ position:absolute; left:12px; top:100px; z-index:9; width:104px; display:flex; flex-direction:column; gap:6px; padding:6px; box-sizing:border-box; background:rgba(10,24,36,.78); border:2px solid rgba(124,196,232,.75); border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,.4); }
 #isl-camp-petlist .pt{ font-size:13px; font-weight:900; color:#9be7ff; text-align:center; line-height:1.2; }
 #isl-camp-petlist .pi{ position:relative; min-height:0; min-width:0; margin:0; display:flex; flex-direction:column; align-items:center; gap:2px; padding:4px 2px 5px; border-radius:10px; background:rgba(255,255,255,.12); border:2px solid rgba(255,255,255,.35); color:#fff; cursor:pointer; }
@@ -7976,6 +7978,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 #island-root.ipad #isl-camp-zoom input[type=range]{ width:92px; height:30px; }   /* iPad 有 1.3 倍縮放:整條不可伸到正上方「前往大地圖」出口標籤 */
 #island-root.ipad #isl-camp-zoom .zp{ font-size:16px; }
 #island-root.ipad #isl-camp-undo{ left:14px; font-size:17px; padding:7px 14px; }
+#island-root.ipad #isl-camp-save{ font-size:17px; padding:7px 14px; }
 #island-root.ipad #isl-camp-petlist{ left:14px; width:124px; }
 #island-root.ipad #isl-camp-petlist .pc{ width:68px; height:68px; }
 #island-root.ipad #isl-camp-petlist .pt, #island-root.ipad #isl-camp-petlist .pn{ font-size:15px; }
@@ -7993,6 +7996,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
   #isl-camp-zoom .zp, #island-root.ipad #isl-camp-zoom .zp{ font-size:10px; min-width:2.8em; }
   #isl-camp-undo, #island-root.ipad #isl-camp-undo{ left:8px; font-size:12px; padding:3px 8px; border-width:2px; border-radius:9px; }
   #isl-camp-undo .un{ font-size:10px; }
+  #isl-camp-save, #island-root.ipad #isl-camp-save{ font-size:12px; padding:3px 8px; border-width:2px; border-radius:9px; }
   #isl-camp-petlist, #island-root.ipad #isl-camp-petlist{ left:8px; width:56px; gap:3px; padding:3px; border-width:1.5px; border-radius:10px; }
   #isl-camp-petlist .pt, #island-root.ipad #isl-camp-petlist .pt{ font-size:9px; }
   #isl-camp-petlist .pc, #island-root.ipad #isl-camp-petlist .pc{ width:34px; height:34px; }
@@ -8076,6 +8080,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
       <button id="isl-camp-fix-btn" onclick="islCampFixOpen()" title="設施或裝飾不小心拖到畫面外時,從這裡一鍵搬回營地正中央">🏕 營地造景</button><!-- ★ v1.360.0 老師「營地設施裝飾不小心拖移到畫面外,無法移回來或編輯:新增一顆營地造景鈕在營地左上角,打開設施與裝飾清單,每個物件旁有重設位置一鍵回到營地正中心」— 掛在 #isl-camp 底下(不在 #isl-camp-grid 裡),跟 #isl-camp-joy/#isl-camp-movebtns 同一個理由:不被雙指縮放/平移的 transform 一起吃到,永遠停在視窗左上角;參觀好友營地(_IS.coop)時由 islCampPaint 加 .hidden 藏起來 -->
       <div id="isl-camp-actbar" class="hidden"></div><!-- ★ v1.454.0 裝飾互動中的操作列(起身/睡到明天/位置微調),掛 #isl-camp 底下不吃營地縮放 -->
       <button id="isl-camp-undo" class="hidden" onclick="islCampUndo()" title="把剛剛調整的位置、大小、方向或圖層改回去">↩ 取消修改</button><!-- ★ v1.476.0 老師「每次在有裝飾被調整位置、尺寸、角度時,新增［取消修改］按鈕在營地造景的下方」(islCampUndoPush/islCampUndo) -->
+      <button id="isl-camp-save" class="hidden" onclick="islCampLayoutSave()" title="這樣擺就對了:儲存目前的營地配置">💾 儲存配置</button><!-- ★ v1.478.0 老師「營地裝飾擺好確認後,除了原有的取消操作以外,再新增一個『儲存配置』的按鈕」(islCampLayoutSave;跟取消修改同時出現,排在它右邊) -->
       <div id="isl-camp-petlist" class="hidden"></div><!-- ★ v1.476.0 老師「陪伴的三隻寵物用列表放在營地左側營地造景下方,肚子餓的寵物顯示標記,點擊直接開視窗餵食和互動」(islCampPetListPaint/islCampPetQuick) -->
       <div id="isl-camp-pend" class="hidden"></div><!-- ★ v1.406.0 營地造景下方「🧺 待布置」暫放區:按過「開始布置」的新設施/裝飾排在這裡,拖進營地才擺上去(islPendPaint/islPendDragBind);同樣掛在 #isl-camp 底下不吃營地縮放 -->
       <div id="isl-camp-side"></div>
@@ -8161,7 +8166,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 (function(){
 'use strict';
 
-var MG_VER = 'v1.476.0';   /* ★ v1.476.0(2026-11-28 11:10・老師四項)— ①營地擺設上鎖:設施/裝飾存 lock:1,上鎖的拖不動、不能縮放/翻轉/轉向/換圖層/重設;🏕 營地造景清單每列 🔒/🔓 + 全部上鎖/解鎖 ②↩ 取消修改:搬家/縮放/翻轉/轉向/圖層/重設前拍快照(_IS.campUndo 最多 30 步,不存檔),營地造景下方按一次退一步 ③營地造景上方縮放條 #isl-camp-zoom(與雙指/滾輪共用 _IS.campCam)④左側 🐾 隨身夥伴列表(🍖 餓了/💢 鬧脾氣標記),點一下開 islCampPetQuick(餵食/💗摸摸/夥伴卡;餵完回小視窗),營地走動的夥伴改成點一下就開;左側排版 islCampLeftLayout。只改 index + sw,island_db 不動(?v= 仍 v1.456.0) */ void 'v1.475.0';   /* ★ v1.475.0(2026-11-28 09:25・老師「《荒島的夜襲》手機模式右下角的寵物蓋住橡膠手套的選項,無法使用。把下方武器按鈕置於最頂,不要被好友或寵物蓋住」)— #isl-def-tools z-index 4→30(寵物 6/7、好友 3、閃紅光 8)、整列 pointer-events:none 只讓按鈕吃點擊;寵物開場位置/拖曳上限改避開武器列(islDefToolTop)。只改本檔+sw,island_db 不動 */ void 'v1.474.0';   /* ★ v1.474.0(2026-11-28 07:51・老師「荒島家具互動的調整位置,增加自由旋轉(順/逆時針一次 30 度)躺下時的角度,自動儲存角度和左右高低位置,下次和相同方向的家具互動時以調整後的角度位置來躺」)— 互動操作列躺下多「角度 ↺ ↻ ⟲」,位置/角度改存 ISL.actAdj(同種家具+同方向共用,小木屋另記;舊 deco.ax/ay 為退路);程式搜尋 v1.474.0。island_db 零改動 */   void 'v1.473.0';   /* ★ v1.473.0(2026-11-27 22:00・老師「繼續 外島 12 種夥伴的專屬天賦和技能」;池子表 claude/荒島寵物個體化_第3輪之二_外島專屬池.md)— ISL_PX.T/S/POOL 補外島 12 種(各 4 天賦+4 技能,只用既有效果鍵,冰凍/破甲/處決走 islSeaCmdOnHit;招牌機制不進池);舊外島夥伴讀檔 islPxFill 固定種子自動補抽;說明頁 ISL_PET_NEWS_V 3→4(即將推出→外島 NEW 卡)。 */
+var MG_VER = 'v1.479.0';   /* ★ v1.479.0(2026-11-28 13:10・老師「主角防卡死:被自己的障礙物圍住時,點營地任何空白區域就自動跳起跨越障礙到那個位置」)— islCampWalkTo:islCampPath 回 null(找不到路)⇒ _IS.campWalk.hop,islJump 跳躍弧線+0.62 秒直線滑到目的地(不看障礙),落地照常 cb;toast「🦘 被圍住了,跳過去!」。只改本檔+sw */ void 'v1.478.0';   /* ★ v1.478.0(2026-11-28 13:03・老師兩項)— ①營地「💾 儲存配置」鈕(跟 ↩ 取消修改一起出現、排右邊;按下存檔+清掉取消步驟,islCampLayoutSave)②營地障礙物:已擺好的設施/裝飾腳底區當障礙(量 DOM,石板路/木橋/花拱門/地毯/野餐墊/坐墊可踩),主角點地走路 A* 繞路、方向盤撞到貼著滑,營地寵物漫步也避開/繞路(islCampObsList/islCampPath/islCampMoveSlide/islCampPetStep)。只改本檔+sw */ void 'v1.477.0';   /* ★ v1.477.0(2026-11-28 13:00・老師「營地放大時畫面鎖定主角人物為中心」)— 營地視角放大(>100%)時 islCampViewApply 先把視角中心對準主角(islCampFollowAim,靠邊照舊夾邊界),主角每次移動 islCampCharPlace → islCampFollowNow 重套;雙指/滾輪/縮放條放大縮小都以主角為中心;100% 全貌、小木屋內不跟。只改本檔+sw,island_db 不動(?v= 仍 v1.456.0) */ void 'v1.476.0';   /* ★ v1.476.0(2026-11-28 11:10・老師四項)— ①營地擺設上鎖:設施/裝飾存 lock:1,上鎖的拖不動、不能縮放/翻轉/轉向/換圖層/重設;🏕 營地造景清單每列 🔒/🔓 + 全部上鎖/解鎖 ②↩ 取消修改:搬家/縮放/翻轉/轉向/圖層/重設前拍快照(_IS.campUndo 最多 30 步,不存檔),營地造景下方按一次退一步 ③營地造景上方縮放條 #isl-camp-zoom(與雙指/滾輪共用 _IS.campCam)④左側 🐾 隨身夥伴列表(🍖 餓了/💢 鬧脾氣標記),點一下開 islCampPetQuick(餵食/💗摸摸/夥伴卡;餵完回小視窗),營地走動的夥伴改成點一下就開;左側排版 islCampLeftLayout。只改 index + sw,island_db 不動(?v= 仍 v1.456.0) */ void 'v1.475.0';   /* ★ v1.475.0(2026-11-28 09:25・老師「《荒島的夜襲》手機模式右下角的寵物蓋住橡膠手套的選項,無法使用。把下方武器按鈕置於最頂,不要被好友或寵物蓋住」)— #isl-def-tools z-index 4→30(寵物 6/7、好友 3、閃紅光 8)、整列 pointer-events:none 只讓按鈕吃點擊;寵物開場位置/拖曳上限改避開武器列(islDefToolTop)。只改本檔+sw,island_db 不動 */ void 'v1.474.0';   /* ★ v1.474.0(2026-11-28 07:51・老師「荒島家具互動的調整位置,增加自由旋轉(順/逆時針一次 30 度)躺下時的角度,自動儲存角度和左右高低位置,下次和相同方向的家具互動時以調整後的角度位置來躺」)— 互動操作列躺下多「角度 ↺ ↻ ⟲」,位置/角度改存 ISL.actAdj(同種家具+同方向共用,小木屋另記;舊 deco.ax/ay 為退路);程式搜尋 v1.474.0。island_db 零改動 */   void 'v1.473.0';   /* ★ v1.473.0(2026-11-27 22:00・老師「繼續 外島 12 種夥伴的專屬天賦和技能」;池子表 claude/荒島寵物個體化_第3輪之二_外島專屬池.md)— ISL_PX.T/S/POOL 補外島 12 種(各 4 天賦+4 技能,只用既有效果鍵,冰凍/破甲/處決走 islSeaCmdOnHit;招牌機制不進池);舊外島夥伴讀檔 islPxFill 固定種子自動補抽;說明頁 ISL_PET_NEWS_V 3→4(即將推出→外島 NEW 卡)。 */
 void 'v1.472.0';   /* ★ v1.472.0(2026-11-27 21:10・老師「寵物個體化第 3 輪」;設計書 claude/荒島寵物個體化_設計書.md 第 5/9/11 節,裁定 D/L/M/N)— ①本島 19 種專屬池 ISL_PX(各 4 天賦+4 技能,每隻隨機帶 2+2;舊存檔用 uid|id 固定種子補抽;外島 12 種下一次)②天賦走 islPetTal/islPartyTal 單一出口(+islPxTal,數值吃品級)③戰鬥 3 招:u.xcmds/u.xcd,每招各自冷卻+公共冷卻 2,自動 islBtCmdPick、手動預覽視窗每招一顆鈕④📘 訓練書 ISL.pxBook(阿獺常駐 500/萬獸之王 400,夥伴卡「換技能」自選)⑤星盤馴獸星域 islPxInit 只改效果與說明(幸運 8%/馴獸之心 SR+3 SSR+1/心有靈犀 傳承 50%/羈絆守護 升階+3/萬獸共鳴 每隻 SR+ +1% 最多 3/萬獸之王 升階+5 訓練書 8 折)⑥說明頁 ISL_PET_NEWS_V 2→3;反彈/自我修復/每回合補全隊/閃開 四條戰鬥紀錄改成通用文字。 */
 void 'v1.471.0';   /* ★ v1.471.0(2026-11-27 21:01・老師「遇到寵物如果身上剛好沒有攜帶食物,寵物現在會留在原地等待(用寵物在營地的角色圖即可),最多等到主角睡覺之前都可以來招募。主角睡覺後寵物就會離去等下次再遇。」)— 一般遭遇(islPetEncounterOpen)與重複遭遇(islPetDupOpen)沒食物 ⇒ islPetWaitAdd 登記 ISL.petWait(種類/區/日/座標/重複時先抽好的那一隻),場景畫營地同款角色圖+「🍽 等你帶○○來」泡泡(islPetWaitPaint,進場景時畫);主角走近 <100px 自動再開遭遇視窗(islTick 移動時 islPetWaitNear;走開 >150px 才再觸發);送出食物 islPetWaitDel;睡覺換日 islNewDay → islPetWaitClear(日誌「等不到你,回到森林裡了」)。等待的那一隻跨重讀檔編號被占用 ⇒ islPetGet 重新給號。含 v1.470.0(寵物個體化第 2 輪,尚未上傳)。island_db 零改動。 */
 void 'v1.470.0';   /* ★ v1.470.0(2026-11-27 20:35・老師「寵物個體化第 2 輪」;設計書 claude/荒島寵物個體化_設計書.md 第 7/8/10 節)— ①重複遭遇:這一區沒有沒收服的夥伴時,已擁有的種類採集類活動成功 6% 再遇到(同種一天 1 次,ISL.petDupDay),🌈 傳說擁有過後在原調查區 2%;以前答過題 ⇒ 送喜歡的食物就加入(裁定 E);NPC 4 位唯一;阿獺換購的在夥伴卡「🦦 再換一隻」。②營地空間提示「還能再收留幾隻(n/2)」+ 先看新來這一隻(islPetMiniHtml)。③滿 2 隻 ⇒ 三選一 islPetDupChoose(放生一隻舊的換新的/放棄新的,食物不退)。④🍃 放生 islPetReleaseOpen:裝備卸回、離開編組/出來逛,回饋貝幣 N20/R40/SR80/SSR150 + 1 份最愛食物,經驗傳承 30% 自選對象(可給三選一的新來的),離別禮 🍇 islPetReleaseFruitP,SR 以上再確認,日誌附自然教育小語;放生最後一隻可以,圖鑑保留(petDex),之後再遇到送食物就回來;傳說任務改看 islPetEver。⑤⬆ 打倒頭目升階:撐到戰鬥結束(沒倒下、沒被旋風吹走 _wasGone)的夥伴每隻頭目 10%(islPetsGainAfterWin)。⑥同種 2 隻前置:islPetCount 改「幾種」、islPetIndN 個體數、選隊友一隻一張卡(同格換同種另一隻 OK)、圖鑑 ×2/🍃、物品包餵食/飽足標籤/夜襲守衛改個體、章節外島夥伴數只算種類。⑦📢 說明頁 ISL_PET_NEWS_V 1→2(三張 NEW 卡)。island_db 零改動。 */
@@ -26651,6 +26656,7 @@ function islCampCharPlace(){
   if(!el) return;
   if(islCabinHasChar()){ el.style.left = _IS.cabin.p.x + '%'; el.style.bottom = (100 - _IS.cabin.p.y) + '%'; return; }   /* ★ v1.344.0 主角在屋內:房間座標(y 是腳底離頂端 %) */
   el.style.left = p.x + '%'; el.style.bottom = p.y + '%';
+  try{ islCampFollowNow(); }catch(_cf){}   /* ★ v1.477.0 放大時視角跟著主角走 */
 }
 /* ══ ★ v1.186.0(老師⑦「IPAD版...建造區域改成可以用雙指同時滑動縮放,呈現更遼闊的建造區域和裝飾空間」)══
    仿照大地圖(#isl-map-wrap/#isl-map,islMapFit/islMapApply/islMapBindDrag)同一套「外層 overflow:hidden
@@ -26759,13 +26765,39 @@ function islCampViewApply(){
   if(!vp || !g || !c) return;
   w = vp.clientWidth; h = vp.clientHeight;
   var cw = (_IS.campCanvas && _IS.campCanvas.w) || ISL_CAMP_W, ch = (_IS.campCanvas && _IS.campCanvas.h) || ISL_CAMP_H;   /* ★ v1.259.0 畫布已非正方形,分別夾 */
+  islCampFollowAim(c, w, h, cw, ch);   /* ★ v1.477.0 老師「營地放大時畫面鎖定主角人物為中心」— 放大(>100%)時視角中心改成主角,下面照舊夾邊界(靠邊時主角會偏離中心,不露出畫布外) */
   /* ★ v1.400.0 contain 縮放:某一軸畫布比視窗小時固定置中(兩側是補邊背景,不讓學生把營地拖到角落);比視窗大(雙指放大後)才夾邊界可平移 */
   if(cw * c.s <= w) c.x = (w - cw * c.s) / 2; else c.x = islClamp(c.x, w - cw * c.s, 0);
   if(ch * c.s <= h) c.y = (h - ch * c.s) / 2; else c.y = islClamp(c.y, h - ch * c.s, 0);
   g.style.transform = 'translate(' + c.x + 'px,' + c.y + 'px) scale(' + c.s + ')';
-  g.style.setProperty('--isl-cinv', String(islClamp(1 / c.s, 0.35, 3)));
+  var _cinv = String(islClamp(1 / c.s, 0.35, 3)); if(g._islCinv !== _cinv){ g._islCinv = _cinv; g.style.setProperty('--isl-cinv', _cinv); }   /* ★ v1.477.0 跟隨主角時每幀都會進來,倍率沒變就不重設 CSS 變數(免得每幀重算所有標籤樣式) */
   try{ islCampZoomSync(); }catch(_zs){}   /* ★ v1.476.0 縮放條跟著雙指/滾輪/調節條同步 */   /* ★ v1.400.0 畫布內文字標籤反向縮放(CSS scale:var(--isl-cinv)) */
 }
+/* ★ v1.477.0 老師「營地放大時畫面鎖定主角人物為中心」:
+   - 只在「放大」時鎖定(c.s 比全貌 c.min 大 0.5% 以上);100% 全貌照舊整張置中,不跟。
+   - 主角在小木屋裡(islCabinHasChar)、主角元素不在營地畫布上時不跟。
+   - 主角座標 _IS.campC 是畫布 %(x=left%、y=bottom% 腳底),畫布原始像素 cw×ch;瞄準點取身體中段(腳底往上 32×campCharK 原始像素)。
+   - 鎖定期間雙指/滾輪/縮放條的縮放錨點都會被這裡蓋掉 ⇒ 一律「以主角為中心」放大縮小;滑鼠拖曳平移在放大時也不再生效(鎖定)。
+   - 主角每一幀移動由 islCampCharPlace → islCampFollowNow 觸發重套視角。 */
+function islCampFollowOn(c){
+  var el;
+  if(!c || !(c.s > c.min * 1.005)) return false;
+  if(_IS.screen !== 'camp') return false;
+  if(typeof islCabinHasChar === 'function' && islCabinHasChar()) return false;
+  el = $('isl-camp-char');
+  if(!el || !el.parentNode || el.parentNode.id !== 'isl-camp-grid') return false;
+  return true;
+}
+function islCampFollowAim(c, w, h, cw, ch){
+  var p, gx, gy;
+  if(!islCampFollowOn(c)) return;
+  p = _IS.campC; if(!p) return;
+  gx = (p.x / 100) * cw;
+  gy = (1 - p.y / 100) * ch - 32 * (_IS.campCharK || 1);
+  c.x = w / 2 - gx * c.s;
+  c.y = h / 2 - gy * c.s;
+}
+function islCampFollowNow(){ var c = _IS.campCam; if(islCampFollowOn(c)) islCampViewApply(); }
 function islCampViewIsInteractive(t){   /* 沿著祖先鏈往上找,碰到建造格/裝飾/告示牌/主角就讓給它們自己的手勢,不搶 */
   while(t && t !== document.body){
     if(t.id === 'isl-camp-viewport') return false;
@@ -27001,6 +27033,7 @@ function islCampPetsWanderStart(){
         else if(_ps === 'brave'){ nx = islClamp(u[i].x + (Math.random() < 0.5 ? -1 : 1) * (14 + Math.random() * 12), 6, 94); ny = islClamp(u[i].y + (Math.random() * 6 - 3), 4, 66); }
         else if(_ps === 'hasty'){ nx = islClamp(u[i].x + (Math.random() * 44 - 22), 6, 94); if(Math.random() < 0.3 && !u[i].hop){ (function(r0, idx){ r0.hop = true; islCampPetRender(idx); setTimeout(function(){ var uu = _IS.campPets || []; if(uu[idx] === r0){ r0.hop = false; islCampPetRender(idx); } }, 1200); })(u[i], i); } }
       }catch(_psw){}
+      try{ var _pst = islCampPetStep(u[i], nx, ny); if(!_pst) continue; nx = _pst.x; ny = _pst.y; }catch(_pse){}   /* ★ v1.478.0 寵物也避開設施/裝飾:目的地在障礙裡換一個、路線被擋就先走繞路的第一個點,都不行這輪不動 */
       dx = nx - u[i].x; dy = ny - u[i].y;
       /* ★ v1.204.0 老師「往上或往下走不旋轉角色,往左右走要正確鏡像翻轉」—
          只有「這一步左右移動的量 > 上下移動的量」時才更新 flip;純粹上下移動(或左右量很小)
@@ -27044,13 +27077,134 @@ function islCampPetsNapStop(){
   if(_IS.campNapT){ clearInterval(_IS.campNapT); _IS.campNapT = 0; }
   for(i = 0; i < u.length; i++){ if(u[i].napTo){ clearTimeout(u[i].napTo); u[i].napTo = 0; } u[i].nap = false; }
 }
+/* ══════════════════════════════════════════════════════════════════════════
+ * ★ v1.478.0(2026-11-28 13:03・老師「在營地中移動時,會將現有配置好的物件作為障礙物,主角不會直接穿越障礙物,而是繞過。這個原理也適用在自動行動的寵物」)
+ *   障礙物 = 營地上已擺好的設施(#isl-camp-cells .isl-cell.built)與裝飾(#isl-camp-deco .isl-deco),待布置(pend)的本來就沒畫出來。
+ *   ① 直接量 DOM(圖片的 getBoundingClientRect 相對 #isl-camp-grid),所以設施 baseK/個人縮放、裝飾 sz/scale、好友營地都自動正確,不必自己重算尺寸。
+ *      只取「腳底那一塊」當障礙:圖寬中間 70%、圖高最下面 30%(物件上半部是畫面上往後疊的部分,主角走到後面會被圖層蓋住,很自然)。
+ *      座標換成營地 %(x = left%、y = bottom%,跟 _IS.campC / 寵物 rec.x/y 同一套);再外擴主角半身(ISL_OBS_RX/RY)。
+ *      平的東西可以踩過去:DECO_ACT a:'walk'(石板路/木橋/花拱門)+ ISL_OBS_PASS(地毯/圓地毯/野餐墊/坐墊)。
+ *      快取 300ms(_IS.campObs),搬家/重畫後最多 0.3 秒就更新;營地畫面沒顯示(寬 0)⇒ 沒有障礙。
+ *   ② 起點或終點本來就在某個障礙裡(站在床上剛起身、點裝飾要走過去坐/互動、走到設施正下方開視窗)⇒ 那一個障礙這次不算,永遠不會卡死。
+ *   ③ islCampPath(a,b):直線沒擋到就直走(空陣列);擋到就在 2%×2% 格子上 A*(8 方向、不切角),走可行區(islCampClampXY 範圍)且避開障礙,
+ *      再用「看得到就跳過」把折線拉直,回傳中途點(不含終點);找不到路回 null(呼叫端照舊直走,不讓學生點了沒反應)。
+ *   ④ 主角:點地走路沿中途點走(_IS.campWalk.path);方向盤/鍵盤即時移動遇到障礙「貼著滑」(先試只動 x、再試只動 y)。
+ *   ⑤ 寵物漫步:目的地在障礙裡就換一個(最多 6 次);路線被擋 ⇒ 這一步改走 A* 的第一個中途點(下一輪再繼續繞);都不行這輪原地不動。
+ *   小木屋室內(主角不在 #isl-camp-grid)不套用。
+ * ══════════════════════════════════════════════════════════════════════════ */
+var ISL_OBS_RX = 1.6, ISL_OBS_RY = 1.3, ISL_OBS_PASS = { rug: 1, roundrug: 1, picnic: 1, cushion: 1 };
+function islCampObsPassId(id){ var A; if(!id) return false; if(ISL_OBS_PASS[id]) return true; try{ A = islDecoActDef(id); }catch(_e){ A = null; } return !!(A && A.a === 'walk'); }
+function islCampObsList(){
+  var g = $('isl-camp-grid'), now = Date.now(), gr, out = [], els, i, el, im, r, L, o, w, h, x1, x2, yb;
+  if(_IS.campObs && now - _IS.campObsT < 300) return _IS.campObs;
+  _IS.campObsT = now; _IS.campObs = out;
+  if(!g || _IS.screen !== 'camp' || _IS.cabin) return out;
+  gr = g.getBoundingClientRect(); if(!(gr.width > 0 && gr.height > 0)) return out;
+  try{ L = islActList(islActCtx()); }catch(_l){ L = []; }
+  els = g.querySelectorAll('#isl-camp-cells .isl-cell.built, #isl-camp-deco .isl-deco');
+  for(i = 0; i < els.length; i++){
+    el = els[i];
+    if(el.classList.contains('isl-deco')){ o = L[+el.getAttribute('data-d')]; if(o && islCampObsPassId(o.id)) continue; }
+    im = el.querySelector('img'); if(im && im.style.display === 'none') im = null;
+    if(!im) im = el.querySelector('.isl-noimg');
+    r = (im || el).getBoundingClientRect();
+    if(!(r.width > 0 && r.height > 0)) continue;
+    w = r.width / gr.width * 100; h = r.height / gr.height * 100;
+    x1 = (r.left - gr.left) / gr.width * 100 + w * 0.15; x2 = x1 + w * 0.70;
+    yb = (gr.bottom - r.bottom) / gr.height * 100;
+    if(x2 - x1 < 0.5) continue;
+    out.push({ x1: x1 - ISL_OBS_RX, x2: x2 + ISL_OBS_RX, y1: yb - ISL_OBS_RY, y2: yb + h * 0.30 + ISL_OBS_RY });
+  }
+  return out;
+}
+function islCampObsIn(o, x, y){ return x > o.x1 && x < o.x2 && y > o.y1 && y < o.y2; }
+function islCampObsActive(a, b){   /* 起點/終點所在的障礙這次不算(見 ②) */
+  var L = islCampObsList(), out = [], i;
+  for(i = 0; i < L.length; i++){ if(islCampObsIn(L[i], a.x, a.y)) continue; if(b && islCampObsIn(L[i], b.x, b.y)) continue; out.push(L[i]); }
+  return out;
+}
+function islCampObsHit(O, x, y){ var i; for(i = 0; i < O.length; i++){ if(islCampObsIn(O[i], x, y)) return true; } return false; }
+function islCampFree(O, x, y){ var c = islCampClampXY(x, y); if(Math.abs(c.x - x) > 0.05 || Math.abs(c.y - y) > 0.05) return false; return !islCampObsHit(O, x, y); }
+function islCampSegOk(O, a, b){
+  var dx = b.x - a.x, dy = b.y - a.y, n = Math.ceil(Math.sqrt(dx * dx + dy * dy) / 0.6), i, t;
+  for(i = 1; i <= n; i++){ t = i / n; if(islCampObsHit(O, a.x + dx * t, a.y + dy * t)) return false; }
+  return true;
+}
+function islCampPath(a, b){
+  var O = islCampObsActive(a, b), S = 2, NX = 50, NY = 50, N = NX * NY, si, gi, gS, fS, came, closed, heap, cur, cx, cy, k, nx, ny, ni, d, ng, pts, sm, j, last, DIRS, ii;
+  if(!O.length || islCampSegOk(O, a, b)) return [];
+  function idx(x, y){ return islClamp(Math.round((y - S / 2) / S), 0, NY - 1) * NX + islClamp(Math.round((x - S / 2) / S), 0, NX - 1); }
+  function ptx(i){ return (i % NX) * S + S / 2; } function pty(i){ return Math.floor(i / NX) * S + S / 2; }
+  function ok(i){ return i === si || i === gi || islCampFree(O, ptx(i), pty(i)); }
+  function hcost(i){ var ex = ptx(i) - b.x, ey = pty(i) - b.y; return Math.sqrt(ex * ex + ey * ey); }
+  function push(i, f){ heap.push([f, i]); var c = heap.length - 1, p, t; while(c > 0){ p = (c - 1) >> 1; if(heap[p][0] <= heap[c][0]) break; t = heap[p]; heap[p] = heap[c]; heap[c] = t; c = p; } }
+  function pop(){ var top = heap[0], e = heap.pop(), c = 0, l, r, m, t; if(heap.length){ heap[0] = e; for(;;){ l = c * 2 + 1; r = l + 1; m = c; if(l < heap.length && heap[l][0] < heap[m][0]) m = l; if(r < heap.length && heap[r][0] < heap[m][0]) m = r; if(m === c) break; t = heap[m]; heap[m] = heap[c]; heap[c] = t; c = m; } } return top; }
+  si = idx(a.x, a.y); gi = idx(b.x, b.y);
+  gS = {}; came = {}; closed = {}; heap = [];
+  gS[si] = 0; push(si, hcost(si));
+  DIRS = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [1, 1, 1.4142], [1, -1, 1.4142], [-1, 1, 1.4142], [-1, -1, 1.4142]];
+  while(heap.length){
+    cur = pop()[1]; if(closed[cur]) continue; closed[cur] = 1;
+    if(cur === gi) break;
+    cx = cur % NX; cy = Math.floor(cur / NX);
+    for(k = 0; k < 8; k++){
+      nx = cx + DIRS[k][0]; ny = cy + DIRS[k][1];
+      if(nx < 0 || ny < 0 || nx >= NX || ny >= NY) continue;
+      ni = ny * NX + nx; if(closed[ni] || !ok(ni)) continue;
+      if(DIRS[k][0] && DIRS[k][1] && (!ok(cy * NX + nx) || !ok(ny * NX + cx))) continue;   /* 斜走不切障礙的角 */
+      ng = gS[cur] + DIRS[k][2] * S;
+      if(gS[ni] === undefined || ng < gS[ni]){ gS[ni] = ng; came[ni] = cur; push(ni, ng + hcost(ni)); }
+    }
+  }
+  if(!closed[gi]) return null;
+  pts = []; for(ii = gi; ii !== si && ii !== undefined; ii = came[ii]) pts.unshift({ x: ptx(ii), y: pty(ii) });
+  if(!pts.length) return [];
+  pts[pts.length - 1] = { x: b.x, y: b.y };
+  sm = []; last = a; j = 0;
+  while(j < pts.length){   /* 拉直:從目前點往後找最遠一個「直線看得到」的點 */
+    for(k = pts.length - 1; k > j; k--){ if(islCampSegOk(O, last, pts[k])) break; }
+    last = pts[k]; sm.push(last); j = k + 1;
+  }
+  sm.pop();   /* 最後一點就是終點,由呼叫端 tx/ty 處理 */
+  return sm;
+}
+function islCampMoveSlide(p, nx, ny){   /* 方向盤/鍵盤即時移動:撞到就貼著滑 */
+  var O, c;
+  if(_IS.cabin) return islCampClampXY(nx, ny);
+  O = islCampObsActive(p, null);
+  c = islCampClampXY(nx, ny); if(!islCampObsHit(O, c.x, c.y)) return c;
+  c = islCampClampXY(nx, p.y); if(!islCampObsHit(O, c.x, c.y)) return c;
+  c = islCampClampXY(p.x, ny); if(!islCampObsHit(O, c.x, c.y)) return c;
+  return { x: p.x, y: p.y };
+}
+function islCampPetStep(rec, nx, ny){   /* 寵物這一步要走到哪(null = 這輪不動) */
+  var a = { x: rec.x, y: rec.y }, O = islCampObsActive(a, null), t, P;
+  if(!O.length) return { x: nx, y: ny };
+  for(t = 0; t < 6 && islCampObsHit(O, nx, ny); t++){ nx = islClamp(rec.x + (Math.random() * 30 - 15), 6, 94); ny = islClamp(rec.y + (Math.random() * 20 - 10), 4, 66); }
+  if(islCampObsHit(O, nx, ny)) return null;
+  if(islCampSegOk(O, a, { x: nx, y: ny })) return { x: nx, y: ny };
+  P = islCampPath(a, { x: nx, y: ny });
+  if(P && P.length) return { x: islClamp(P[0].x, 4, 96), y: islClamp(P[0].y, 4, 70) };
+  return null;
+}
 function islCampWalkTo(x, y, cb, run){
   var p = islCampCharPos(), dist;
   if(!ISL){ if(cb) cb(); return; }
   var _cxy = islCampClampXY(x, y); x = _cxy.x; y = _cxy.y;   /* 可行走區域:營地範圍內,不讓他走出畫面或爬到頂端(★ v1.350.0 出口走道例外,見 islCampClampXY) */
   dist = Math.sqrt((x - p.x) * (x - p.x) + (y - p.y) * (y - p.y));
   if(dist < 1.5){ if(cb) setTimeout(cb, 60); return; }
-  _IS.campWalk = { tx: x, ty: y, cb: cb, run: !!run };   /* ★ v1.212.0 新增 run 旗標(比照野外 islTapToMove 的 run 參數),islCampTick/islRunningNow('isl-camp-char') 讀這裡 */
+  _IS.campWalk = { tx: x, ty: y, cb: cb, run: !!run, path: (function(){ try{ return islCabinHasChar() ? null : islCampPath({ x: p.x, y: p.y }, { x: x, y: y }); }catch(_cp){ return null; } })() };   /* ★ v1.478.0 繞過障礙的中途點(null/[] = 直走) */   /* ★ v1.212.0 新增 run 旗標(比照野外 islTapToMove 的 run 參數),islCampTick/islRunningNow('isl-camp-char') 讀這裡 */
+  /* ★ v1.479.0 老師「主角防卡死:萬一主角被自己的障礙物圍住,只要點營地任何的空白區域,主角就會自動跳起並跨越障礙物到達那個位置」—
+     islCampPath 回 null = 被圍住/找不到路 ⇒ 不再直接穿過去走,改成「跳過去」:播 islJump 跳躍(.jump.power 弧線+跳躍姿勢+音效),
+     同時在 0.62 秒內直線滑到目的地(islCampTick 的 w.hop 分支,不看障礙),落地後照常執行 cb。小木屋內不會有 null(不算障礙)。 */
+  if(_IS.campWalk.path === null && !islCabinHasChar()){
+    _IS.campWalk.hop = { sx: p.x, sy: p.y, t0: Date.now(), dur: 620 };
+    _IS.campDir = (x >= p.x) ? 'r' : 'l';
+    try{ islJump('isl-camp-char'); var _hj = $('isl-camp-char'); if(_hj) _hj.classList.add('power'); }catch(_hj2){}
+    try{ toast('🦘 被圍住了,跳過去!'); }catch(_ht){}
+    islCampRafStart();
+    return;
+  }
   try{ islSfx(run ? 'run' : 'walk'); }catch(_cw){}
   islCampRafStart();   /* ★ v1.262.0 老師回報「跑步有腳步聲但角色停在原地」就是這一行:舊碼 if(!_IS.campRaf) 在迴圈已死但 id 還在時直接跳過,上一行的音效卻照播 ⇒ 有聲音沒動作 */
 }
@@ -27130,7 +27284,7 @@ function islCampTick(t){
     dist = Math.sqrt(vx * vx + vy * vy); if(dist > 1){ vx /= dist; vy /= dist; }
     running = islRunningNow('isl-camp-char'); runActive = running;   /* ★ v1.274.0 */
     spd = islCampWalkSpd(running);
-    var _mxy = islCampClampXY(p.x + vx * spd * dt, p.y + vy * spd * dt); p.x = _mxy.x; p.y = _mxy.y;   /* ★ v1.350.0 出口走道 */
+    var _mxy = islCampMoveSlide(p, p.x + vx * spd * dt, p.y + vy * spd * dt); p.x = _mxy.x; p.y = _mxy.y;   /* ★ v1.478.0 撞到設施/裝飾貼著滑(內含 islCampClampXY) */   /* ★ v1.350.0 出口走道 */
     islCampCharPlace();
     if(islCampExitCheck(p)){ islRunSfxSync(false); _IS.campRaf = requestAnimationFrame(islCampTick); return; }   /* ★ v1.348.0 走進正上方出口 */
     if(Math.abs(vx) > Math.abs(vy)) _IS.campDir = vx > 0 ? 'r' : 'l'; else _IS.campDir = vy > 0 ? 'u' : 'd';
@@ -27138,8 +27292,16 @@ function islCampTick(t){
     if(_cellK2 !== _IS.campWalkCell){ _IS.campWalkCell = _cellK2; _IS.campWalkN = (_IS.campWalkN | 0) + 1; if(running && _IS.campWalkN % 2 === 0){ try{ islSfx('run'); }catch(_cwk){} } }   /* ★ v1.241.0 兩個問題一起修:①營地的 p.x/p.y 是「百分比」(0~100)不是 px,Math.round 等於每走 1% 畫布就算換一格 ⇒ 走路速度 8.8%/秒 大約每秒響九聲,比野外還密;改成 4% 一格(≒ 一步)。②腳步聲與野外同步取消(那顆音效其實是 UI 點擊音),只留跑步、且每兩格一聲。 */
     islCharPaint('walk', 'isl-camp-char', true);
   } else if(w){
-    dx = w.tx - p.x; dy = w.ty - p.y; dist = Math.sqrt(dx * dx + dy * dy);
-    if(dist < 1){
+    if(w.hop){   /* ★ v1.479.0 防卡死跳躍:直線滑過障礙,到點收尾(跟正常抵達同一套) */
+      var _hk = Math.min(1, (Date.now() - w.hop.t0) / w.hop.dur), _he = _hk * (2 - _hk);
+      p.x = w.hop.sx + (w.tx - w.hop.sx) * _he; p.y = w.hop.sy + (w.ty - w.hop.sy) * _he; islCampCharPlace();
+      if(_hk >= 1){ p.x = w.tx; p.y = w.ty; islCampCharPlace(); cb = w.cb; _IS.campWalk = null; islCharPaint('idle', 'isl-camp-char', true); islRunSfxSync(false); _IS.campRaf = requestAnimationFrame(islCampTick); if(cb) setTimeout(cb, 60); return; }
+      islRunSfxSync(false); _IS.campRaf = requestAnimationFrame(islCampTick); return;
+    }
+    var _wp = (w.path && w.path.length) ? w.path[0] : null;   /* ★ v1.478.0 繞過障礙:先走中途點,到了就換下一個 */
+    if(_wp && Math.sqrt((_wp.x - p.x) * (_wp.x - p.x) + (_wp.y - p.y) * (_wp.y - p.y)) < 1){ w.path.shift(); _wp = w.path.length ? w.path[0] : null; }
+    dx = (_wp ? _wp.x : w.tx) - p.x; dy = (_wp ? _wp.y : w.ty) - p.y; dist = Math.sqrt(dx * dx + dy * dy);
+    if(!_wp && dist < 1){
       p.x = w.tx; p.y = w.ty; islCampCharPlace();
       cb = w.cb; _IS.campWalk = null;
       islCharPaint('idle', 'isl-camp-char', true);
@@ -27149,6 +27311,7 @@ function islCampTick(t){
     }
     running = islRunningNow('isl-camp-char'); runActive = running;   /* ★ v1.274.0 */
     spd = islCampWalkSpd(running);
+    if(dist < 0.001) dist = 0.001;   /* ★ v1.478.0 中途點剛好重疊時避免 0/0 */
     vx = dx / dist; vy = dy / dist;
     p.x += vx * spd * dt; p.y += vy * spd * dt;
     islCampCharPlace();
@@ -33695,8 +33858,21 @@ function islCampUndoPaint(){
   n = ISL && !_IS.coop ? islCampUndoList().length : 0;
   b.innerHTML = '↩ 取消修改' + (n > 1 ? '<b class="un">' + n + '</b>' : '');
   b.classList.toggle('hidden', !n);
+  var sv = $('isl-camp-save'); if(sv) sv.classList.toggle('hidden', !n);   /* ★ v1.478.0 💾 儲存配置跟取消修改一起出現 */
   islCampLeftLayout();
 }
+/* ★ v1.478.0 老師「營地裝飾擺好確認後,除了原有的取消操作以外,再新增一個『儲存配置』的按鈕」—
+   按下 = 確認這樣擺:立刻寫存檔(islSave)、清掉取消修改的步驟(確認過的配置不會再被「取消修改」退回去),兩顆鈕一起收起。
+   (每次調整本來就會存檔,這顆是讓學生明確「定案」;之後再調整,取消修改只會退回到這次儲存的樣子。) */
+window.islCampLayoutSave = function(){
+  if(!ISL || _IS.coop) return;
+  _IS.campUndo = []; _IS.campUndoIsl = ISL;
+  _IS.campObs = null;   /* 障礙物快取立刻重算 */
+  islSave('camplayout');
+  playSfx('sfx-confirm', 0.35);
+  toast('💾 營地配置儲存好了!');
+  islCampUndoPaint();
+};
 window.islCampUndo = function(){
   var L = islCampUndoList(), e, arr, j, kk, ix;
   if(_IS.coop) return;
@@ -33813,6 +33989,7 @@ window.islCampPetPat = function(pid){
 };
 /* ── 左側一整排依實際高度排位置 ── */
 function islCampLeftLayout(){
+  var sv = $('isl-camp-save');   /* ★ v1.478.0 */
   var camp = $('isl-camp'), zb = $('isl-camp-zoom'), fx = $('isl-camp-fix-btn'), un = $('isl-camp-undo'), pl = $('isl-camp-petlist'), pd = $('isl-camp-pend'), joy = $('isl-camp-joy'),
       phone = false, gap, y, lim, need, x0;
   if(!camp || !zb || !fx || camp.classList.contains('hidden') || !camp.offsetHeight) return;
@@ -33826,8 +34003,9 @@ function islCampLeftLayout(){
   if(vis(fx)){
     put(fx, y);
     if(un && vis(un)){ un.style.setProperty('left', (fx.offsetLeft + fx.offsetWidth + gap) + 'px', 'important'); put(un, y); }   /* 取消修改排在營地造景右邊(緊貼下方那一列),省下一列高度給夥伴列表 */
+    if(sv && vis(sv) && un && vis(un)){ sv.style.setProperty('left', (un.offsetLeft + un.offsetWidth + gap) + 'px', 'important'); put(sv, y); }   /* ★ v1.478.0 💾 儲存配置排在取消修改右邊 */
     y += Math.max(fx.offsetHeight, (un && vis(un)) ? un.offsetHeight : 0) + gap;
-  } else if(un && vis(un)){ put(un, y); y += un.offsetHeight + gap; }
+  } else if(un && vis(un)){ put(un, y); if(sv && vis(sv)){ sv.style.setProperty('left', (un.offsetLeft + un.offsetWidth + gap) + 'px', 'important'); put(sv, y); } y += un.offsetHeight + gap; }
   lim = (joy && joy.offsetHeight) ? joy.offsetTop - gap : camp.offsetHeight - gap;
   if(pl && vis(pl)){
     pl.classList.remove('row'); pl.classList.remove('cmp'); pl.style.removeProperty('left');
